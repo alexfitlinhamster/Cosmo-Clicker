@@ -26,45 +26,28 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ItemConfig("beacon", "Signal Beacon", 1500000.0, 6000.0, R.drawable.beacon)
     )
 
-    val fleetItems = listOf(
-        FleetConfig("ast", "Asteroid", 5.0, 0.05, R.drawable.ast),
-        FleetConfig("spider", "Spider", 15.0, 0.2, R.drawable.spider),
-        FleetConfig("walker", "Walker", 100.0, 1.0, R.drawable.walker),
-        FleetConfig("rocket1", "Rocket I", 500.0, 5.0, R.drawable.rocket1),
-        FleetConfig("rocket2", "Rocket II", 2000.0, 20.0, R.drawable.rocket2),
-        
-        FleetConfig("crate", "Crate Bot", 5000.0, 50.0, R.drawable.crate),
-        FleetConfig("shuttle", "Shuttle", 12000.0, 120.0, R.drawable.shuttle),
-        FleetConfig("rover", "Rover", 30000.0, 350.0, R.drawable.rover),
-        FleetConfig("capsule", "Capsule", 70000.0, 800.0, R.drawable.capsule),
-        FleetConfig("ufonet", "UFO Net", 150000.0, 2000.0, R.drawable.ufonet),
+    val fleetItems = (1..29).map { i ->
+        val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
+        FleetConfig(
+            id = "drone_$i",
+            name = "Drone #$i",
+            base = 10.0 * 1.8.pow(i.toDouble() - 1),
+            rate = 0.5 * 2.1.pow(i.toDouble() - 1),
+            iconRes = if (resId != 0) resId else R.drawable.magnet, 
+            spriteIndex = -1 
+        )
+    }
 
-        FleetConfig("uforing", "UFO Ring", 400000.0, 5000.0, R.drawable.uforing),
-        FleetConfig("ufobig", "UFO Big", 1000000.0, 12000.0, R.drawable.ufobig),
-        FleetConfig("ufoalien", "UFO Alien", 250000.0, 30000.0, R.drawable.ufoalien),
-        FleetConfig("station", "Star Station", 6000000.0, 80000.0, R.drawable.station),
-        FleetConfig("astclust", "Ast Cluster", 15000000.0, 200000.0, R.drawable.astclust),
-
-        FleetConfig("portal", "Warp Portal", 50000000.0, 500000.0, R.drawable.portal),
-        FleetConfig("hauler", "Heavy Hauler", 120000000.0, 1200000.0, R.drawable.hauler),
-        FleetConfig("sentinel", "Sentinel", 300000000.0, 3000000.0, R.drawable.sentinel),
-        FleetConfig("comet", "Comet", 800000000.0, 8000000.0, R.drawable.comet),
-        FleetConfig("railgun", "Railgun", 2000000000.0, 20000000.0, R.drawable.railgun)
-    )
-
+    // Keeping ONLY the 8 new planets as requested
     val planets = mapOf(
-        "sylva" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet_01_forest),
-        "earth_2" to PlanetConfig("Earth-2", 10000.0, "Base x1.0", Color(0xFF2fa3a8), R.drawable.planet_02_earth),
-        "mars_r" to PlanetConfig("Mars-R", 50000.0, "Click +2", Color(0xFFe27158), R.drawable.planet_03_bands),
-        "venus_x" to PlanetConfig("Venus-X", 500000.0, "Green Swirl", Color(0xFF8CAF50), R.drawable.planet_04_swirl),
-        "kryos" to PlanetConfig("Kryos", 1000000.0, "Ice World", Color(0xFF4FC3F7), R.drawable.planet_05_ice),
-        "mechan_x" to PlanetConfig("Mechan-X", 2500000.0, "Techno Sphere", Color(0xFF90A4AE), R.drawable.planet_06_tech),
-        "volcania" to PlanetConfig("Volcania", 10000000.0, "Lava Rivers", Color(0xFFFF5722), R.drawable.planet_07_lava),
-        "eldorado" to PlanetConfig("Eldorado", 50000000.0, "Gold World", Color(0xFFFFC107), R.drawable.planet_08_desert),
-        "neptune_z" to PlanetConfig("Neptune-Z", 150000000.0, "Gas Giant", Color(0xFF3F51B5), R.drawable.planet_09_ocean),
-        "future_1" to PlanetConfig("???", -1.0, "Coming Soon", Color.Gray, R.drawable.planet_10_void),
-        "future_2" to PlanetConfig("???", -1.0, "Coming Soon", Color.Gray, R.drawable.planet_11_storm),
-        "future_3" to PlanetConfig("???", -1.0, "Coming Soon", Color.Gray, R.drawable.planet_12_moss)
+        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1, -1),
+        "p2" to PlanetConfig("Oceania", 25000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2, -1),
+        "p3" to PlanetConfig("Ignis", 150000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3, -1),
+        "p4" to PlanetConfig("Glacies", 1000000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4, -1),
+        "p5" to PlanetConfig("Aurea", 10000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5, -1),
+        "p6" to PlanetConfig("Toxis", 50000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6, -1),
+        "p7" to PlanetConfig("Exo-Prime", 250000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7, -1),
+        "p8" to PlanetConfig("Void-9", 1000000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8, -1)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -83,11 +66,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val fleetCounts = mutableMapOf<String, Int>()
         fleetItems.forEach { fleetCounts[it.id] = prefs.getInt("fleet_${it.id}", 0) }
 
+        val ownedPlanets = prefs.getStringSet("ownedPlanets", setOf("p1")) ?: setOf("p1")
+
         return GameState(
             totalDebris = prefs.getFloat("totalDebris", 50f).toDouble(),
             clickLevels = clickLevels,
             fleetCounts = fleetCounts,
-            currentPlanetId = prefs.getString("currentPlanetId", "sylva") ?: "sylva",
+            currentPlanetId = prefs.getString("currentPlanetId", "p1") ?: "p1",
+            ownedPlanets = ownedPlanets,
             isHotelDebtActive = prefs.getBoolean("isHotelDebtActive", false),
             currentHotelDebt = prefs.getFloat("currentHotelDebt", 0f).toDouble()
         )
@@ -100,6 +86,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             state.clickLevels.forEach { (id, lvl) -> putInt("click_$id", lvl) }
             state.fleetCounts.forEach { (id, count) -> putInt("fleet_$id", count) }
             putString("currentPlanetId", state.currentPlanetId)
+            putStringSet("ownedPlanets", state.ownedPlanets)
             putBoolean("isHotelDebtActive", state.isHotelDebtActive)
             putFloat("currentHotelDebt", state.currentHotelDebt.toFloat())
             apply()
@@ -202,13 +189,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         
         _gameState.update { currentState ->
             val drones = currentState.drones.toMutableList()
-            val maxUnitsPerType = 10
+            
             fleetItems.forEach { item ->
-                val count = (fleetCounts[item.id] ?: 0).coerceAtMost(maxUnitsPerType)
+                val count = fleetCounts[item.id] ?: 0
                 val currentOfThisType = drones.filter { it.type == item.id }
                 if (currentOfThisType.size < count) {
                     repeat(count - currentOfThisType.size) {
-                        drones.add(DroneData(Random.nextLong(), 0.5f, 0.5f, type = item.id))
+                        drones.add(DroneData(Random.nextLong(), Random.nextFloat(), Random.nextFloat(), type = item.id))
                     }
                 } else if (currentOfThisType.size > count) {
                     val toRemove = currentOfThisType.size - count
@@ -233,15 +220,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nState = drone.state
                 var nTargetId = drone.targetId
                 var nHasCargo = drone.hasCargo
-                val speed = when(drone.type) {
-                    "ast" -> 0.01f
-                    "walker" -> 0.04f
-                    "uforing" -> 0.05f
-                    "shuttle" -> 0.035f
-                    "comet" -> 0.08f
-                    "railgun" -> 0.015f
-                    else -> 0.025f
-                }
+                val speed = 0.025f
 
                 when (drone.state) {
                     DroneState.IDLE -> {
@@ -317,7 +296,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     newHotelDebt -= debtPayment
                     newTotalDebris += actualIncome
                     if (newHotelDebt <= 0) {
-                        newHotelDebt = 0.0
+                        newTotalDebris = 0.0
                         hotelDebtActive = false
                     }
                 } else {
@@ -332,10 +311,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val state = _gameState.value
         var dps = fleetItems.sumOf { (state.fleetCounts[it.id] ?: 0) * it.rate }
         when (state.currentPlanetId) {
-            "venus_x" -> dps *= 1.5
-            "volcania" -> dps *= 2.0
-            "sylva" -> dps *= 1.2
-            "eldorado" -> dps *= 2.0
+            "p4" -> dps *= 1.5
+            "p7" -> dps *= 2.0
+            "p1" -> dps *= 1.2
+            "p8" -> dps *= 2.0
         }
         if (state.isHotelDebtActive) dps *= 5.0
         return dps
@@ -345,9 +324,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val state = _gameState.value
         var v = 1.0 + clickItems.sumOf { (state.clickLevels[it.id] ?: 0) * it.value }
         when (state.currentPlanetId) {
-            "mars_r" -> v += 5.0
-            "neptune_z" -> v *= 2.0
-            "eldorado" -> v *= 1.5
+            "p3" -> v += 5.0
+            "p2" -> v *= 1.2
+            "p8" -> v *= 2.0
         }
         v *= state.eventMultiplier
         return v
@@ -357,7 +336,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         var valToReturn = calculateClickValue()
         _gameState.update { currentState ->
             var clickPower = valToReturn
-            if (currentState.currentPlanetId == "kryos" && Random.nextFloat() < 0.1) {
+            if (currentState.currentPlanetId == "p4" && Random.nextFloat() < 0.1) {
                 clickPower *= 5.0
                 valToReturn = clickPower
             }
@@ -394,18 +373,43 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun buyFleet(id: String) {
         val item = fleetItems.find { it.id == id } ?: return
         val currentCount = _gameState.value.fleetCounts[id] ?: 0
+        val totalDrones = _gameState.value.fleetCounts.values.sum()
+        
+        if (totalDrones >= 5) return // Limit drones to 5
+
         var cost = cost(item.base, currentCount)
-        if (_gameState.value.currentPlanetId == "mechan_x") cost *= 0.85
+        if (_gameState.value.currentPlanetId == "p6") cost *= 0.85
         if (_gameState.value.totalDebris >= cost) {
             _gameState.update { it.copy(totalDebris = it.totalDebris - cost, fleetCounts = it.fleetCounts + (id to currentCount + 1)) }
             saveGameState()
         }
     }
 
+    fun sellFleet(id: String) {
+        val item = fleetItems.find { it.id == id } ?: return
+        val currentCount = _gameState.value.fleetCounts[id] ?: 0
+        if (currentCount <= 0) return
+
+        val cost = cost(item.base, currentCount - 1)
+        val refund = cost / 2.0
+        
+        _gameState.update { it.copy(totalDebris = it.totalDebris + refund, fleetCounts = it.fleetCounts + (id to currentCount - 1)) }
+        saveGameState()
+    }
+
     fun buyPlanet(planetId: String) {
         val config = planets[planetId] ?: return
-        if (_gameState.value.totalDebris >= config.price && _gameState.value.currentPlanetId != planetId) {
-            _gameState.update { it.copy(totalDebris = it.totalDebris - config.price, currentPlanetId = planetId) }
+        val state = _gameState.value
+        
+        if (state.ownedPlanets.contains(planetId)) {
+            _gameState.update { it.copy(currentPlanetId = planetId) }
+            saveGameState()
+        } else if (state.totalDebris >= config.price) {
+            _gameState.update { it.copy(
+                totalDebris = it.totalDebris - config.price, 
+                currentPlanetId = planetId,
+                ownedPlanets = it.ownedPlanets + planetId
+            ) }
             saveGameState()
         }
     }
@@ -421,5 +425,5 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
-data class FleetConfig(val id: String, val name: String, val base: Double, val rate: Double, val iconRes: Int)
-data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int)
+data class FleetConfig(val id: String, val name: String, val base: Double, val rate: Double, val iconRes: Int, val spriteIndex: Int = -1)
+data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)

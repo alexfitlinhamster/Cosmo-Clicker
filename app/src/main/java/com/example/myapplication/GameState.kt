@@ -4,7 +4,8 @@ data class GameState(
     val totalDebris: Double = 50.0,
     val clickLevels: Map<String, Int> = emptyMap(),
     val fleetCounts: Map<String, Int> = emptyMap(),
-    val currentPlanetId: String = "earth_2",
+    val currentPlanetId: String = "p1",
+    val ownedPlanets: Set<String> = setOf("p1"),
     val isHotelDebtActive: Boolean = false,
     val currentHotelDebt: Double = 0.0,
     val activeEvent: GameEvent? = null,
@@ -40,4 +41,11 @@ data class GameEvent(
     val expiresAt: Long,
     val x: Float = 0.5f,
     val y: Float = 0.5f
+)
+
+data class FloatingTextData(
+    val id: Long,
+    val text: String,
+    val x: Float,
+    val y: Float
 )
