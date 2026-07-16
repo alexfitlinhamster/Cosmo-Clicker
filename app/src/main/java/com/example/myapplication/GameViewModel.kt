@@ -18,6 +18,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
 
+    private val droneNames = listOf(
+        "Scrap-Bot", "Copper Cloud", "Rusty Rover", "Azure Ace", "Cobalt Collector",
+        "Blue Beam", "Forest Phantom", "Jade Jumper", "Emerald Eye", "Crimson Crusher",
+        "Ruby Reaper", "Solar Stinger", "Amber Apex", "Void Vulture", "Shadow Shifter",
+        "Ghost Glider", "Plasma Prowler", "Neon Nibbler", "Cyber Cicada", "Titan Talon",
+        "Iron Icarus", "Gold Guardian", "Gilded Golem", "Quartz Quill", "Silver Spectre",
+        "Diamond Diver", "Onyx Orb", "Obsidian Owl", "Quantum Quark"
+    )
+
     val clickItems = listOf(
         ItemConfig("magnet", "Plasma Magnet", 15.0, 1.0, R.drawable.magnet),
         ItemConfig("torch", "Weld Torch", 200.0, 10.0, R.drawable.torch),
@@ -30,7 +39,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
         FleetConfig(
             id = "drone_$i",
-            name = "Drone #$i",
+            name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
             rate = 0.5 * 2.1.pow(i.toDouble() - 1),
             iconRes = if (resId != 0) resId else R.drawable.magnet, 
@@ -38,16 +47,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    // Keeping ONLY the 8 new planets as requested
     val planets = mapOf(
-        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1, -1),
-        "p2" to PlanetConfig("Oceania", 25000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2, -1),
-        "p3" to PlanetConfig("Ignis", 150000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3, -1),
-        "p4" to PlanetConfig("Glacies", 1000000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4, -1),
-        "p5" to PlanetConfig("Aurea", 10000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5, -1),
-        "p6" to PlanetConfig("Toxis", 50000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6, -1),
-        "p7" to PlanetConfig("Exo-Prime", 250000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7, -1),
-        "p8" to PlanetConfig("Void-9", 1000000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8, -1)
+        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1),
+        "p2" to PlanetConfig("Oceania", 25000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2),
+        "p3" to PlanetConfig("Ignis", 150000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3),
+        "p4" to PlanetConfig("Glacies", 1000000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4),
+        "p5" to PlanetConfig("Aurea", 10000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5),
+        "p6" to PlanetConfig("Toxis", 50000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6),
+        "p7" to PlanetConfig("Exo-Prime", 250000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7),
+        "p8" to PlanetConfig("Void-9", 1000000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -349,7 +357,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 newHotelDebt -= debtPayment
                 newTotalDebris += actualIncome
                 if (newHotelDebt <= 0) {
-                    newHotelDebt = 0.0
+                    newTotalDebris = 0.0
                     hotelDebtActive = false
                 }
             } else {
@@ -366,21 +374,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val cost = cost(item.base, currentLvl)
         if (_gameState.value.totalDebris >= cost) {
             _gameState.update { it.copy(totalDebris = it.totalDebris - cost, clickLevels = it.clickLevels + (id to currentLvl + 1)) }
-            saveGameState()
-        }
-    }
-
-    fun buyFleet(id: String) {
-        val item = fleetItems.find { it.id == id } ?: return
-        val currentCount = _gameState.value.fleetCounts[id] ?: 0
-        val totalDrones = _gameState.value.fleetCounts.values.sum()
-        
-        if (totalDrones >= 5) return // Limit drones to 5
-
-        var cost = cost(item.base, currentCount)
-        if (_gameState.value.currentPlanetId == "p6") cost *= 0.85
-        if (_gameState.value.totalDebris >= cost) {
-            _gameState.update { it.copy(totalDebris = it.totalDebris - cost, fleetCounts = it.fleetCounts + (id to currentCount + 1)) }
             saveGameState()
         }
     }
@@ -412,6 +405,37 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             ) }
             saveGameState()
         }
+    }
+
+    fun startOpeningCase() {
+        val totalDrones = _gameState.value.fleetCounts.values.sum()
+        if (totalDrones >= 5) return
+        
+        val caseCost = 1000.0
+        if (_gameState.value.totalDebris >= caseCost) {
+            _gameState.update { it.copy(
+                totalDebris = it.totalDebris - caseCost,
+                isOpeningCase = true,
+                lastDroppedDroneId = null
+            ) }
+        }
+    }
+
+    fun finishOpeningCase() {
+        val randomDroneIndex = Random.nextInt(1, 30)
+        val droneId = "drone_$randomDroneIndex"
+        val currentCount = _gameState.value.fleetCounts[droneId] ?: 0
+        
+        _gameState.update { it.copy(
+            isOpeningCase = false,
+            fleetCounts = it.fleetCounts + (droneId to currentCount + 1),
+            lastDroppedDroneId = droneId
+        ) }
+        saveGameState()
+    }
+
+    fun clearReward() {
+        _gameState.update { it.copy(lastDroppedDroneId = null) }
     }
 
     fun takeHotelDebt() {

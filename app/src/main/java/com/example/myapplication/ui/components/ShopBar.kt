@@ -30,6 +30,7 @@ import com.example.myapplication.GameViewModel
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
+import kotlinx.coroutines.delay
 import kotlin.math.pow
 
 @Composable
@@ -110,22 +111,24 @@ fun ShopBar(
                             }
                         }
                         1 -> {
+                            item {
+                                MysteryCaseRow(viewModel, state)
+                            }
                             items(viewModel.fleetItems, key = { it.id }) { item ->
                                 val count = state.fleetCounts[item.id] ?: 0
-                                val totalDrones = state.fleetCounts.values.sum()
-                                var cost = (item.base * 1.15.pow(count.toDouble())).toLong()
-                                if (state.currentPlanetId == "p6") cost = (cost * 0.85).toLong()
-                                ShopRow(
-                                    name = "", 
-                                    meta = "+${formatNum(item.rate)}/s • $count/5",
-                                    cost = cost,
-                                    canBuy = state.totalDebris >= cost && totalDrones < 5,
-                                    canSell = count > 0,
-                                    iconRes = item.iconRes,
-                                    spriteIndex = item.spriteIndex,
-                                    onBuy = { viewModel.buyFleet(item.id) },
-                                    onSell = { viewModel.sellFleet(item.id) }
-                                )
+                                if (count > 0) {
+                                    ShopRow(
+                                        name = item.name, 
+                                        meta = "+${formatNum(item.rate)}/s • qty $count",
+                                        cost = 0,
+                                        canBuy = false,
+                                        canSell = true,
+                                        iconRes = item.iconRes,
+                                        spriteIndex = item.spriteIndex,
+                                        onBuy = { },
+                                        onSell = { viewModel.sellFleet(item.id) }
+                                    )
+                                }
                             }
                             item {
                                 Button(
@@ -164,6 +167,53 @@ fun ShopBar(
                     Text("SHOP (TAP TO OPEN)", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
+    val totalDrones = state.fleetCounts.values.sum()
+    val caseCost = 1000L
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
+            .border(1.dp, AppColors.Primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(AppColors.WhiteAlpha05, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = com.example.myapplication.R.drawable.keis1),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().padding(4.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text("Mystery Case", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("Get random drone • $totalDrones/5", color = Color.Gray, fontSize = 11.sp)
+            }
+        }
+        
+        Button(
+            onClick = { viewModel.startOpeningCase() },
+            enabled = state.totalDebris >= caseCost && totalDrones < 5,
+            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.height(36.dp)
+        ) {
+            Text(formatNum(caseCost.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -242,15 +292,17 @@ fun ShopRow(
                     Text("Sell", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Button(
-                onClick = onBuy,
-                enabled = canBuy,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(36.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
-                Text(formatNum(cost.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            if (canBuy) {
+                Button(
+                    onClick = onBuy,
+                    enabled = canBuy,
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.height(36.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp)
+                ) {
+                    Text(formatNum(cost.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
@@ -293,7 +345,7 @@ fun PlanetRow(
                         modifier = Modifier
                             .requiredSize(iconSize * columns, iconSize * rows)
                             .offset(x = -iconSize * col, y = -iconSize * row)
-                            .scale(1.8f) // Zoom for sprite sheet
+                            .scale(1.8f) 
                     )
                 } else {
                     Image(
@@ -302,7 +354,7 @@ fun PlanetRow(
                         contentScale = ContentScale.Crop, 
                         modifier = Modifier
                             .fillMaxSize()
-                            .scale(1.8f) // Zoom to hide white shields
+                            .scale(1.8f)
                             .clip(CircleShape)
                             .let { if(isLocked) it.alpha(0.3f) else it }
                     )

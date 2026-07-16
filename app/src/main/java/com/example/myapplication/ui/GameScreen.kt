@@ -24,7 +24,6 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopCollapsed by remember { mutableStateOf(true) }
 
-    // Оптимизация: предвычисляем Map флота для быстрого доступа в цикле дронов
     val fleetMap = remember(viewModel.fleetItems) {
         viewModel.fleetItems.associateBy { it.id }
     }
@@ -47,12 +46,10 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                 )
             )
     ) {
-        // Stars background
         repeat(GameConstants.StarCount) {
             Star()
         }
 
-        // Active Debris
         state.scavengeTargets.forEach { target ->
             key(target.id) {
                 DebrisTarget(target)
@@ -67,6 +64,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                     EventBanner(event)
                 }
 
+                // ВЕРНУЛИ ПЛАНЕТУ В ЦЕНТР
                 PlanetButton(
                     planetId = state.currentPlanetId,
                     planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
@@ -76,7 +74,6 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                     addFloatingText("+${formatNum(value)}", x, y)
                 }
 
-                // Drones с оптимизированным поиском и ключами
                 state.drones.forEach { drone ->
                     key(drone.id) {
                         ScavengingDrone(drone, fleetMap)
@@ -109,5 +106,13 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                 onToggleCollapse = { isShopCollapsed = !isShopCollapsed }
             )
         }
+
+        // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА (ПОЯВЛЯЕТСЯ ПОВЕРХ ВСЕГО)
+        CaseOpeningOverlay(
+            isOpening = state.isOpeningCase,
+            lastDroppedDrone = state.lastDroppedDroneId?.let { fleetMap[it] },
+            onFinishOpening = { viewModel.finishOpeningCase() },
+            onClearReward = { viewModel.clearReward() }
+        )
     }
 }

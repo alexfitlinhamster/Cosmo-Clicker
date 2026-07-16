@@ -12,7 +12,9 @@ data class GameState(
     val eventMultiplier: Double = 1.0,
     val pirateTapsLeft: Int = 0,
     val drones: List<DroneData> = emptyList(),
-    val scavengeTargets: List<ScavengeTarget> = emptyList()
+    val scavengeTargets: List<ScavengeTarget> = emptyList(),
+    val isOpeningCase: Boolean = false, // Новое состояние
+    val lastDroppedDroneId: String? = null
 )
 
 data class DroneData(
