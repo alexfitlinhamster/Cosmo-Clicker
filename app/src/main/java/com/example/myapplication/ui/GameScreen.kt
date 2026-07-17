@@ -80,12 +80,6 @@ fun GameScreen(
             Star()
         }
 
-        state.scavengeTargets.forEach { target ->
-            key(target.id) {
-                DebrisTarget(target)
-            }
-        }
-
         Column(modifier = Modifier.fillMaxSize()) {
             Header(
                 state = state,
@@ -94,6 +88,12 @@ fun GameScreen(
             )
             
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                state.scavengeTargets.forEach { target ->
+                    key(target.id) {
+                        DebrisTarget(target)
+                    }
+                }
+
                 state.activeEvent?.let { event ->
                     EventBanner(event)
                 }

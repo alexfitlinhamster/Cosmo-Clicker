@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -31,15 +32,25 @@ fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = formatNum(state.totalDebris),
+                    modifier = Modifier.alignByBaseline(),
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
                     color = AppColors.Primary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = stringResource(R.string.debris), color = Color.Gray, fontSize = 14.sp)
+                Text(
+                    text = stringResource(R.string.debris),
+                    modifier = Modifier.alignByBaseline(),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
             }
             IconButton(onClick = onSettingsClick) {
                 Text(

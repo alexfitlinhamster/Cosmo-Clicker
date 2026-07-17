@@ -17,6 +17,8 @@ import kotlin.random.Random
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
+    private val clickUpgradePurchaseLock = Any()
+    private val lastClickUpgradePurchaseNanos = mutableMapOf<String, Long>()
 
     private val droneNames = listOf(
         "Scrap-Bot", "Copper Cloud", "Rusty Rover", "Azure Ace", "Cobalt Collector",
@@ -259,7 +261,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             val targets = currentState.scavengeTargets.toMutableList()
             var debrisGained = 0.0
-            val claimedTargetIds = drones.mapNotNull { it.targetId }.toSet()
+            val claimedTargetIds = drones.mapNotNullTo(mutableSetOf()) { it.targetId }
 
             val updatedDrones = drones.map { drone ->
                 var nx = drone.x
@@ -282,6 +284,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         if (availableTarget != null) {
                             nTargetId = availableTarget.id
                             nState = DroneState.MOVING_TO_DEBRIS
+                            claimedTargetIds += availableTarget.id
                         } else {
                             nx += (Random.nextFloat() - 0.5f) * 0.005f
                             ny += (Random.nextFloat() - 0.5f) * 0.005f
@@ -293,7 +296,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             val dx = target.x - nx
                             val dy = target.y - ny
                             val distSq = dx * dx + dy * dy
-                            if (distSq < 0.0025) {
+                            if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                                nx = target.x
+                                ny = target.y
                                 nState = DroneState.RETURNING
                                 nHasCargo = true
                                 nCargoRarity = target.rarity
@@ -301,18 +306,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 nTargetId = null
                             } else {
                                 val dist = Math.sqrt(distSq.toDouble()).toFloat()
-                                nx += (dx / dist) * 0.025f
-                                ny += (dy / dist) * 0.025f
+                                nx += (dx / dist) * DRONE_MOVE_STEP
+                                ny += (dy / dist) * DRONE_MOVE_STEP
                             }
                         } else {
                             nState = DroneState.RETURNING
                         }
                     }
                     DroneState.RETURNING -> {
-                        val dx = 0.5f - nx
-                        val dy = 0.5f - ny
+                        val dx = DRONE_HOME_POSITION - nx
+                        val dy = DRONE_HOME_POSITION - ny
                         val distSq = dx * dx + dy * dy
-                        if (distSq < 0.0025) {
+                        if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                            nx = DRONE_HOME_POSITION
+                            ny = DRONE_HOME_POSITION
                             if (nHasCargo && nCargoRarity != null) {
                                 // The collected debris determines the entire reward.
                                 debrisGained += nCargoRarity.debrisReward
@@ -322,8 +329,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             nCargoRarity = null
                         } else {
                             val dist = Math.sqrt(distSq.toDouble()).toFloat()
-                            nx += (dx / dist) * 0.025f
-                            ny += (dy / dist) * 0.025f
+                            nx += (dx / dist) * DRONE_MOVE_STEP
+                            ny += (dy / dist) * DRONE_MOVE_STEP
                         }
                     }
                 }
@@ -394,16 +401,33 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun buyClickUpgrade(id: String) {
-        try {
-            val item = clickItems.find { it.id == id } ?: return
-            val currentLvl = _gameState.value.clickLevels[id] ?: 0
-            val cost = (item.base * 1.15.pow(currentLvl.toDouble())).toLong().toDouble()
-            if (_gameState.value.totalDebris >= cost) {
-                _gameState.update { it.copy(totalDebris = it.totalDebris - cost, clickLevels = it.clickLevels + (id to currentLvl + 1)) }
-                saveGameState()
+        val item = clickItems.find { it.id == id } ?: return
+
+        synchronized(clickUpgradePurchaseLock) {
+            val now = System.nanoTime()
+            val lastPurchase = lastClickUpgradePurchaseNanos[id] ?: 0L
+            if (now - lastPurchase < CLICK_UPGRADE_DEBOUNCE_NANOS) return
+
+            while (true) {
+                val state = _gameState.value
+                val currentLevel = (state.clickLevels[id] ?: 0).coerceAtLeast(0)
+                if (currentLevel == Int.MAX_VALUE) return
+
+                val rawCost = item.base * 1.15.pow(currentLevel.toDouble())
+                if (!rawCost.isFinite()) return
+                val purchaseCost = rawCost.toLong().toDouble()
+                if (state.totalDebris < purchaseCost) return
+
+                val updatedState = state.copy(
+                    totalDebris = state.totalDebris - purchaseCost,
+                    clickLevels = state.clickLevels + (id to currentLevel + 1)
+                )
+                if (_gameState.compareAndSet(state, updatedState)) {
+                    lastClickUpgradePurchaseNanos[id] = now
+                    saveGameState()
+                    return
+                }
             }
-        } catch (e: Exception) {
-            android.util.Log.e("ShopError", "Crash in buyClickUpgrade: ${e.message}")
         }
     }
 
@@ -476,3 +500,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
 data class FleetConfig(val id: String, val name: String, val base: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
 data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)
+
+private const val DRONE_MOVE_STEP = 0.025f
+private const val DRONE_HOME_POSITION = 0.5f
+private const val CLICK_UPGRADE_DEBOUNCE_NANOS = 100_000_000L
