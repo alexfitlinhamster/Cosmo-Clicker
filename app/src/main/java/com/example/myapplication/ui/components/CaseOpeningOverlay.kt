@@ -55,7 +55,7 @@ fun CaseOpeningOverlay(
             // Проигрываем анимацию 1..8 один раз
             for (frame in 1..8) {
                 currentFrame = frame
-                delay(200) // Увеличили задержку, чтобы анимация была более плавной и торжественной
+                delay(200) // Задержка 200мс для торжественности
             }
             onFinishOpening()
         }
@@ -127,31 +127,20 @@ fun CaseOpeningOverlay(
                 modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)).clickable { onClearReward() },
                 contentAlignment = Alignment.Center
             ) {
-<<<<<<< HEAD
                 lastDroppedDrone?.let { drone ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-=======
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        stringResource(R.string.unlocked),
-                        color = Color.Yellow,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                    Spacer(modifier = Modifier.height(32.dp))
-                    
-                    lastDroppedDrone?.let { drone ->
-                        FleetIcon(item = drone, iconSize = 180.dp)
-                        Spacer(modifier = Modifier.height(24.dp))
->>>>>>> origin/main
                         Text(
                             drone.rarity.label,
                             color = drone.rarity.color,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
-<<<<<<< HEAD
-                        Text("NEW DRONE UNLOCKED!", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                        Text(
+                            stringResource(R.string.unlocked),
+                            color = Color.White,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Black
+                        )
                         Spacer(modifier = Modifier.height(32.dp))
                         
                         Box(contentAlignment = Alignment.Center) {
@@ -166,18 +155,8 @@ fun CaseOpeningOverlay(
                             onClick = { onClearReward() },
                             colors = ButtonDefaults.buttonColors(containerColor = drone.rarity.color)
                         ) {
-                            Text("COLLECT", color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
                         }
-=======
-                    }
-                    
-                    Spacer(modifier = Modifier.height(64.dp))
-                    Button(
-                        onClick = { onClearReward() },
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
-                    ) {
-                        Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
->>>>>>> origin/main
                     }
                 }
             }
