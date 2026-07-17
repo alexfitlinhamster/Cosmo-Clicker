@@ -15,12 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
+import com.example.myapplication.R
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 
@@ -35,7 +37,13 @@ fun EventBanner(event: GameEvent) {
         border = androidx.compose.foundation.BorderStroke(1.dp, color)
     ) {
         Text(
-            text = event.title,
+            text = stringResource(
+                when (event.type) {
+                    GameEventType.STORM -> R.string.event_space_storm
+                    GameEventType.ASTEROID -> R.string.event_gold_asteroid
+                    GameEventType.PIRATES -> R.string.event_pirates
+                }
+            ),
             modifier = Modifier.padding(8.dp).fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = color,

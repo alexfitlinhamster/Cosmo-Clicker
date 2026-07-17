@@ -1,44 +1,55 @@
-# Space Scavenger (Космический Мусорщик)
+# Cosmo Clicker
 
-**Space Scavenger** — это захватывающая инкрементальная игра (кликер) в сеттинге космических приключений, разработанная на языке Kotlin с использованием современного фреймворка Jetpack Compose.
+Cosmo Clicker is an incremental Android game about collecting space debris, expanding a drone fleet, and travelling between increasingly valuable planets. The interface is built entirely with Jetpack Compose.
 
-## 🚀 Описание проекта
-Игрок берет на себя роль космического мусорщика, чья цель — очистить орбиты планет от обломков и заработать на этом целое состояние. Путешествуйте между уникальными планетами, развивайте свой флот дронов и справляйтесь с опасностями глубокого космоса.
+## Features
 
-## ✨ Основные возможности
+- Tap planets to collect debris and improve your click power.
+- Build passive income with a fleet of animated scavenging drones.
+- Unlock eight planets with different prices and income bonuses.
+- React to random space storms, golden asteroids, and pirate attacks.
+- Open cases to receive a random drone.
+- Purchase upgrades and manage debt while growing the space operation.
+- Keep progress between sessions with local Android storage.
 
-### 🪐 Исследование планет
-- **13 уникальных планет**: от лесного мира Сильва до огненной Вулкании и золотого Эльдорадо.
-- **Процедурная графика**: планеты отрисовываются динамически с помощью Canvas API, что обеспечивает высокую четкость и уникальный визуальный стиль.
-- **Бонусы планет**: каждая планета дает свои уникальные преимущества к клику или пассивному доходу.
+## Tech stack
 
-### 🛸 Автоматизация и Флот
-- **Разнообразные юниты**: нанимайте астероидных ботов, пауков-сборщиков, тяжелые хаулеры и даже инопланетные корабли.
-- **Живой мир**: дроны не просто цифры в меню — они физически присутствуют на экране, летают за мусором и возвращают его на базу.
-- **Система улучшений**: прокачивайте плазменные магниты, квантовые гаечные ключи и сигнальные маяки для увеличения эффективности клика.
+- Kotlin
+- Jetpack Compose and Material 3
+- MVVM with `ViewModel`, coroutines, and `StateFlow`
+- Gradle Kotlin DSL
+- Android SDK 24+
 
-### ☄️ Динамические события
-Будьте готовы к неожиданностям:
-- **Космический шторм**: временное увеличение множителя дохода.
-- **Золотой астероид**: возможность сорвать огромный куш одним нажатием.
-- **Нападение пиратов**: защищайте свои ресурсы от космических грабителей.
+## Requirements
 
-### 🏦 Экономика и Механики
-- **Система долга**: возможность взять крупный кредит ("Отельный долг") для резкого скачка в развитии, который придется выплачивать процентами с дохода.
-- **Сохранение прогресса**: ваше состояние автоматически сохраняется через SharedPreferences.
+- Android Studio with JDK 11 or newer
+- Android SDK 37
+- An emulator or Android device running Android 7.0 (API 24) or newer
 
-## 🛠 Технологический стек
-- **Язык**: Kotlin
-- **UI**: Jetpack Compose (Declarative UI)
-- **Архитектура**: MVVM (Model-View-ViewModel)
-- **Асинхронность**: Kotlin Coroutines & Flow (игровые циклы, AI дронов)
-- **Графика**: Android Canvas API (для планет и спецэффектов)
+## Build and run
 
-## 📦 Установка и запуск
-1. Склонируйте репозиторий.
-2. Откройте проект в **Android Studio**.
-3. Дождитесь завершения синхронизации Gradle.
-4. Запустите приложение на эмуляторе или физическом устройстве (API 24+).
+1. Clone the repository.
+2. Open the project in Android Studio.
+3. Let Gradle sync the project dependencies.
+4. Select an emulator or connected Android device and run the `app` configuration.
 
----
-*Проект разработан в рамках практики создания высокопроизводительных игровых интерфейсов на Jetpack Compose.*
+To build a debug APK from the command line on Windows:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+The APK is generated in `app/build/outputs/apk/debug/`.
+
+## Versioning
+
+The current release uses two values defined in `gradle.properties`:
+
+- `APP_VERSION_NAME` is the public, human-readable application version.
+- `APP_VERSION_CODE` is the positive integer Android uses to order releases.
+
+Increase `APP_VERSION_CODE` for every published build and update `APP_VERSION_NAME` when preparing a new release. Record the same values and a short English summary in [`news.md`](news.md).
+
+## Release notes
+
+See [`news.md`](news.md) for the version history and brief changes.

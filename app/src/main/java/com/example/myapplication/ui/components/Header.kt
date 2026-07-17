@@ -3,6 +3,7 @@ package com.example.myapplication.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,29 +13,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.myapplication.R
 import com.example.myapplication.GameState
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 
 @Composable
-fun Header(state: GameState, dps: Double) {
+fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
             .fillMaxWidth()
     ) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = formatNum(state.totalDebris),
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.Primary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "debris", color = Color.Gray, fontSize = 14.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = formatNum(state.totalDebris),
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.Primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.debris), color = Color.Gray, fontSize = 14.sp)
+            }
+            IconButton(onClick = onSettingsClick) {
+                Text(
+                    text = "⚙",
+                    color = AppColors.Primary,
+                    fontSize = 28.sp
+                )
+            }
         }
         Text(
-            text = "+${formatNum(dps)} / sec",
+            text = stringResource(R.string.per_second, formatNum(dps)),
             color = AppColors.Secondary,
             fontSize = 14.sp
         )
@@ -42,7 +58,7 @@ fun Header(state: GameState, dps: Double) {
         if (state.isHotelDebtActive) {
             Column(modifier = Modifier.padding(top = 8.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Hotel Debt", color = AppColors.Danger, fontSize = 12.sp)
+                    Text(stringResource(R.string.hotel_debt), color = AppColors.Danger, fontSize = 12.sp)
                     Text(formatNum(state.currentHotelDebt), color = AppColors.Danger, fontSize = 12.sp)
                 }
                 LinearProgressIndicator(

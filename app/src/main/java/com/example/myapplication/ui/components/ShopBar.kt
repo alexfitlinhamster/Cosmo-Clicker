@@ -22,11 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.R
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -41,7 +43,7 @@ fun ShopBar(
     onToggleCollapse: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Planets", "Fleet", "Click")
+    val tabs = listOf(R.string.tab_planets, R.string.tab_fleet, R.string.tab_click)
     val animatedHeight by animateDpAsState(
         targetValue = if (isCollapsed) GameConstants.ShopCollapsedHeight else GameConstants.ShopExpandedHeight, 
         label = ""
@@ -85,7 +87,7 @@ fun ShopBar(
                             border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedTab == index) AppColors.Primary else Color.White.copy(alpha = 0.1f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(title, fontSize = 12.sp)
+                            Text(stringResource(title), fontSize = 12.sp)
                         }
                     }
                 }
@@ -100,7 +102,7 @@ fun ShopBar(
                                 val owned = state.ownedPlanets.contains(id)
                                 PlanetRow(
                                     name = config.name,
-                                    desc = config.desc,
+                                    desc = localizedPlanetDescription(id),
                                     price = config.price.toLong(),
                                     active = active,
                                     owned = owned,
@@ -119,7 +121,7 @@ fun ShopBar(
                                 if (count > 0) {
                                     ShopRow(
                                         name = item.name, 
-                                        meta = "+${formatNum(item.rate)}/s • qty $count",
+                                        meta = stringResource(R.string.fleet_meta, formatNum(item.rate), count),
                                         cost = 0,
                                         canBuy = false,
                                         canSell = true,
@@ -138,7 +140,7 @@ fun ShopBar(
                                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger.copy(alpha = 0.1f), contentColor = AppColors.Danger),
                                     border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Danger)
                                 ) {
-                                    Text(if (state.isHotelDebtActive) "Debt Active" else "Take Hotel Debt (x5 DPS!)")
+                                    Text(stringResource(if (state.isHotelDebtActive) R.string.debt_active else R.string.take_hotel_debt))
                                 }
                             }
                         }
@@ -147,8 +149,8 @@ fun ShopBar(
                                 val lvl = state.clickLevels[item.id] ?: 0
                                 val cost = (item.base * 1.15.pow(lvl.toDouble())).toLong()
                                 ShopRow(
-                                    name = item.name,
-                                    meta = "+${formatNum(item.value)}/tap • lvl $lvl",
+                                    name = localizedUpgradeName(item.id),
+                                    meta = stringResource(R.string.click_meta, formatNum(item.value), lvl),
                                     cost = cost,
                                     canBuy = state.totalDebris >= cost,
                                     canSell = false,
@@ -164,7 +166,7 @@ fun ShopBar(
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("SHOP (TAP TO OPEN)", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.shop_tap_to_open), color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -201,8 +203,8 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text("Mystery Case", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("Get random drone • $totalDrones/5", color = Color.Gray, fontSize = 11.sp)
+                Text(stringResource(R.string.mystery_case), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.random_drone_count, totalDrones), color = Color.Gray, fontSize = 11.sp)
             }
         }
         
@@ -289,7 +291,7 @@ fun ShopRow(
                     modifier = Modifier.height(36.dp).width(60.dp),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("Sell", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.sell), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
             if (canBuy) {
@@ -376,13 +378,40 @@ fun PlanetRow(
             shape = RoundedCornerShape(8.dp)
         ) {
             val btnText = when {
-                isLocked -> "Locked"
-                active -> "Active"
-                owned -> "Select"
-                price == 0L -> "Free"
+                isLocked -> stringResource(R.string.locked)
+                active -> stringResource(R.string.active)
+                owned -> stringResource(R.string.select)
+                price == 0L -> stringResource(R.string.free)
                 else -> formatNum(price.toDouble())
             }
             Text(btnText, fontSize = 12.sp)
         }
     }
 }
+
+@Composable
+private fun localizedUpgradeName(id: String): String = stringResource(
+    when (id) {
+        "magnet" -> R.string.upgrade_plasma_magnet
+        "torch" -> R.string.upgrade_weld_torch
+        "wrench" -> R.string.upgrade_quantum_wrench
+        "harvester" -> R.string.upgrade_debris_harvester
+        "beacon" -> R.string.upgrade_signal_beacon
+        else -> R.string.unknown_item
+    }
+)
+
+@Composable
+private fun localizedPlanetDescription(id: String): String = stringResource(
+    when (id) {
+        "p1" -> R.string.planet_forest_world
+        "p2" -> R.string.planet_water_world
+        "p3" -> R.string.planet_volcanic
+        "p4" -> R.string.planet_ice_world
+        "p5" -> R.string.planet_gold_veins
+        "p6" -> R.string.planet_toxic_gas
+        "p7" -> R.string.planet_advanced
+        "p8" -> R.string.planet_dark_matter
+        else -> R.string.unknown_item
+    }
+)

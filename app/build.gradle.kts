@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val appVersionName = providers.gradleProperty("APP_VERSION_NAME").get()
+val appVersionCode = providers.gradleProperty("APP_VERSION_CODE").get().toInt()
+
 android {
     namespace = "com.example.myapplication"
     compileSdk = 37
@@ -11,8 +14,8 @@ android {
         applicationId = "com.example.myapplication"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,6 +35,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

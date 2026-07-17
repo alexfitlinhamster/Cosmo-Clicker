@@ -18,11 +18,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun GameScreen(viewModel: GameViewModel = viewModel()) {
+fun GameScreen(
+    selectedLanguage: String?,
+    onLanguageSelected: (String?) -> Unit,
+    viewModel: GameViewModel = viewModel()
+) {
     val state by viewModel.gameState.collectAsState()
     val scope = rememberCoroutineScope()
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopCollapsed by remember { mutableStateOf(true) }
+    var showSettings by remember { mutableStateOf(false) }
 
     val fleetMap = remember(viewModel.fleetItems) {
         viewModel.fleetItems.associateBy { it.id }
@@ -57,7 +62,11 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Header(state, viewModel.calculateDPS())
+            Header(
+                state = state,
+                dps = viewModel.calculateDPS(),
+                onSettingsClick = { showSettings = true }
+            )
             
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 state.activeEvent?.let { event ->
@@ -114,5 +123,13 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             onFinishOpening = { viewModel.finishOpeningCase() },
             onClearReward = { viewModel.clearReward() }
         )
+
+        if (showSettings) {
+            SettingsScreen(
+                selectedLanguage = selectedLanguage,
+                onLanguageSelected = onLanguageSelected,
+                onBack = { showSettings = false }
+            )
+        }
     }
 }
