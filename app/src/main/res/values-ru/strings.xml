@@ -17,7 +17,7 @@
     <string name="tab_planets">Планеты</string>
     <string name="tab_fleet">Флот</string>
     <string name="tab_click">Клик</string>
-    <string name="fleet_meta">+%1$s/сек • кол-во %2$d</string>
+    <string name="fleet_meta">Редкость: %1$s • кол-во %2$d</string>
     <string name="click_meta">+%1$s/клик • ур. %2$d</string>
     <string name="debt_active">Долг активен</string>
     <string name="take_hotel_debt">Взять долг отеля (x5 DPS!)</string>

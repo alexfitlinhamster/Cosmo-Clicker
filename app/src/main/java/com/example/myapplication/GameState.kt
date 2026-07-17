@@ -2,12 +2,14 @@ package com.example.myapplication
 
 import androidx.compose.ui.graphics.Color
 
-enum class Rarity(val label: String, val color: Color, val spawnWeight: Int, val multiplier: Double) {
-    COMMON("Обычный", Color(0xFFB0BEC5), 60, 1.0),
-    UNCOMMON("Необычный", Color(0xFF4CAF50), 25, 2.5),
-    RARE("Редкий", Color(0xFF2196F3), 10, 6.0),
-    EPIC("Эпический", Color(0xFF9C27B0), 4, 15.0),
-    LEGENDARY("Легендарный", Color(0xFFFF9800), 1, 40.0)
+enum class Rarity(val label: String, val color: Color, val spawnWeight: Int, val debrisReward: Double) {
+    COMMON("Обычный", Color(0xFFB0BEC5), 60, 10.0),
+    UNCOMMON("Необычный", Color(0xFF4CAF50), 25, 25.0),
+    RARE("Редкий", Color(0xFF2196F3), 10, 60.0),
+    EPIC("Эпический", Color(0xFF9C27B0), 4, 150.0),
+    LEGENDARY("Легендарный", Color(0xFFFF9800), 1, 400.0);
+
+    fun canCollect(targetRarity: Rarity): Boolean = targetRarity.ordinal <= ordinal
 }
 
 data class GameState(

@@ -48,7 +48,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
-            rate = 5.0 * 1.5.pow(i.toDouble() - 1), // Базовая награда за мусор для этого уровня
             iconRes = if (resId != 0) resId else R.drawable.magnet, 
             spriteIndex = -1,
             rarity = rarity
@@ -277,7 +276,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     DroneState.IDLE -> {
                         // Ищем самый редкий доступный мусор
                         val availableTarget = targets
-                            .filter { t -> t.id !in claimedTargetIds && t.rarity.ordinal <= droneRarity.ordinal }
+                            .filter { t -> t.id !in claimedTargetIds && droneRarity.canCollect(t.rarity) }
                             .maxByOrNull { it.rarity.ordinal }
                         
                         if (availableTarget != null) {
@@ -315,8 +314,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         val distSq = dx * dx + dy * dy
                         if (distSq < 0.0025) {
                             if (nHasCargo && nCargoRarity != null) {
-                                // Награда = База дрона * Множитель мусора
-                                debrisGained += (droneConfig?.rate ?: 1.0) * nCargoRarity.multiplier
+                                // The collected debris determines the entire reward.
+                                debrisGained += nCargoRarity.debrisReward
                             }
                             nState = DroneState.IDLE
                             nHasCargo = false
@@ -475,5 +474,5 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
-data class FleetConfig(val id: String, val name: String, val base: Double, val rate: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
+data class FleetConfig(val id: String, val name: String, val base: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
 data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)

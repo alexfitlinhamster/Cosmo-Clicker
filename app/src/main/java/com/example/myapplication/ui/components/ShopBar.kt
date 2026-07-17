@@ -120,7 +120,7 @@ fun ShopBar(
                                 if (count > 0) {
                                     ShopRow(
                                         name = item.name, 
-                                        meta = stringResource(R.string.fleet_meta, formatNum(item.rate), count),
+                                        meta = stringResource(R.string.fleet_meta, item.rarity.label, count),
                                         cost = 0,
                                         canBuy = false,
                                         canSell = true,

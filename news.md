@@ -1,5 +1,12 @@
 # News
 
+## 1.2 (version code 4) - 2026-07-17
+
+- Added five debris rarity tiers with increasing rewards.
+- Made drone rarity determine which debris tiers it can collect.
+- Removed drone-based income so rewards now come from collected debris only.
+- Added rarity-colored debris visuals and drone rarity details in the fleet shop.
+
 ## 1.1.1 (version code 3) - 2026-07-17
 
 - Fixed a crash caused by rapid taps on the planet.

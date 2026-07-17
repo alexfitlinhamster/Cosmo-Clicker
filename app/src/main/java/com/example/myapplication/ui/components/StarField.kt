@@ -2,6 +2,7 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -47,16 +48,20 @@ fun DebrisTarget(target: ScavengeTarget) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
     
+    val targetSize = (26 + target.rarity.ordinal * 3).dp
+
     Box(
         modifier = Modifier
             .offset(
                 x = (target.x * screenWidth).dp - 15.dp,
                 y = (target.y * (screenHeight - GameConstants.GameAreaHeightOffset)).dp - 15.dp
             )
-            .size(30.dp)
-            .alpha(0.6f),
+            .size(targetSize)
+            .background(target.rarity.color.copy(alpha = 0.18f), CircleShape)
+            .border(1.dp, target.rarity.color, CircleShape)
+            .alpha(0.9f),
         contentAlignment = Alignment.Center
     ) {
-        Text("⚙️", fontSize = 16.sp)
+        Text("\u2699", color = target.rarity.color, fontSize = 16.sp)
     }
 }

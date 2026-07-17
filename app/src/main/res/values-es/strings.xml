@@ -17,7 +17,7 @@
     <string name="tab_planets">Planetas</string>
     <string name="tab_fleet">Flota</string>
     <string name="tab_click">Clic</string>
-    <string name="fleet_meta">+%1$s/s • cant. %2$d</string>
+    <string name="fleet_meta">Rareza: %1$s • cant. %2$d</string>
     <string name="click_meta">+%1$s/clic • niv. %2$d</string>
     <string name="debt_active">Deuda activa</string>
     <string name="take_hotel_debt">Obtener deuda del hotel (¡x5 DPS!)</string>
