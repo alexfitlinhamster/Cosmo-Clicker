@@ -14,6 +14,14 @@ import kotlinx.coroutines.flow.update
 import kotlin.math.pow
 import kotlin.random.Random
 
+enum class Rarity(val label: String, val color: Color, val chance: Int) {
+    COMMON("COMMON", Color(0xFFB0BEC5), 50),
+    RARE("RARE", Color(0xFF2196F3), 25),
+    EPIC("EPIC", Color(0xFF9C27B0), 15),
+    MYTHIC("MYTHIC", Color(0xFFF44336), 7),
+    LEGENDARY("LEGENDARY", Color(0xFFFFD700), 3)
+}
+
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
@@ -37,13 +45,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val fleetItems = (1..29).map { i ->
         val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
+        val rarity = when(i) {
+            in 1..10 -> Rarity.COMMON
+            in 11..18 -> Rarity.RARE
+            in 19..24 -> Rarity.EPIC
+            in 25..27 -> Rarity.MYTHIC
+            else -> Rarity.LEGENDARY
+        }
         FleetConfig(
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
-            rate = 0.5 * 2.1.pow(i.toDouble() - 1),
+            rate = 0.5 * 2.1.pow(i.toDouble() - 1) * (1.0 + rarity.ordinal * 0.5), // Bonus rate for rarity
             iconRes = if (resId != 0) resId else R.drawable.magnet, 
-            spriteIndex = -1 
+            spriteIndex = -1,
+            rarity = rarity
         )
     }
 
@@ -357,7 +373,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 newHotelDebt -= debtPayment
                 newTotalDebris += actualIncome
                 if (newHotelDebt <= 0) {
-                    newTotalDebris = 0.0
+                    newHotelDebt = 0.0
                     hotelDebtActive = false
                 }
             } else {
@@ -422,8 +438,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun finishOpeningCase() {
-        val randomDroneIndex = Random.nextInt(1, 30)
-        val droneId = "drone_$randomDroneIndex"
+        val randomRoll = Random.nextInt(100)
+        var accumulatedChance = 0
+        var selectedRarity = Rarity.COMMON
+        
+        for (rarity in Rarity.entries.reversed()) {
+            accumulatedChance += rarity.chance
+            if (randomRoll < accumulatedChance) {
+                selectedRarity = rarity
+                break
+            }
+        }
+        
+        val availableDrones = fleetItems.filter { it.rarity == selectedRarity }
+        val selectedDrone = availableDrones.randomOrNull() ?: fleetItems.first()
+        
+        val droneId = selectedDrone.id
         val currentCount = _gameState.value.fleetCounts[droneId] ?: 0
         
         _gameState.update { it.copy(
@@ -449,5 +479,5 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
-data class FleetConfig(val id: String, val name: String, val base: Double, val rate: Double, val iconRes: Int, val spriteIndex: Int = -1)
+data class FleetConfig(val id: String, val name: String, val base: Double, val rate: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
 data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)

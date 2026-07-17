@@ -8,8 +8,10 @@ object AppColors {
     val Danger = Color(0xFFff6464)
     val Warning = Color(0xFFffce54)
     
-    val BackgroundStart = Color(0xFF0D47A1) // Deep Blue
-    val BackgroundMid = Color(0xFF1976D2)   // Vibrant Blue
+    // Плавный синий градиент для фона
+    val BackgroundStart = Color(0xFF071A35) 
+    val BackgroundMid = Color(0xFF0A2A4D)
+    val BackgroundEnd = Color(0xFF051126)
     
     val CardBackground = Color(0xFF0e1320)
     val CargoColor = Color(0xFF8B4513)

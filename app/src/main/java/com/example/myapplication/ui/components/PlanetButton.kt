@@ -70,7 +70,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                     modifier = Modifier
                         .requiredSize(containerSize * columns, containerSize * rows)
                         .offset(x = -containerSize * col, y = -containerSize * row)
-                        .scale(1.4f) // Zoom in more to push edges out of circle
+                        .scale(1.4f)
                 )
             } else {
                 Image(
@@ -79,7 +79,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .scale(1.8f) // Very aggressive zoom for individual files to hide edges
+                        .scale(1.8f)
                         .let { if (isLocked) it.alpha(0.5f) else it }
                 )
             }

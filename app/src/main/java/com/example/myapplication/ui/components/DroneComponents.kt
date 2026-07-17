@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -25,15 +26,17 @@ import com.example.myapplication.ui.theme.AppColors
 
 @Composable
 fun FleetIcon(item: FleetConfig, iconSize: Dp) {
+    val rarityColor = remember(item.rarity) { item.rarity.color }
+    
     Box(
         modifier = Modifier.size(iconSize),
         contentAlignment = Alignment.Center
     ) {
-        // Glow effect for all drones
+        // Свечение зависит от редкости дрона
         Box(
             modifier = Modifier
                 .size(iconSize * 0.8f)
-                .shadow(10.dp, CircleShape, ambientColor = AppColors.Primary, spotColor = AppColors.Primary)
+                .shadow(12.dp, CircleShape, ambientColor = rarityColor, spotColor = rarityColor)
         )
 
         if (item.spriteIndex >= 0) {
@@ -41,7 +44,6 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
             val rows = 5
             val row = item.spriteIndex / columns
             val col = item.spriteIndex % columns
-            val zoom = 1.3f
             
             Box(modifier = Modifier.size(iconSize)) {
                 Image(
@@ -49,15 +51,15 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
                     modifier = Modifier
-                        .requiredSize(iconSize * columns * zoom, iconSize * rows * zoom)
-                        .offset(
-                            x = -iconSize * col * zoom - (iconSize * (zoom - 1f) / 2f),
-                            y = -iconSize * row * zoom - (iconSize * (zoom - 1f) / 2f)
-                        )
+                        .requiredSize(iconSize * columns, iconSize * rows)
+                        .graphicsLayer {
+                            translationX = -this.size.width * (col.toFloat() / columns.toFloat())
+                            translationY = -this.size.height * (row.toFloat() / rows.toFloat())
+                        }
+                        .scale(1.15f)
                 )
             }
         } else {
-            // For individual drone files
             Image(
                 painter = painterResource(id = item.iconRes),
                 contentDescription = null,
@@ -73,17 +75,18 @@ fun ScavengingDrone(drone: DroneData, fleetItems: Map<String, FleetConfig>) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
     
-    val droneSize = remember(drone.type) {
-        when {
-            drone.type.startsWith("drone_") -> {
-                val num = drone.type.removePrefix("drone_").toIntOrNull() ?: 0
-                if (num > 20) 48.dp else if (num > 10) 38.dp else 28.dp
-            }
-            else -> 28.dp
-        }
-    }
-
     val fleetItem = fleetItems[drone.type]
+    
+    val droneSize = remember(drone.type, fleetItem) {
+        if (fleetItem != null) {
+            when(fleetItem.rarity.name) {
+                "LEGENDARY" -> 48.dp
+                "MYTHIC" -> 42.dp
+                "EPIC" -> 36.dp
+                else -> 28.dp
+            }
+        } else 28.dp
+    }
 
     Box(
         modifier = Modifier
@@ -97,7 +100,6 @@ fun ScavengingDrone(drone: DroneData, fleetItems: Map<String, FleetConfig>) {
         if (fleetItem != null) {
             FleetIcon(fleetItem, droneSize)
         } else {
-            // Placeholder if not found
             Box(modifier = Modifier.size(droneSize).background(Color.Red, RoundedCornerShape(2.dp)))
         }
         
