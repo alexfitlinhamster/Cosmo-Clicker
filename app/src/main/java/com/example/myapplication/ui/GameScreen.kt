@@ -20,6 +20,7 @@ import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
 
 @Composable
 fun GameScreen(
@@ -29,6 +30,7 @@ fun GameScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
     val scope = rememberCoroutineScope()
+    val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopCollapsed by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
@@ -48,8 +50,9 @@ fun GameScreen(
     }
 
     fun addFloatingText(text: String, x: Float, y: Float) {
-        val id = System.currentTimeMillis()
-        floatingTexts = floatingTexts + FloatingTextData(id, text, x, y)
+        val id = floatingTextId.incrementAndGet()
+        floatingTexts = floatingTexts
+            .takeLast(MAX_FLOATING_TEXTS - 1) + FloatingTextData(id, text, x, y)
         scope.launch {
             delay(GameConstants.FloatingTextDuration)
             floatingTexts = floatingTexts.filter { it.id != id }
@@ -154,3 +157,5 @@ fun GameScreen(
         }
     }
 }
+
+private const val MAX_FLOATING_TEXTS = 40

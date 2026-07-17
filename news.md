@@ -1,5 +1,10 @@
 # News
 
+## 1.1.1 (version code 3) - 2026-07-17
+
+- Fixed a crash caused by rapid taps on the planet.
+- Limited simultaneous floating reward animations to improve stability.
+
 ## 1.1 (version code 2) - 2026-07-17
 
 ### Version changes
