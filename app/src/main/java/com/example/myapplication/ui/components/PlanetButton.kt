@@ -44,17 +44,17 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
     ) {
         LaunchedEffect(scaleVal) { if (scaleVal < 1f) { delay(80); scaleVal = 1f } }
 
-        // Glow
+        // Мощное свечение
         Box(
             modifier = Modifier
-                .size(containerSize * 0.8f)
-                .shadow(30.dp, CircleShape, ambientColor = planetConfig.color, spotColor = planetConfig.color)
+                .size(containerSize * 0.7f)
+                .shadow(40.dp, CircleShape, ambientColor = planetConfig.color, spotColor = planetConfig.color)
         )
 
-        // Aggressive cropping container
+        // Обрезка с внутренним запасом
         Box(
             modifier = Modifier
-                .size(containerSize)
+                .size(containerSize - 4.dp) // Чуть меньше контейнера, чтобы отсечь края
                 .clip(CircleShape)
         ) {
             if (planetConfig.spriteIndex >= 0) {
@@ -70,7 +70,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                     modifier = Modifier
                         .requiredSize(containerSize * columns, containerSize * rows)
                         .offset(x = -containerSize * col, y = -containerSize * row)
-                        .scale(1.4f)
+                        .scale(1.5f) // Сильный зум внутри маски
                 )
             } else {
                 Image(
@@ -79,20 +79,20 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .scale(1.8f)
+                        .scale(2.8f) // Экстремальный зум для одиночных файлов
                         .let { if (isLocked) it.alpha(0.5f) else it }
                 )
             }
         }
         
-        // Atmosphere overlay
+        // Атмосфера
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color.Transparent, planetConfig.color.copy(alpha = 0.2f)),
+                        colors = listOf(Color.Transparent, planetConfig.color.copy(alpha = 0.25f)),
                     )
                 )
         )

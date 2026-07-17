@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -196,7 +195,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = com.example.myapplication.R.drawable.keis1),
+                    painter = painterResource(id = R.drawable.keis1),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().padding(4.dp)
                 )
@@ -356,7 +355,7 @@ fun PlanetRow(
                         contentScale = ContentScale.Crop, 
                         modifier = Modifier
                             .fillMaxSize()
-                            .scale(1.8f)
+                            .scale(2.2f) // Увеличили зум до 2.2x, чтобы убрать белые скобки
                             .clip(CircleShape)
                             .let { if(isLocked) it.alpha(0.3f) else it }
                     )

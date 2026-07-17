@@ -1,16 +1,20 @@
 package com.example.myapplication.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.R
 import com.example.myapplication.ui.components.*
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -33,6 +37,16 @@ fun GameScreen(
         viewModel.fleetItems.associateBy { it.id }
     }
 
+    // Логика выбора фона в зависимости от активного ивента
+    val backgroundRes = remember<Int>(state.activeEvent?.type) {
+        when (state.activeEvent?.type) {
+            GameEventType.STORM -> R.drawable.fonkosmo2
+            GameEventType.ASTEROID -> R.drawable.fonkosmo3
+            GameEventType.PIRATES -> R.drawable.fonkosmo4
+            else -> R.drawable.fonkosmo
+        }
+    }
+
     fun addFloatingText(text: String, x: Float, y: Float) {
         val id = System.currentTimeMillis()
         floatingTexts = floatingTexts + FloatingTextData(id, text, x, y)
@@ -42,15 +56,23 @@ fun GameScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(AppColors.BackgroundStart, AppColors.BackgroundMid, AppColors.BackgroundStart)
-                )
-            )
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // ДИНАМИЧЕСКИЙ ФОН
+        Image(
+            painter = painterResource(id = backgroundRes),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Затемнение для читаемости элементов
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.2f))
+        )
+
+        // Звезды
         repeat(GameConstants.StarCount) {
             Star()
         }
@@ -73,7 +95,6 @@ fun GameScreen(
                     EventBanner(event)
                 }
 
-                // ВЕРНУЛИ ПЛАНЕТУ В ЦЕНТР
                 PlanetButton(
                     planetId = state.currentPlanetId,
                     planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
@@ -116,7 +137,7 @@ fun GameScreen(
             )
         }
 
-        // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА (ПОЯВЛЯЕТСЯ ПОВЕРХ ВСЕГО)
+        // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
         CaseOpeningOverlay(
             isOpening = state.isOpeningCase,
             lastDroppedDrone = state.lastDroppedDroneId?.let { fleetMap[it] },
