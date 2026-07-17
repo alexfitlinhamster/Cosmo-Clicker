@@ -16,10 +16,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.FleetConfig
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.delay
 
@@ -85,7 +87,7 @@ fun CaseOpeningOverlay(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "UNLOCKED!",
+                        stringResource(R.string.unlocked),
                         color = Color.Yellow,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Black
@@ -108,7 +110,7 @@ fun CaseOpeningOverlay(
                         onClick = { onClearReward() },
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                     ) {
-                        Text("COLLECT", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
             }
