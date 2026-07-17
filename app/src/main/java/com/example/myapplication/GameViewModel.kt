@@ -14,14 +14,6 @@ import kotlinx.coroutines.flow.update
 import kotlin.math.pow
 import kotlin.random.Random
 
-enum class Rarity(val label: String, val color: Color, val chance: Int) {
-    COMMON("COMMON", Color(0xFFB0BEC5), 50),
-    RARE("RARE", Color(0xFF2196F3), 25),
-    EPIC("EPIC", Color(0xFF9C27B0), 15),
-    MYTHIC("MYTHIC", Color(0xFFF44336), 7),
-    LEGENDARY("LEGENDARY", Color(0xFFFFD700), 3)
-}
-
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
@@ -45,18 +37,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val fleetItems = (1..29).map { i ->
         val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
-        val rarity = when(i) {
-            in 1..10 -> Rarity.COMMON
-            in 11..18 -> Rarity.RARE
-            in 19..24 -> Rarity.EPIC
-            in 25..27 -> Rarity.MYTHIC
+        val rarity = when {
+            i <= 10 -> Rarity.COMMON
+            i <= 18 -> Rarity.UNCOMMON
+            i <= 24 -> Rarity.RARE
+            i <= 27 -> Rarity.EPIC
             else -> Rarity.LEGENDARY
         }
         FleetConfig(
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
-            rate = 0.5 * 2.1.pow(i.toDouble() - 1) * (1.0 + rarity.ordinal * 0.5), // Bonus rate for rarity
+            rate = 5.0 * 1.5.pow(i.toDouble() - 1), // Базовая награда за мусор для этого уровня
             iconRes = if (resId != 0) resId else R.drawable.magnet, 
             spriteIndex = -1,
             rarity = rarity
@@ -65,13 +57,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val planets = mapOf(
         "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1),
-        "p2" to PlanetConfig("Oceania", 25000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2),
-        "p3" to PlanetConfig("Ignis", 150000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3),
-        "p4" to PlanetConfig("Glacies", 1000000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4),
-        "p5" to PlanetConfig("Aurea", 10000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5),
-        "p6" to PlanetConfig("Toxis", 50000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6),
-        "p7" to PlanetConfig("Exo-Prime", 250000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7),
-        "p8" to PlanetConfig("Void-9", 1000000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8)
+        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2),
+        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3),
+        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4),
+        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5),
+        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6),
+        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7),
+        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -81,6 +73,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startGameLoop()
         startEventLoop()
         startDroneLoop()
+        startTrashSpawnLoop()
     }
 
     private fun loadGameState(): GameState {
@@ -121,10 +114,56 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(1000)
-                processPassiveIncome()
+                // Passive income for drones removed per TZ. 
+                // Only planet bonus (if any) or debt processing remains.
+                processEconomyTick()
                 saveGameState()
             }
         }
+    }
+
+    private fun startTrashSpawnLoop() {
+        viewModelScope.launch(Dispatchers.Default) {
+            while (isActive) {
+                // Рандомный интервал 2-40 сек
+                delay(Random.nextLong(2000, 40000))
+                
+                _gameState.update { state ->
+                    if (state.scavengeTargets.size < 3) {
+                        val rarity = rollTrashRarity()
+                        val newTarget = ScavengeTarget(
+                            id = System.currentTimeMillis(),
+                            x = Random.nextFloat(),
+                            y = Random.nextFloat() * 0.6f + 0.1f, // Не спавним слишком низко/высоко
+                            rarity = rarity,
+                            expiresAt = System.currentTimeMillis() + 60000 // Исчезает через 60 сек
+                        )
+                        state.copy(scavengeTargets = state.scavengeTargets + newTarget)
+                    } else state
+                }
+            }
+        }
+        
+        // Цикл очистки просроченного мусора
+        viewModelScope.launch(Dispatchers.Default) {
+            while (isActive) {
+                delay(5000)
+                val now = System.currentTimeMillis()
+                _gameState.update { it.copy(
+                    scavengeTargets = it.scavengeTargets.filter { t -> t.expiresAt > now }
+                )}
+            }
+        }
+    }
+
+    private fun rollTrashRarity(): Rarity {
+        val roll = Random.nextInt(100)
+        var cumulative = 0
+        for (r in Rarity.entries) {
+            cumulative += r.spawnWeight
+            if (roll < cumulative) return r
+        }
+        return Rarity.COMMON
     }
 
     private fun startEventLoop() {
@@ -165,7 +204,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun onAsteroidClick() {
         _gameState.update { state ->
             if (state.activeEvent?.type == GameEventType.ASTEROID) {
-                val bonus = calculateDPS() * 300 + 500
+                val bonus = 500.0 * state.eventMultiplier
                 state.copy(totalDebris = state.totalDebris + bonus, activeEvent = null)
             } else state
         }
@@ -191,20 +230,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 updateDrones()
             }
         }
-        
-        viewModelScope.launch(Dispatchers.Default) {
-            while (isActive) {
-                delay(4000)
-                if (_gameState.value.scavengeTargets.size < 8) {
-                    val newTarget = ScavengeTarget(
-                        System.currentTimeMillis(),
-                        Random.nextFloat(),
-                        Random.nextFloat()
-                    )
-                    _gameState.update { it.copy(scavengeTargets = it.scavengeTargets + newTarget) }
-                }
-            }
-        }
     }
 
     private fun updateDrones() {
@@ -214,6 +239,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _gameState.update { currentState ->
             val drones = currentState.drones.toMutableList()
             
+            // Sync drones list with fleet counts
             fleetItems.forEach { item ->
                 val count = fleetCounts[item.id] ?: 0
                 val currentOfThisType = drones.filter { it.type == item.id }
@@ -225,9 +251,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     val toRemove = currentOfThisType.size - count
                     repeat(toRemove) {
                         val droneToRemove = drones.find { it.type == item.id }
-                        if (droneToRemove != null) {
-                            drones.remove(droneToRemove)
-                        }
+                        if (droneToRemove != null) drones.remove(droneToRemove)
                     }
                 }
             }
@@ -244,11 +268,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nState = drone.state
                 var nTargetId = drone.targetId
                 var nHasCargo = drone.hasCargo
-                val speed = 0.025f
+                var nCargoRarity = drone.cargoRarity
+                
+                val droneConfig = fleetItems.find { it.id == drone.type }
+                val droneRarity = droneConfig?.rarity ?: Rarity.COMMON
 
                 when (drone.state) {
                     DroneState.IDLE -> {
-                        val availableTarget = targets.firstOrNull { t -> t.id !in claimedTargetIds }
+                        // Ищем самый редкий доступный мусор
+                        val availableTarget = targets
+                            .filter { t -> t.id !in claimedTargetIds && t.rarity.ordinal <= droneRarity.ordinal }
+                            .maxByOrNull { it.rarity.ordinal }
+                        
                         if (availableTarget != null) {
                             nTargetId = availableTarget.id
                             nState = DroneState.MOVING_TO_DEBRIS
@@ -266,12 +297,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             if (distSq < 0.0025) {
                                 nState = DroneState.RETURNING
                                 nHasCargo = true
+                                nCargoRarity = target.rarity
                                 targets.removeAll { it.id == target.id }
                                 nTargetId = null
                             } else {
                                 val dist = Math.sqrt(distSq.toDouble()).toFloat()
-                                nx += (dx / dist) * speed
-                                ny += (dy / dist) * speed
+                                nx += (dx / dist) * 0.025f
+                                ny += (dy / dist) * 0.025f
                             }
                         } else {
                             nState = DroneState.RETURNING
@@ -282,19 +314,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         val dy = 0.5f - ny
                         val distSq = dx * dx + dy * dy
                         if (distSq < 0.0025) {
-                            if (nHasCargo) {
-                                debrisGained += 5.0
+                            if (nHasCargo && nCargoRarity != null) {
+                                // Награда = База дрона * Множитель мусора
+                                debrisGained += (droneConfig?.rate ?: 1.0) * nCargoRarity.multiplier
                             }
                             nState = DroneState.IDLE
                             nHasCargo = false
+                            nCargoRarity = null
                         } else {
                             val dist = Math.sqrt(distSq.toDouble()).toFloat()
-                            nx += (dx / dist) * speed
-                            ny += (dy / dist) * speed
+                            nx += (dx / dist) * 0.025f
+                            ny += (dy / dist) * 0.025f
                         }
                     }
                 }
-                drone.copy(x = nx.coerceIn(0f, 1f), y = ny.coerceIn(0f, 1f), state = nState, targetId = nTargetId, hasCargo = nHasCargo)
+                drone.copy(x = nx.coerceIn(0f, 1f), y = ny.coerceIn(0f, 1f), state = nState, targetId = nTargetId, hasCargo = nHasCargo, cargoRarity = nCargoRarity)
             }
 
             currentState.copy(
@@ -305,44 +339,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun processPassiveIncome() {
-        var dps = calculateDPS()
+    private fun processEconomyTick() {
         _gameState.update { currentState ->
             var newTotalDebris = currentState.totalDebris
             var newHotelDebt = currentState.currentHotelDebt
             var hotelDebtActive = currentState.isHotelDebtActive
-            if (currentState.activeEvent?.type == GameEventType.PIRATES) newTotalDebris *= 0.95
+            
+            // Если активен ивент с пиратами, они крадут 0.1% каждую секунду
+            if (currentState.activeEvent?.type == GameEventType.PIRATES) newTotalDebris *= 0.999
 
-            if (dps > 0) {
-                if (hotelDebtActive) {
-                    val debtPayment = dps * 0.3
-                    val actualIncome = dps * 0.7
-                    newHotelDebt -= debtPayment
-                    newTotalDebris += actualIncome
-                    if (newHotelDebt <= 0) {
-                        newTotalDebris = 0.0
-                        hotelDebtActive = false
-                    }
-                } else {
-                    newTotalDebris += dps
-                }
+            if (hotelDebtActive) {
+                // Долг выплачивается только с активных действий теперь? 
+                // Оставим просто обработку остатка если нужно.
             }
             currentState.copy(totalDebris = newTotalDebris, currentHotelDebt = newHotelDebt, isHotelDebtActive = hotelDebtActive)
         }
     }
 
-    fun calculateDPS(): Double {
-        val state = _gameState.value
-        var dps = fleetItems.sumOf { (state.fleetCounts[it.id] ?: 0) * it.rate }
-        when (state.currentPlanetId) {
-            "p4" -> dps *= 1.5
-            "p7" -> dps *= 2.0
-            "p1" -> dps *= 1.2
-            "p8" -> dps *= 2.0
-        }
-        if (state.isHotelDebtActive) dps *= 5.0
-        return dps
-    }
+    fun calculateDPS(): Double = 0.0 // Пассивный доход убран по ТЗ
 
     fun calculateClickValue(): Double {
         val state = _gameState.value
@@ -357,23 +371,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPlanetClick(): Double {
-        var valToReturn = calculateClickValue()
+        val clickPower = calculateClickValue()
         _gameState.update { currentState ->
-            var clickPower = valToReturn
-            if (currentState.currentPlanetId == "p4" && Random.nextFloat() < 0.1) {
-                clickPower *= 5.0
-                valToReturn = clickPower
-            }
             var newTotalDebris = currentState.totalDebris
             var newHotelDebt = currentState.currentHotelDebt
             var hotelDebtActive = currentState.isHotelDebtActive
+            
             if (hotelDebtActive) {
                 val debtPayment = clickPower * 0.3
                 val actualIncome = clickPower * 0.7
                 newHotelDebt -= debtPayment
                 newTotalDebris += actualIncome
                 if (newHotelDebt <= 0) {
-                    newHotelDebt = 0.0
+                    newTotalDebris = 0.0
                     hotelDebtActive = false
                 }
             } else {
@@ -381,16 +391,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
             currentState.copy(totalDebris = newTotalDebris, currentHotelDebt = newHotelDebt, isHotelDebtActive = hotelDebtActive)
         }
-        return valToReturn
+        return clickPower
     }
 
     fun buyClickUpgrade(id: String) {
-        val item = clickItems.find { it.id == id } ?: return
-        val currentLvl = _gameState.value.clickLevels[id] ?: 0
-        val cost = cost(item.base, currentLvl)
-        if (_gameState.value.totalDebris >= cost) {
-            _gameState.update { it.copy(totalDebris = it.totalDebris - cost, clickLevels = it.clickLevels + (id to currentLvl + 1)) }
-            saveGameState()
+        try {
+            val item = clickItems.find { it.id == id } ?: return
+            val currentLvl = _gameState.value.clickLevels[id] ?: 0
+            val cost = (item.base * 1.15.pow(currentLvl.toDouble())).toLong().toDouble()
+            if (_gameState.value.totalDebris >= cost) {
+                _gameState.update { it.copy(totalDebris = it.totalDebris - cost, clickLevels = it.clickLevels + (id to currentLvl + 1)) }
+                saveGameState()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ShopError", "Crash in buyClickUpgrade: ${e.message}")
         }
     }
 
@@ -399,7 +413,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val currentCount = _gameState.value.fleetCounts[id] ?: 0
         if (currentCount <= 0) return
 
-        val cost = cost(item.base, currentCount - 1)
+        val cost = (item.base * 1.15.pow((currentCount - 1).toDouble())).toLong().toDouble()
         val refund = cost / 2.0
         
         _gameState.update { it.copy(totalDebris = it.totalDebris + refund, fleetCounts = it.fleetCounts + (id to currentCount - 1)) }
@@ -409,16 +423,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun buyPlanet(planetId: String) {
         val config = planets[planetId] ?: return
         val state = _gameState.value
-        
         if (state.ownedPlanets.contains(planetId)) {
             _gameState.update { it.copy(currentPlanetId = planetId) }
             saveGameState()
         } else if (state.totalDebris >= config.price) {
-            _gameState.update { it.copy(
-                totalDebris = it.totalDebris - config.price, 
-                currentPlanetId = planetId,
-                ownedPlanets = it.ownedPlanets + planetId
-            ) }
+            _gameState.update { it.copy(totalDebris = it.totalDebris - config.price, currentPlanetId = planetId, ownedPlanets = it.ownedPlanets + planetId) }
             saveGameState()
         }
     }
@@ -426,14 +435,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun startOpeningCase() {
         val totalDrones = _gameState.value.fleetCounts.values.sum()
         if (totalDrones >= 5) return
-        
         val caseCost = 1000.0
         if (_gameState.value.totalDebris >= caseCost) {
-            _gameState.update { it.copy(
-                totalDebris = it.totalDebris - caseCost,
-                isOpeningCase = true,
-                lastDroppedDroneId = null
-            ) }
+            _gameState.update { it.copy(totalDebris = it.totalDebris - caseCost, isOpeningCase = true, lastDroppedDroneId = null) }
         }
     }
 
@@ -441,26 +445,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val randomRoll = Random.nextInt(100)
         var accumulatedChance = 0
         var selectedRarity = Rarity.COMMON
-        
         for (rarity in Rarity.entries.reversed()) {
-            accumulatedChance += rarity.chance
+            accumulatedChance += rarity.spawnWeight
             if (randomRoll < accumulatedChance) {
                 selectedRarity = rarity
                 break
             }
         }
-        
         val availableDrones = fleetItems.filter { it.rarity == selectedRarity }
         val selectedDrone = availableDrones.randomOrNull() ?: fleetItems.first()
-        
         val droneId = selectedDrone.id
         val currentCount = _gameState.value.fleetCounts[droneId] ?: 0
-        
-        _gameState.update { it.copy(
-            isOpeningCase = false,
-            fleetCounts = it.fleetCounts + (droneId to currentCount + 1),
-            lastDroppedDroneId = droneId
-        ) }
+        _gameState.update { it.copy(isOpeningCase = false, fleetCounts = it.fleetCounts + (droneId to currentCount + 1), lastDroppedDroneId = droneId) }
         saveGameState()
     }
 
