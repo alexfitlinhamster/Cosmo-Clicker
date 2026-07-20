@@ -15,6 +15,7 @@ import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.R
+import com.example.myapplication.SoundManager
 import com.example.myapplication.ui.components.*
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -30,10 +31,15 @@ fun GameScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
     val scope = rememberCoroutineScope()
+    val soundManager = remember { SoundManager() }
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopCollapsed by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
+
+    DisposableEffect(soundManager) {
+        onDispose { soundManager.close() }
+    }
 
     val fleetMap = remember(viewModel.fleetItems) {
         viewModel.fleetItems.associateBy { it.id }
@@ -103,6 +109,7 @@ fun GameScreen(
                     planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
                     modifier = Modifier.align(Alignment.Center)
                 ) { x, y ->
+                    soundManager.playClick()
                     val value = viewModel.onPlanetClick()
                     addFloatingText("+${formatNum(value)}", x, y)
                 }

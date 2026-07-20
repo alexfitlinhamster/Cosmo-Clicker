@@ -1,5 +1,10 @@
 # News
 
+## 1.3 (version code 8) - 2026-07-20
+
+- Added a short sound effect when the player taps a planet.
+- Reused and safely released the audio generator across rapid taps.
+
 ## 1.2.3 (version code 7) - 2026-07-17
 
 - Aligned the currency amount and label on a shared text baseline.
