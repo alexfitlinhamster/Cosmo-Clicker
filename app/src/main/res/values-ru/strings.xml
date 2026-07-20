@@ -34,6 +34,7 @@
     <string name="event_space_storm">Космическая буря!</string>
     <string name="event_gold_asteroid">Золотой астероид!</string>
     <string name="event_pirates">Пираты!</string>
+    <string name="event_debris_shower">Метеоритный дождь из мусора!</string>
     <string name="upgrade_plasma_magnet">Плазменный магнит</string>
     <string name="upgrade_weld_torch">Сварочная горелка</string>
     <string name="upgrade_quantum_wrench">Квантовый ключ</string>

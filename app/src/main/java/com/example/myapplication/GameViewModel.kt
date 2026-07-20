@@ -17,8 +17,8 @@ import kotlin.random.Random
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
-    private val clickUpgradePurchaseLock = Any()
-    private val lastClickUpgradePurchaseNanos = mutableMapOf<String, Long>()
+    private val storeActionLock = Any()
+    private val lastStoreActionNanos = mutableMapOf<String, Long>()
 
     private val droneNames = listOf(
         "Scrap-Bot", "Copper Cloud", "Rusty Rover", "Azure Ace", "Cobalt Collector",
@@ -172,11 +172,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             while (isActive) {
                 delay(15000 + Random.nextLong(30000))
                 if (_gameState.value.activeEvent == null) {
-                    val r = Random.nextFloat()
-                    when {
-                        r < 0.33f -> spawnEvent(GameEventType.STORM, "Space Storm!", 30000)
-                        r < 0.66f -> spawnEvent(GameEventType.ASTEROID, "Gold Asteroid!", 10000)
-                        else -> spawnEvent(GameEventType.PIRATES, "Pirates!", 20000)
+                    val durationMs = Random.nextLong(MIN_EVENT_DURATION_MS, MAX_EVENT_DURATION_MS + 1)
+                    when (Random.nextInt(GameEventType.entries.size)) {
+                        0 -> spawnEvent(GameEventType.STORM, "Space Storm!", durationMs)
+                        1 -> spawnEvent(GameEventType.ASTEROID, "Gold Asteroid!", durationMs)
+                        2 -> spawnEvent(GameEventType.PIRATES, "Pirates!", durationMs)
+                        else -> spawnEvent(GameEventType.METEOR_SHOWER, "Debris Shower!", durationMs)
                     }
                 }
             }
@@ -402,65 +403,65 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun buyClickUpgrade(id: String) {
         val item = clickItems.find { it.id == id } ?: return
+        updateStoreState("click:$id") { state ->
+            val currentLevel = (state.clickLevels[id] ?: 0).coerceAtLeast(0)
+            if (currentLevel == Int.MAX_VALUE) return@updateStoreState null
 
-        synchronized(clickUpgradePurchaseLock) {
-            val now = System.nanoTime()
-            val lastPurchase = lastClickUpgradePurchaseNanos[id] ?: 0L
-            if (now - lastPurchase < CLICK_UPGRADE_DEBOUNCE_NANOS) return
+            val rawCost = item.base * 1.15.pow(currentLevel.toDouble())
+            if (!rawCost.isFinite()) return@updateStoreState null
+            val purchaseCost = rawCost.toLong().toDouble()
+            if (state.totalDebris < purchaseCost) return@updateStoreState null
 
-            while (true) {
-                val state = _gameState.value
-                val currentLevel = (state.clickLevels[id] ?: 0).coerceAtLeast(0)
-                if (currentLevel == Int.MAX_VALUE) return
-
-                val rawCost = item.base * 1.15.pow(currentLevel.toDouble())
-                if (!rawCost.isFinite()) return
-                val purchaseCost = rawCost.toLong().toDouble()
-                if (state.totalDebris < purchaseCost) return
-
-                val updatedState = state.copy(
-                    totalDebris = state.totalDebris - purchaseCost,
-                    clickLevels = state.clickLevels + (id to currentLevel + 1)
-                )
-                if (_gameState.compareAndSet(state, updatedState)) {
-                    lastClickUpgradePurchaseNanos[id] = now
-                    saveGameState()
-                    return
-                }
-            }
+            state.copy(
+                totalDebris = state.totalDebris - purchaseCost,
+                clickLevels = state.clickLevels + (id to currentLevel + 1)
+            )
         }
     }
 
     fun sellFleet(id: String) {
         val item = fleetItems.find { it.id == id } ?: return
-        val currentCount = _gameState.value.fleetCounts[id] ?: 0
-        if (currentCount <= 0) return
+        updateStoreState("sell:$id") { state ->
+            val currentCount = state.fleetCounts[id] ?: 0
+            if (currentCount <= 0) return@updateStoreState null
 
-        val cost = (item.base * 1.15.pow((currentCount - 1).toDouble())).toLong().toDouble()
-        val refund = cost / 2.0
-        
-        _gameState.update { it.copy(totalDebris = it.totalDebris + refund, fleetCounts = it.fleetCounts + (id to currentCount - 1)) }
-        saveGameState()
+            val rawCost = item.base * 1.15.pow((currentCount - 1).toDouble())
+            if (!rawCost.isFinite()) return@updateStoreState null
+            val refund = rawCost.toLong().toDouble() / 2.0
+            state.copy(
+                totalDebris = state.totalDebris + refund,
+                fleetCounts = state.fleetCounts + (id to currentCount - 1)
+            )
+        }
     }
 
     fun buyPlanet(planetId: String) {
         val config = planets[planetId] ?: return
-        val state = _gameState.value
-        if (state.ownedPlanets.contains(planetId)) {
-            _gameState.update { it.copy(currentPlanetId = planetId) }
-            saveGameState()
-        } else if (state.totalDebris >= config.price) {
-            _gameState.update { it.copy(totalDebris = it.totalDebris - config.price, currentPlanetId = planetId, ownedPlanets = it.ownedPlanets + planetId) }
-            saveGameState()
+        updateStoreState("planet:$planetId") { state ->
+            when {
+                state.currentPlanetId == planetId -> null
+                state.ownedPlanets.contains(planetId) -> state.copy(currentPlanetId = planetId)
+                state.totalDebris >= config.price -> state.copy(
+                    totalDebris = state.totalDebris - config.price,
+                    currentPlanetId = planetId,
+                    ownedPlanets = state.ownedPlanets + planetId
+                )
+                else -> null
+            }
         }
     }
 
     fun startOpeningCase() {
-        val totalDrones = _gameState.value.fleetCounts.values.sum()
-        if (totalDrones >= 5) return
-        val caseCost = 1000.0
-        if (_gameState.value.totalDebris >= caseCost) {
-            _gameState.update { it.copy(totalDebris = it.totalDebris - caseCost, isOpeningCase = true, lastDroppedDroneId = null) }
+        updateStoreState("case") { state ->
+            val totalDrones = state.fleetCounts.values.sum()
+            if (state.isOpeningCase || totalDrones >= 5 || state.totalDebris < CASE_COST) {
+                return@updateStoreState null
+            }
+            state.copy(
+                totalDebris = state.totalDebris - CASE_COST,
+                isOpeningCase = true,
+                lastDroppedDroneId = null
+            )
         }
     }
 
@@ -488,13 +489,31 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun takeHotelDebt() {
-        if (!_gameState.value.isHotelDebtActive) {
-            _gameState.update { it.copy(isHotelDebtActive = true, currentHotelDebt = 1000000.0) }
-            saveGameState()
+        updateStoreState("hotel-debt") { state ->
+            if (state.isHotelDebtActive) null else state.copy(
+                isHotelDebtActive = true,
+                currentHotelDebt = 1000000.0
+            )
         }
     }
 
-    private fun cost(base: Double, level: Int) = (base * 1.15.pow(level.toDouble())).toLong().toDouble()
+    private fun updateStoreState(actionKey: String, transform: (GameState) -> GameState?) {
+        synchronized(storeActionLock) {
+            val now = System.nanoTime()
+            val lastAction = lastStoreActionNanos[actionKey] ?: 0L
+            if (now - lastAction < STORE_ACTION_DEBOUNCE_NANOS) return
+
+            while (true) {
+                val state = _gameState.value
+                val updatedState = transform(state) ?: return
+                if (_gameState.compareAndSet(state, updatedState)) {
+                    lastStoreActionNanos[actionKey] = now
+                    saveGameState()
+                    return
+                }
+            }
+        }
+    }
 }
 
 data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
@@ -503,4 +522,7 @@ data class PlanetConfig(val name: String, val price: Double, val desc: String, v
 
 private const val DRONE_MOVE_STEP = 0.025f
 private const val DRONE_HOME_POSITION = 0.5f
-private const val CLICK_UPGRADE_DEBOUNCE_NANOS = 100_000_000L
+private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
+private const val CASE_COST = 1000.0
+private const val MIN_EVENT_DURATION_MS = 20_000L
+private const val MAX_EVENT_DURATION_MS = 60_000L

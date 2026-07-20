@@ -34,6 +34,7 @@
     <string name="event_space_storm">Space Storm!</string>
     <string name="event_gold_asteroid">Gold Asteroid!</string>
     <string name="event_pirates">Pirates!</string>
+    <string name="event_debris_shower">Debris Shower!</string>
     <string name="upgrade_plasma_magnet">Plasma Magnet</string>
     <string name="upgrade_weld_torch">Weld Torch</string>
     <string name="upgrade_quantum_wrench">Quantum Wrench</string>

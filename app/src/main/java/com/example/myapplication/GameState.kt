@@ -50,7 +50,7 @@ data class ScavengeTarget(
     val expiresAt: Long = 0
 )
 
-enum class GameEventType { STORM, ASTEROID, PIRATES }
+enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER }
 
 data class GameEvent(
     val type: GameEventType,

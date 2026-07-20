@@ -34,6 +34,7 @@
     <string name="event_space_storm">¡Tormenta espacial!</string>
     <string name="event_gold_asteroid">¡Asteroide dorado!</string>
     <string name="event_pirates">¡Piratas!</string>
+    <string name="event_debris_shower">¡Lluvia de basura espacial!</string>
     <string name="upgrade_plasma_magnet">Imán de plasma</string>
     <string name="upgrade_weld_torch">Soplete de soldadura</string>
     <string name="upgrade_quantum_wrench">Llave cuántica</string>

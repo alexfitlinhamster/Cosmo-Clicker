@@ -128,6 +128,9 @@ fun GameScreen(
                         GameEventType.PIRATES -> {
                             PirateTarget(event, state.pirateTapsLeft) { viewModel.onPirateClick() }
                         }
+                        GameEventType.METEOR_SHOWER -> {
+                            DebrisShower(event)
+                        }
                         else -> {}
                     }
                 }

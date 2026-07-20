@@ -1,5 +1,15 @@
 # News
 
+## 1.4 (version code 10) - 2026-07-20
+
+- Added a debris shower event with animated flying space junk.
+- Randomized every event duration between 20 and 60 seconds.
+
+## 1.3.1 (version code 9) - 2026-07-20
+
+- Fixed crashes caused by rapidly pressing any store action.
+- Made purchases, sales, planet unlocks, cases, and debt actions atomic.
+
 ## 1.3 (version code 8) - 2026-07-20
 
 - Added a short sound effect when the player taps a planet.
