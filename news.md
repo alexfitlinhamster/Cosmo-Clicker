@@ -1,5 +1,11 @@
 # News
 
+## 1.5 (version code 11) - 2026-07-20
+
+- Made debris shower objects collectible by drones.
+- Replaced debris placeholders with the musor1 through musor6 artwork.
+- Added random drone patrols that avoid flying through the planet.
+
 ## 1.4 (version code 10) - 2026-07-20
 
 - Added a debris shower event with animated flying space junk.

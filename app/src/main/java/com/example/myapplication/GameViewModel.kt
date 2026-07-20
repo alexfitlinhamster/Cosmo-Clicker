@@ -12,13 +12,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.random.Random
+import java.util.concurrent.atomic.AtomicLong
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("game_prefs", Context.MODE_PRIVATE)
     private val storeActionLock = Any()
     private val lastStoreActionNanos = mutableMapOf<String, Long>()
+    private val debrisId = AtomicLong(System.currentTimeMillis())
 
     private val droneNames = listOf(
         "Scrap-Bot", "Copper Cloud", "Rusty Rover", "Azure Ace", "Cobalt Collector",
@@ -75,6 +78,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startEventLoop()
         startDroneLoop()
         startTrashSpawnLoop()
+        startDebrisShowerLoop()
     }
 
     private fun loadGameState(): GameState {
@@ -133,11 +137,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     if (state.scavengeTargets.size < 3) {
                         val rarity = rollTrashRarity()
                         val newTarget = ScavengeTarget(
-                            id = System.currentTimeMillis(),
+                            id = debrisId.incrementAndGet(),
                             x = Random.nextFloat(),
                             y = Random.nextFloat() * 0.6f + 0.1f, // Не спавним слишком низко/высоко
                             rarity = rarity,
-                            expiresAt = System.currentTimeMillis() + 60000 // Исчезает через 60 сек
+                            expiresAt = System.currentTimeMillis() + 60000,
+                            imageIndex = debrisImageIndex(rarity)
                         )
                         state.copy(scavengeTargets = state.scavengeTargets + newTarget)
                     } else state
@@ -155,6 +160,44 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )}
             }
         }
+    }
+
+    private fun startDebrisShowerLoop() {
+        viewModelScope.launch(Dispatchers.Default) {
+            while (isActive) {
+                delay(DEBRIS_SHOWER_SPAWN_INTERVAL_MS)
+                _gameState.update { state ->
+                    if (state.activeEvent?.type != GameEventType.METEOR_SHOWER ||
+                        state.scavengeTargets.count { it.isFalling } >= MAX_FALLING_DEBRIS
+                    ) {
+                        return@update state
+                    }
+
+                    val rarity = rollTrashRarity()
+                    state.copy(
+                        scavengeTargets = state.scavengeTargets + ScavengeTarget(
+                            id = debrisId.incrementAndGet(),
+                            x = Random.nextFloat(),
+                            y = -0.08f,
+                            rarity = rarity,
+                            expiresAt = state.activeEvent.expiresAt,
+                            imageIndex = debrisImageIndex(rarity),
+                            isFalling = true,
+                            velocityX = Random.nextFloat() * 0.008f - 0.004f,
+                            velocityY = Random.nextFloat() * 0.009f + 0.012f
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun debrisImageIndex(rarity: Rarity): Int = when (rarity) {
+        Rarity.COMMON -> Random.nextInt(1, 3)
+        Rarity.UNCOMMON -> 3
+        Rarity.RARE -> 4
+        Rarity.EPIC -> 5
+        Rarity.LEGENDARY -> 6
     }
 
     private fun rollTrashRarity(): Rarity {
@@ -247,7 +290,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val currentOfThisType = drones.filter { it.type == item.id }
                 if (currentOfThisType.size < count) {
                     repeat(count - currentOfThisType.size) {
-                        drones.add(DroneData(Random.nextLong(), Random.nextFloat(), Random.nextFloat(), type = item.id))
+                        val spawn = randomPatrolPoint()
+                        drones.add(DroneData(Random.nextLong(), spawn.first, spawn.second, type = item.id))
                     }
                 } else if (currentOfThisType.size > count) {
                     val toRemove = currentOfThisType.size - count
@@ -258,9 +302,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            if (drones.isEmpty()) return@update currentState
+            val targets = currentState.scavengeTargets.mapNotNull { target ->
+                if (!target.isFalling) return@mapNotNull target
+                target.copy(
+                    x = target.x + target.velocityX,
+                    y = target.y + target.velocityY
+                ).takeIf { it.x in -0.15f..1.15f && it.y <= 1.1f }
+            }.toMutableList()
+            if (drones.isEmpty()) return@update currentState.copy(scavengeTargets = targets)
 
-            val targets = currentState.scavengeTargets.toMutableList()
             var debrisGained = 0.0
             val claimedTargetIds = drones.mapNotNullTo(mutableSetOf()) { it.targetId }
 
@@ -271,6 +321,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nTargetId = drone.targetId
                 var nHasCargo = drone.hasCargo
                 var nCargoRarity = drone.cargoRarity
+                var nPatrolTargetX = drone.patrolTargetX
+                var nPatrolTargetY = drone.patrolTargetY
                 
                 val droneConfig = fleetItems.find { it.id == drone.type }
                 val droneRarity = droneConfig?.rarity ?: Rarity.COMMON
@@ -285,10 +337,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         if (availableTarget != null) {
                             nTargetId = availableTarget.id
                             nState = DroneState.MOVING_TO_DEBRIS
+                            nPatrolTargetX = null
+                            nPatrolTargetY = null
                             claimedTargetIds += availableTarget.id
                         } else {
-                            nx += (Random.nextFloat() - 0.5f) * 0.005f
-                            ny += (Random.nextFloat() - 0.5f) * 0.005f
+                            if (nPatrolTargetX == null || nPatrolTargetY == null ||
+                                distanceSquared(nx, ny, nPatrolTargetX, nPatrolTargetY) <= DRONE_MOVE_STEP * DRONE_MOVE_STEP
+                            ) {
+                                val patrolTarget = randomPatrolPoint()
+                                nPatrolTargetX = patrolTarget.first
+                                nPatrolTargetY = patrolTarget.second
+                            }
+                            val moved = movePatrolDrone(
+                                nx,
+                                ny,
+                                nPatrolTargetX ?: nx,
+                                nPatrolTargetY ?: ny,
+                                drone.id
+                            )
+                            nx = moved.first
+                            ny = moved.second
                         }
                     }
                     DroneState.MOVING_TO_DEBRIS -> {
@@ -335,7 +403,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 }
-                drone.copy(x = nx.coerceIn(0f, 1f), y = ny.coerceIn(0f, 1f), state = nState, targetId = nTargetId, hasCargo = nHasCargo, cargoRarity = nCargoRarity)
+                drone.copy(
+                    x = nx.coerceIn(0f, 1f),
+                    y = ny.coerceIn(0f, 1f),
+                    state = nState,
+                    targetId = nTargetId,
+                    hasCargo = nHasCargo,
+                    cargoRarity = nCargoRarity,
+                    patrolTargetX = nPatrolTargetX,
+                    patrolTargetY = nPatrolTargetY
+                )
             }
 
             currentState.copy(
@@ -344,6 +421,53 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 totalDebris = currentState.totalDebris + debrisGained
             )
         }
+    }
+
+    private fun randomPatrolPoint(): Pair<Float, Float> {
+        while (true) {
+            val x = Random.nextFloat() * 0.9f + 0.05f
+            val y = Random.nextFloat() * 0.9f + 0.05f
+            if (distanceSquared(x, y, DRONE_HOME_POSITION, DRONE_HOME_POSITION) > PLANET_AVOID_RADIUS_SQ) {
+                return x to y
+            }
+        }
+    }
+
+    private fun movePatrolDrone(
+        x: Float,
+        y: Float,
+        targetX: Float,
+        targetY: Float,
+        id: Long
+    ): Pair<Float, Float> {
+        val dx = targetX - x
+        val dy = targetY - y
+        val distance = sqrt(dx * dx + dy * dy)
+        if (distance <= DRONE_PATROL_STEP) return targetX to targetY
+
+        var stepX = dx / distance * DRONE_PATROL_STEP
+        var stepY = dy / distance * DRONE_PATROL_STEP
+        if (distanceSquared(
+                x + stepX,
+                y + stepY,
+                DRONE_HOME_POSITION,
+                DRONE_HOME_POSITION
+            ) < PLANET_AVOID_RADIUS_SQ
+        ) {
+            val radialX = x - DRONE_HOME_POSITION
+            val radialY = y - DRONE_HOME_POSITION
+            val clockwise = if (id and 1L == 0L) 1f else -1f
+            val radialLength = sqrt(radialX * radialX + radialY * radialY).coerceAtLeast(0.001f)
+            stepX = -radialY / radialLength * DRONE_PATROL_STEP * clockwise
+            stepY = radialX / radialLength * DRONE_PATROL_STEP * clockwise
+        }
+        return (x + stepX) to (y + stepY)
+    }
+
+    private fun distanceSquared(x1: Float, y1: Float, x2: Float, y2: Float): Float {
+        val dx = x2 - x1
+        val dy = y2 - y1
+        return dx * dx + dy * dy
     }
 
     private fun processEconomyTick() {
@@ -526,3 +650,8 @@ private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
 private const val CASE_COST = 1000.0
 private const val MIN_EVENT_DURATION_MS = 20_000L
 private const val MAX_EVENT_DURATION_MS = 60_000L
+private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L
+private const val MAX_FALLING_DEBRIS = 12
+private const val DRONE_PATROL_STEP = 0.008f
+private const val PLANET_AVOID_RADIUS = 0.22f
+private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS

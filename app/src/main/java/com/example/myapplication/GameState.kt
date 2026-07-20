@@ -37,7 +37,9 @@ data class DroneData(
     val state: DroneState = DroneState.IDLE,
     val hasCargo: Boolean = false,
     val type: String = "drone",
-    val cargoRarity: Rarity? = null // Какую редкость несет сейчас
+    val cargoRarity: Rarity? = null,
+    val patrolTargetX: Float? = null,
+    val patrolTargetY: Float? = null
 )
 
 enum class DroneState { IDLE, MOVING_TO_DEBRIS, RETURNING }
@@ -47,7 +49,11 @@ data class ScavengeTarget(
     val x: Float,
     val y: Float,
     val rarity: Rarity = Rarity.COMMON,
-    val expiresAt: Long = 0
+    val expiresAt: Long = 0,
+    val imageIndex: Int = 1,
+    val isFalling: Boolean = false,
+    val velocityX: Float = 0f,
+    val velocityY: Float = 0f
 )
 
 enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER }

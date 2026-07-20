@@ -1,24 +1,28 @@
 package com.example.myapplication.ui.components
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ScavengeTarget
+import com.example.myapplication.R
 import com.example.myapplication.ui.GameConstants
 import kotlin.random.Random
 
@@ -62,6 +66,22 @@ fun DebrisTarget(target: ScavengeTarget) {
             .alpha(0.9f),
         contentAlignment = Alignment.Center
     ) {
-        Text("\u2699", color = target.rarity.color, fontSize = 16.sp)
+        Image(
+            painter = painterResource(debrisDrawable(target.imageIndex)),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(targetSize - 4.dp)
+                .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
+        )
     }
+}
+
+private fun debrisDrawable(index: Int): Int = when (index) {
+    1 -> R.drawable.musor1
+    2 -> R.drawable.musor2
+    3 -> R.drawable.musor3
+    4 -> R.drawable.musor4
+    5 -> R.drawable.musor5
+    else -> R.drawable.musor6
 }
