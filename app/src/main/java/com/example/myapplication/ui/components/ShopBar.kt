@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,20 +37,16 @@ import kotlin.math.pow
 fun ShopBar(
     viewModel: GameViewModel,
     state: GameState,
-    isCollapsed: Boolean,
-    onToggleCollapse: () -> Unit
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf(R.string.tab_planets, R.string.tab_fleet, R.string.tab_click)
-    val animatedHeight by animateDpAsState(
-        targetValue = if (isCollapsed) GameConstants.ShopCollapsedHeight else GameConstants.ShopExpandedHeight, 
-        label = ""
-    )
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(animatedHeight),
+            .height(GameConstants.ShopExpandedHeight),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
@@ -61,7 +56,7 @@ fun ShopBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(20.dp)
-                    .clickable { onToggleCollapse() },
+                    .clickable { onClose() },
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -72,8 +67,7 @@ fun ShopBar(
                 )
             }
 
-            if (!isCollapsed) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     tabs.forEachIndexed { index, title ->
                         Button(
@@ -107,7 +101,8 @@ fun ShopBar(
                                     owned = owned,
                                     canBuy = state.totalDebris >= config.price && !active,
                                     iconRes = config.imageRes,
-                                    spriteIndex = config.spriteIndex
+                                    spriteIndex = config.spriteIndex,
+                                    showLock = !owned
                                 ) { viewModel.buyPlanet(id) }
                             }
                         }
@@ -154,22 +149,27 @@ fun ShopBar(
                                     canBuy = state.totalDebris >= cost,
                                     canSell = false,
                                     iconRes = item.iconRes,
+                                    showLock = lvl == 0,
                                     onBuy = { viewModel.buyClickUpgrade(item.id) }
                                 )
                             }
                         }
                     }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(stringResource(R.string.shop_tap_to_open), color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                }
             }
         }
     }
+}
+
+@Composable
+fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(R.drawable.buttonshop),
+        contentDescription = stringResource(R.string.open_shop),
+        modifier = modifier
+            .size(76.dp)
+            .clickable(onClick = onClick),
+        contentScale = ContentScale.Fit
+    )
 }
 
 @Composable
@@ -228,6 +228,7 @@ fun ShopRow(
     canSell: Boolean,
     iconRes: Int, 
     spriteIndex: Int = -1, 
+    showLock: Boolean = false,
     onBuy: () -> Unit,
     onSell: () -> Unit = {}
 ) {
@@ -270,6 +271,13 @@ fun ShopRow(
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.size(24.dp)
+                    )
+                }
+                if (showLock) {
+                    Image(
+                        painter = painterResource(R.drawable.buttonzamok),
+                        contentDescription = stringResource(R.string.locked),
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -319,6 +327,7 @@ fun PlanetRow(
     canBuy: Boolean, 
     iconRes: Int, 
     spriteIndex: Int = -1, 
+    showLock: Boolean,
     onClick: () -> Unit
 ) {
     val isLocked = price < 0
@@ -358,6 +367,13 @@ fun PlanetRow(
                             .scale(2.2f) // Увеличили зум до 2.2x, чтобы убрать белые скобки
                             .clip(CircleShape)
                             .let { if(isLocked) it.alpha(0.3f) else it }
+                    )
+                }
+                if (showLock) {
+                    Image(
+                        painter = painterResource(R.drawable.buttonzamok),
+                        contentDescription = stringResource(R.string.locked),
+                        modifier = Modifier.align(Alignment.Center).size(30.dp)
                     )
                 }
             }

@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEventType
@@ -34,7 +35,7 @@ fun GameScreen(
     val soundManager = remember { SoundManager() }
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
-    var isShopCollapsed by remember { mutableStateOf(true) }
+    var isShopOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
 
     DisposableEffect(soundManager) {
@@ -140,11 +141,21 @@ fun GameScreen(
                 }
             }
 
+        }
+
+        if (isShopOpen) {
             ShopBar(
                 viewModel = viewModel,
                 state = state,
-                isCollapsed = isShopCollapsed,
-                onToggleCollapse = { isShopCollapsed = !isShopCollapsed }
+                onClose = { isShopOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        } else {
+            ShopLauncherButton(
+                onClick = { isShopOpen = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 16.dp)
             )
         }
 

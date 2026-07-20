@@ -23,6 +23,7 @@
     <string name="debt_active">Долг активен</string>
     <string name="take_hotel_debt">Взять долг отеля (x5 DPS!)</string>
     <string name="shop_tap_to_open">МАГАЗИН (НАЖМИТЕ, ЧТОБЫ ОТКРЫТЬ)</string>
+    <string name="open_shop">Открыть магазин</string>
     <string name="mystery_case">Таинственный кейс</string>
     <string name="random_drone_count">Случайный дрон • %1$d/5</string>
     <string name="sell">Продать</string>

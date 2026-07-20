@@ -23,6 +23,7 @@
     <string name="debt_active">Deuda activa</string>
     <string name="take_hotel_debt">Obtener deuda del hotel (¡x5 DPS!)</string>
     <string name="shop_tap_to_open">TIENDA (TOCA PARA ABRIR)</string>
+    <string name="open_shop">Abrir tienda</string>
     <string name="mystery_case">Caja misteriosa</string>
     <string name="random_drone_count">Dron aleatorio • %1$d/5</string>
     <string name="sell">Vender</string>

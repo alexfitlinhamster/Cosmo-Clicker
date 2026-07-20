@@ -1,5 +1,10 @@
 # News
 
+## 1.6 (version code 14) - 2026-07-20
+
+- Replaced the collapsed shop bar with a bottom-left shop image button.
+- Added lock artwork to unowned planets and click upgrades until their first purchase.
+
 ## 1.5.2 (version code 13) - 2026-07-20
 
 - Moved rarity names and the case opening prompt to localized resources.

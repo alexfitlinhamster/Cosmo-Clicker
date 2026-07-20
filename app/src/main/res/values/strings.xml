@@ -23,6 +23,7 @@
     <string name="debt_active">Debt Active</string>
     <string name="take_hotel_debt">Take Hotel Debt (x5 DPS!)</string>
     <string name="shop_tap_to_open">SHOP (TAP TO OPEN)</string>
+    <string name="open_shop">Open shop</string>
     <string name="mystery_case">Mystery Case</string>
     <string name="random_drone_count">Get random drone • %1$d/5</string>
     <string name="sell">Sell</string>
