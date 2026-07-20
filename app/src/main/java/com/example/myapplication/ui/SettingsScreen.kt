@@ -73,19 +73,30 @@ fun SettingsScreen(
                 IconButton(onClick = onBack) {
                     Text("‹", color = AppColors.Primary, fontSize = 40.sp)
                 }
-                Text(
-                    text = stringResource(R.string.settings),
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings),
+                        color = Color.White,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.app_version_caption,
+                            stringResource(R.string.app_name),
+                            BuildConfig.VERSION_NAME,
+                            BuildConfig.VERSION_CODE
+                        ),
+                        color = Color.LightGray,
+                        fontSize = 11.sp
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
 
             SettingsCard {
                 SettingsRow(stringResource(R.string.application), stringResource(R.string.app_name))
-                SettingsRow(stringResource(R.string.version), BuildConfig.VERSION_NAME)
             }
 
             Spacer(Modifier.height(12.dp))

@@ -1,5 +1,14 @@
 # News
 
+## 1.5.2 (version code 13) - 2026-07-20
+
+- Moved rarity names and the case opening prompt to localized resources.
+- Added English, Russian, and Spanish translations for the migrated text.
+
+## 1.5.1 (version code 12) - 2026-07-20
+
+- Added a compact app name, version, and build code caption to the settings header.
+
 ## 1.5 (version code 11) - 2026-07-20
 
 - Made debris shower objects collectible by drones.

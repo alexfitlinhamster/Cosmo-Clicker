@@ -83,7 +83,7 @@ fun CaseOpeningOverlay(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (!hasClickedToOpen) {
                         Text(
-                            "НАЖМИ НА МЕНЯ!",
+                            stringResource(R.string.case_tap_to_open),
                             color = AppColors.Primary,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Black,
@@ -130,7 +130,7 @@ fun CaseOpeningOverlay(
                 lastDroppedDrone?.let { drone ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            drone.rarity.label,
+                            rarityLabel(drone.rarity),
                             color = drone.rarity.color,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold

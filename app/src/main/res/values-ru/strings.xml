@@ -4,6 +4,7 @@
     <string name="back">Назад</string>
     <string name="application">Приложение</string>
     <string name="version">Версия</string>
+    <string name="app_version_caption">%1$s · v%2$s (%3$d)</string>
     <string name="language">Язык</string>
     <string name="language_system">Системный</string>
     <string name="language_english">English</string>
@@ -31,6 +32,12 @@
     <string name="free">Бесплатно</string>
     <string name="unlocked">ОТКРЫТО!</string>
     <string name="collect">ЗАБРАТЬ</string>
+    <string name="case_tap_to_open">НАЖМИ, ЧТОБЫ ОТКРЫТЬ!</string>
+    <string name="rarity_common">Обычный</string>
+    <string name="rarity_uncommon">Необычный</string>
+    <string name="rarity_rare">Редкий</string>
+    <string name="rarity_epic">Эпический</string>
+    <string name="rarity_legendary">Легендарный</string>
     <string name="event_space_storm">Космическая буря!</string>
     <string name="event_gold_asteroid">Золотой астероид!</string>
     <string name="event_pirates">Пираты!</string>

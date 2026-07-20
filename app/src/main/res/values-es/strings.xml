@@ -4,6 +4,7 @@
     <string name="back">Atrás</string>
     <string name="application">Aplicación</string>
     <string name="version">Versión</string>
+    <string name="app_version_caption">%1$s · v%2$s (%3$d)</string>
     <string name="language">Idioma</string>
     <string name="language_system">Predeterminado del sistema</string>
     <string name="language_english">English</string>
@@ -31,6 +32,12 @@
     <string name="free">Gratis</string>
     <string name="unlocked">¡DESBLOQUEADO!</string>
     <string name="collect">RECOGER</string>
+    <string name="case_tap_to_open">¡TOCA PARA ABRIR!</string>
+    <string name="rarity_common">Común</string>
+    <string name="rarity_uncommon">Poco común</string>
+    <string name="rarity_rare">Raro</string>
+    <string name="rarity_epic">Épico</string>
+    <string name="rarity_legendary">Legendario</string>
     <string name="event_space_storm">¡Tormenta espacial!</string>
     <string name="event_gold_asteroid">¡Asteroide dorado!</string>
     <string name="event_pirates">¡Piratas!</string>
