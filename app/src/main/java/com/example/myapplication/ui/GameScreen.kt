@@ -49,10 +49,10 @@ fun GameScreen(
     // Логика выбора фона в зависимости от активного ивента
     val backgroundRes = remember<Int>(state.activeEvent?.type) {
         when (state.activeEvent?.type) {
-            GameEventType.STORM -> R.drawable.fonkosmo2
-            GameEventType.ASTEROID -> R.drawable.fonkosmo3
-            GameEventType.PIRATES -> R.drawable.fonkosmo4
-            else -> R.drawable.fonkosmo
+            GameEventType.STORM -> R.drawable.background_storm
+            GameEventType.ASTEROID -> R.drawable.background_asteroid
+            GameEventType.PIRATES -> R.drawable.background_pirates
+            else -> R.drawable.background_space
         }
     }
 

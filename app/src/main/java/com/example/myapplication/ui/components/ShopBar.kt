@@ -163,7 +163,7 @@ fun ShopBar(
 @Composable
 fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.buttonshop),
+        painter = painterResource(R.drawable.ui_button_shop),
         contentDescription = stringResource(R.string.open_shop),
         modifier = modifier
             .size(76.dp)
@@ -195,7 +195,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.keis1),
+                    painter = painterResource(id = R.drawable.case_01),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().padding(4.dp)
                 )
@@ -275,7 +275,7 @@ fun ShopRow(
                 }
                 if (showLock) {
                     Image(
-                        painter = painterResource(R.drawable.buttonzamok),
+                        painter = painterResource(R.drawable.ui_button_lock),
                         contentDescription = stringResource(R.string.locked),
                         modifier = Modifier.size(26.dp)
                     )
@@ -371,7 +371,7 @@ fun PlanetRow(
                 }
                 if (showLock) {
                     Image(
-                        painter = painterResource(R.drawable.buttonzamok),
+                        painter = painterResource(R.drawable.ui_button_lock),
                         contentDescription = stringResource(R.string.locked),
                         modifier = Modifier.align(Alignment.Center).size(30.dp)
                     )

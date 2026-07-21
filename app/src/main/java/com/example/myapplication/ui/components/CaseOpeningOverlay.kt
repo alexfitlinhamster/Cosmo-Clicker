@@ -104,7 +104,8 @@ fun CaseOpeningOverlay(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        val resId = context.resources.getIdentifier("keis$currentFrame", "drawable", context.packageName)
+                        val drawableName = "case_${currentFrame.toString().padStart(2, '0')}"
+                        val resId = context.resources.getIdentifier(drawableName, "drawable", context.packageName)
                         if (resId != 0) {
                             Image(
                                 painter = painterResource(id = resId),

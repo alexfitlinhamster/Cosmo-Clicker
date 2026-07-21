@@ -33,15 +33,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     val clickItems = listOf(
-        ItemConfig("magnet", "Plasma Magnet", 15.0, 1.0, R.drawable.magnet),
-        ItemConfig("torch", "Weld Torch", 200.0, 10.0, R.drawable.torch),
-        ItemConfig("wrench", "Quantum Wrench", 5000.0, 100.0, R.drawable.wrench),
-        ItemConfig("harvester", "Debris Harvester", 80000.0, 750.0, R.drawable.harvester),
-        ItemConfig("beacon", "Signal Beacon", 1500000.0, 6000.0, R.drawable.beacon)
+        ItemConfig("magnet", "Plasma Magnet", 15.0, 1.0, R.drawable.upgrade_magnet),
+        ItemConfig("torch", "Weld Torch", 200.0, 10.0, R.drawable.upgrade_weld_torch),
+        ItemConfig("wrench", "Quantum Wrench", 5000.0, 100.0, R.drawable.upgrade_quantum_wrench),
+        ItemConfig("harvester", "Debris Harvester", 80000.0, 750.0, R.drawable.upgrade_debris_harvester),
+        ItemConfig("beacon", "Signal Beacon", 1500000.0, 6000.0, R.drawable.upgrade_signal_beacon)
     )
 
     val fleetItems = (1..29).map { i ->
-        val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
+        val drawableName = "drone_${i.toString().padStart(2, '0')}"
+        val resId = application.resources.getIdentifier(drawableName, "drawable", application.packageName)
         val rarity = when {
             i <= 10 -> Rarity.COMMON
             i <= 18 -> Rarity.UNCOMMON
@@ -53,21 +54,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
-            iconRes = if (resId != 0) resId else R.drawable.magnet, 
+            iconRes = if (resId != 0) resId else R.drawable.upgrade_magnet,
             spriteIndex = -1,
             rarity = rarity
         )
     }
 
     val planets = mapOf(
-        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1),
-        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2),
-        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3),
-        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4),
-        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5),
-        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6),
-        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7),
-        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8)
+        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet_game_01),
+        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet_game_02),
+        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet_game_03),
+        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet_game_04),
+        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet_game_05),
+        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet_game_06),
+        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet_game_07),
+        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet_game_08)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())

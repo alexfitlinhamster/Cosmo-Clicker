@@ -1,5 +1,15 @@
 # News
 
+## 1.9 (version code 18) - 2026-07-21
+
+- Renamed drawable assets with consistent category prefixes.
+- Updated static, dynamic, and image-slicing references to the new resource names.
+
+## 1.8.1 (version code 17) - 2026-07-21
+
+- Resized and cropped the meteor artwork to match the debris image canvas.
+- Replaced the temporary meteor symbol with the meteor image during debris showers.
+
 ## 1.8 (version code 16) - 2026-07-21
 
 - Added randomized currency rewards to every debris object.

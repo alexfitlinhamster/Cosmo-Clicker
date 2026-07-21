@@ -23,7 +23,7 @@ class ImageSlicer {
     }
 
     private fun slicePlanets() {
-        val input = File("$drawableDir/img_1.png")
+        val input = File("$drawableDir/planet_sprite_sheet.png")
         if (!input.exists()) return
         val sheet = ImageIO.read(input)
         
@@ -87,7 +87,7 @@ class ImageSlicer {
     }
 
     private fun sliceFleet() {
-        val input = File("$drawableDir/preview.png")
+        val input = File("$drawableDir/ui_preview.png")
         if (!input.exists()) return
         val sheet = ImageIO.read(input)
         
@@ -97,11 +97,13 @@ class ImageSlicer {
         val cellH = sheet.height / rows
 
         val names = listOf(
-            "ast", "spider", "walker", "rocket1", "rocket2", "crate", 
-            "shuttle", "rover", "capsule", "ufonet", "uforing", "ufobig", 
-            "ufoalien", "station", "astclust", "portal", "torch", "magnet", 
-            "beacon", "wrench", "harvester", "probe", "hauler", "sentinel", 
-            "comet", "railgun"
+            "fleet_asteroid", "fleet_spider", "fleet_walker", "fleet_rocket_01",
+            "fleet_rocket_02", "fleet_crate", "fleet_shuttle", "fleet_rover",
+            "fleet_capsule", "fleet_ufo_net", "fleet_ufo_ring", "fleet_ufo_big",
+            "fleet_ufo_alien", "fleet_station", "fleet_asteroid_cluster", "fleet_portal",
+            "upgrade_weld_torch", "upgrade_magnet", "upgrade_signal_beacon",
+            "upgrade_quantum_wrench", "upgrade_debris_harvester", "fleet_probe",
+            "fleet_hauler", "fleet_sentinel", "fleet_comet", "fleet_railgun"
         )
 
         val bgColor = sheet.getRGB(0, 0)

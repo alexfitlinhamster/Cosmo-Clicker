@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -21,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.ScavengeTarget
 import com.example.myapplication.R
 import com.example.myapplication.ui.GameConstants
@@ -68,7 +66,14 @@ fun DebrisTarget(target: ScavengeTarget) {
         contentAlignment = Alignment.Center
     ) {
         if (target.isMeteor) {
-            Text("☄", color = Color(0xFFFF8A00), fontSize = 30.sp)
+            Image(
+                painter = painterResource(R.drawable.debris_meteor),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(targetSize - 2.dp)
+                    .rotate(35f)
+            )
         } else {
             Image(
                 painter = painterResource(debrisDrawable(target.imageIndex)),
@@ -83,10 +88,10 @@ fun DebrisTarget(target: ScavengeTarget) {
 }
 
 private fun debrisDrawable(index: Int): Int = when (index) {
-    1 -> R.drawable.musor1
-    2 -> R.drawable.musor2
-    3 -> R.drawable.musor3
-    4 -> R.drawable.musor4
-    5 -> R.drawable.musor5
-    else -> R.drawable.musor6
+    1 -> R.drawable.debris_01
+    2 -> R.drawable.debris_02
+    3 -> R.drawable.debris_03
+    4 -> R.drawable.debris_04
+    5 -> R.drawable.debris_05
+    else -> R.drawable.debris_06
 }
