@@ -173,7 +173,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         return@update state
                     }
 
-                    val rarity = rollTrashRarity()
+                    val isMeteor = Random.nextInt(100) < METEOR_SPAWN_CHANCE_PERCENT
+                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity()
                     state.copy(
                         scavengeTargets = state.scavengeTargets + ScavengeTarget(
                             id = debrisId.incrementAndGet(),
@@ -184,7 +185,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             imageIndex = debrisImageIndex(rarity),
                             isFalling = true,
                             velocityX = Random.nextFloat() * 0.008f - 0.004f,
-                            velocityY = Random.nextFloat() * 0.009f + 0.012f
+                            velocityY = Random.nextFloat() * 0.009f + 0.012f,
+                            isMeteor = isMeteor
                         )
                     )
                 }
@@ -315,6 +317,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val claimedTargetIds = drones.mapNotNullTo(mutableSetOf()) { it.targetId }
 
             val updatedDrones = drones.map { drone ->
+                val now = System.currentTimeMillis()
+                if (drone.disabledUntil > now) return@map drone
+
                 var nx = drone.x
                 var ny = drone.y
                 var nState = drone.state
@@ -323,6 +328,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nCargoRarity = drone.cargoRarity
                 var nPatrolTargetX = drone.patrolTargetX
                 var nPatrolTargetY = drone.patrolTargetY
+                var nDisabledUntil = 0L
+
+                if (drone.disabledUntil != 0L) {
+                    val respawn = randomPatrolPoint()
+                    nx = respawn.first
+                    ny = respawn.second
+                    nState = DroneState.IDLE
+                    nTargetId = null
+                    nHasCargo = false
+                    nCargoRarity = null
+                }
                 
                 val droneConfig = fleetItems.find { it.id == drone.type }
                 val droneRarity = droneConfig?.rarity ?: Rarity.COMMON
@@ -331,8 +347,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     DroneState.IDLE -> {
                         // Ищем самый редкий доступный мусор
                         val availableTarget = targets
-                            .filter { t -> t.id !in claimedTargetIds && droneRarity.canCollect(t.rarity) }
-                            .maxByOrNull { it.rarity.ordinal }
+                            .filter { target ->
+                                target.id !in claimedTargetIds &&
+                                    (target.isMeteor || droneRarity.canCollect(target.rarity))
+                            }
+                            .maxByOrNull { if (it.isMeteor) Int.MAX_VALUE else it.rarity.ordinal }
                         
                         if (availableTarget != null) {
                             nTargetId = availableTarget.id
@@ -368,11 +387,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
                                 nx = target.x
                                 ny = target.y
-                                nState = DroneState.RETURNING
-                                nHasCargo = true
-                                nCargoRarity = target.rarity
                                 targets.removeAll { it.id == target.id }
                                 nTargetId = null
+                                if (target.isMeteor && Random.nextBoolean()) {
+                                    nState = DroneState.IDLE
+                                    nHasCargo = false
+                                    nCargoRarity = null
+                                    nDisabledUntil = now + METEOR_DISABLE_DURATION_MS
+                                } else {
+                                    nState = DroneState.RETURNING
+                                    nHasCargo = true
+                                    nCargoRarity = if (target.isMeteor) Rarity.LEGENDARY else target.rarity
+                                }
                             } else {
                                 val dist = Math.sqrt(distSq.toDouble()).toFloat()
                                 nx += (dx / dist) * DRONE_MOVE_STEP
@@ -411,7 +437,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     hasCargo = nHasCargo,
                     cargoRarity = nCargoRarity,
                     patrolTargetX = nPatrolTargetX,
-                    patrolTargetY = nPatrolTargetY
+                    patrolTargetY = nPatrolTargetY,
+                    disabledUntil = nDisabledUntil
                 )
             }
 
@@ -655,3 +682,5 @@ private const val MAX_FALLING_DEBRIS = 12
 private const val DRONE_PATROL_STEP = 0.008f
 private const val PLANET_AVOID_RADIUS = 0.22f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
+private const val METEOR_SPAWN_CHANCE_PERCENT = 20
+private const val METEOR_DISABLE_DURATION_MS = 60_000L

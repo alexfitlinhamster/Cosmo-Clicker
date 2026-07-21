@@ -115,7 +115,8 @@ fun GameScreen(
                     addFloatingText("+${formatNum(value)}", x, y)
                 }
 
-                state.drones.forEach { drone ->
+                val now = System.currentTimeMillis()
+                state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
                     key(drone.id) {
                         ScavengingDrone(drone, fleetMap)
                     }

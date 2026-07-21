@@ -1,5 +1,11 @@
 # News
 
+## 1.7 (version code 15) - 2026-07-21
+
+- Added a 20% meteor spawn chance during debris showers.
+- Added a 50% chance for collected meteors to disable a drone for one minute.
+- Successful meteor collection now grants the legendary debris reward.
+
 ## 1.6 (version code 14) - 2026-07-20
 
 - Replaced the collapsed shop bar with a bottom-left shop image button.

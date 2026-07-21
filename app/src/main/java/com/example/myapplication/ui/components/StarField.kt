@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -52,7 +53,7 @@ fun DebrisTarget(target: ScavengeTarget) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
     
-    val targetSize = (26 + target.rarity.ordinal * 3).dp
+    val targetSize = if (target.isMeteor) 40.dp else (26 + target.rarity.ordinal * 3).dp
 
     Box(
         modifier = Modifier
@@ -66,14 +67,18 @@ fun DebrisTarget(target: ScavengeTarget) {
             .alpha(0.9f),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(debrisDrawable(target.imageIndex)),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .size(targetSize - 4.dp)
-                .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
-        )
+        if (target.isMeteor) {
+            Text("☄", color = Color(0xFFFF8A00), fontSize = 30.sp)
+        } else {
+            Image(
+                painter = painterResource(debrisDrawable(target.imageIndex)),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(targetSize - 4.dp)
+                    .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
+            )
+        }
     }
 }
 
