@@ -19,8 +19,11 @@ class RarityTest {
 
     @Test
     fun rewardsIncreaseWithRarity() {
+        Rarity.entries.forEach { rarity ->
+            assertTrue(rarity.minReward <= rarity.maxReward)
+        }
         Rarity.entries.zipWithNext().forEach { (lower, higher) ->
-            assertTrue(higher.debrisReward > lower.debrisReward)
+            assertTrue(higher.maxReward > lower.maxReward)
         }
     }
 }

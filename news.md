@@ -1,5 +1,11 @@
 # News
 
+## 1.8 (version code 16) - 2026-07-21
+
+- Added randomized currency rewards to every debris object.
+- Increased rewards up to 5K for common, 20K for rare, 50K for epic, and 1M for legendary debris.
+- Applied the legendary reward range to successfully collected meteors.
+
 ## 1.7 (version code 15) - 2026-07-21
 
 - Added a 20% meteor spawn chance during debris showers.

@@ -142,7 +142,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             y = Random.nextFloat() * 0.6f + 0.1f, // Не спавним слишком низко/высоко
                             rarity = rarity,
                             expiresAt = System.currentTimeMillis() + 60000,
-                            imageIndex = debrisImageIndex(rarity)
+                            imageIndex = debrisImageIndex(rarity),
+                            reward = rollDebrisReward(rarity)
                         )
                         state.copy(scavengeTargets = state.scavengeTargets + newTarget)
                     } else state
@@ -186,7 +187,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             isFalling = true,
                             velocityX = Random.nextFloat() * 0.008f - 0.004f,
                             velocityY = Random.nextFloat() * 0.009f + 0.012f,
-                            isMeteor = isMeteor
+                            isMeteor = isMeteor,
+                            reward = rollDebrisReward(if (isMeteor) Rarity.LEGENDARY else rarity)
                         )
                     )
                 }
@@ -201,6 +203,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.EPIC -> 5
         Rarity.LEGENDARY -> 6
     }
+
+    private fun rollDebrisReward(rarity: Rarity): Double =
+        Random.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
 
     private fun rollTrashRarity(): Rarity {
         val roll = Random.nextInt(100)
@@ -326,6 +331,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nTargetId = drone.targetId
                 var nHasCargo = drone.hasCargo
                 var nCargoRarity = drone.cargoRarity
+                var nCargoReward = drone.cargoReward
                 var nPatrolTargetX = drone.patrolTargetX
                 var nPatrolTargetY = drone.patrolTargetY
                 var nDisabledUntil = 0L
@@ -338,6 +344,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     nTargetId = null
                     nHasCargo = false
                     nCargoRarity = null
+                    nCargoReward = 0.0
                 }
                 
                 val droneConfig = fleetItems.find { it.id == drone.type }
@@ -393,11 +400,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                     nState = DroneState.IDLE
                                     nHasCargo = false
                                     nCargoRarity = null
+                                    nCargoReward = 0.0
                                     nDisabledUntil = now + METEOR_DISABLE_DURATION_MS
                                 } else {
                                     nState = DroneState.RETURNING
                                     nHasCargo = true
                                     nCargoRarity = if (target.isMeteor) Rarity.LEGENDARY else target.rarity
+                                    nCargoReward = target.reward
                                 }
                             } else {
                                 val dist = Math.sqrt(distSq.toDouble()).toFloat()
@@ -417,11 +426,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             ny = DRONE_HOME_POSITION
                             if (nHasCargo && nCargoRarity != null) {
                                 // The collected debris determines the entire reward.
-                                debrisGained += nCargoRarity.debrisReward
+                                debrisGained += nCargoReward
                             }
                             nState = DroneState.IDLE
                             nHasCargo = false
                             nCargoRarity = null
+                            nCargoReward = 0.0
                         } else {
                             val dist = Math.sqrt(distSq.toDouble()).toFloat()
                             nx += (dx / dist) * DRONE_MOVE_STEP
@@ -436,6 +446,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     targetId = nTargetId,
                     hasCargo = nHasCargo,
                     cargoRarity = nCargoRarity,
+                    cargoReward = nCargoReward,
                     patrolTargetX = nPatrolTargetX,
                     patrolTargetY = nPatrolTargetY,
                     disabledUntil = nDisabledUntil
