@@ -1,5 +1,27 @@
 # News
 
+## 1.9 (version code 18) - 2026-07-21
+
+- Renamed drawable assets with consistent category prefixes.
+- Updated static, dynamic, and image-slicing references to the new resource names.
+
+## 1.8.1 (version code 17) - 2026-07-21
+
+- Resized and cropped the meteor artwork to match the debris image canvas.
+- Replaced the temporary meteor symbol with the meteor image during debris showers.
+
+## 1.8 (version code 16) - 2026-07-21
+
+- Added randomized currency rewards to every debris object.
+- Increased rewards up to 5K for common, 20K for rare, 50K for epic, and 1M for legendary debris.
+- Applied the legendary reward range to successfully collected meteors.
+
+## 1.7 (version code 15) - 2026-07-21
+
+- Added a 20% meteor spawn chance during debris showers.
+- Added a 50% chance for collected meteors to disable a drone for one minute.
+- Successful meteor collection now grants the legendary debris reward.
+
 ## 1.6 (version code 14) - 2026-07-20
 
 - Replaced the collapsed shop bar with a bottom-left shop image button.

@@ -33,15 +33,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     val clickItems = listOf(
-        ItemConfig("magnet", "Plasma Magnet", 15.0, 1.0, R.drawable.magnet),
-        ItemConfig("torch", "Weld Torch", 200.0, 10.0, R.drawable.torch),
-        ItemConfig("wrench", "Quantum Wrench", 5000.0, 100.0, R.drawable.wrench),
-        ItemConfig("harvester", "Debris Harvester", 80000.0, 750.0, R.drawable.harvester),
-        ItemConfig("beacon", "Signal Beacon", 1500000.0, 6000.0, R.drawable.beacon)
+        ItemConfig("magnet", "Plasma Magnet", 15.0, 1.0, R.drawable.upgrade_magnet),
+        ItemConfig("torch", "Weld Torch", 200.0, 10.0, R.drawable.upgrade_weld_torch),
+        ItemConfig("wrench", "Quantum Wrench", 5000.0, 100.0, R.drawable.upgrade_quantum_wrench),
+        ItemConfig("harvester", "Debris Harvester", 80000.0, 750.0, R.drawable.upgrade_debris_harvester),
+        ItemConfig("beacon", "Signal Beacon", 1500000.0, 6000.0, R.drawable.upgrade_signal_beacon)
     )
 
     val fleetItems = (1..29).map { i ->
-        val resId = application.resources.getIdentifier("dron$i", "drawable", application.packageName)
+        val drawableName = "drone_${i.toString().padStart(2, '0')}"
+        val resId = application.resources.getIdentifier(drawableName, "drawable", application.packageName)
         val rarity = when {
             i <= 10 -> Rarity.COMMON
             i <= 18 -> Rarity.UNCOMMON
@@ -53,21 +54,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
             base = 10.0 * 1.8.pow(i.toDouble() - 1),
-            iconRes = if (resId != 0) resId else R.drawable.magnet, 
+            iconRes = if (resId != 0) resId else R.drawable.upgrade_magnet,
             spriteIndex = -1,
             rarity = rarity
         )
     }
 
     val planets = mapOf(
-        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet1),
-        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet2),
-        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet3),
-        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet4),
-        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet5),
-        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet6),
-        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet7),
-        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet8)
+        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet_game_01),
+        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet_game_02),
+        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet_game_03),
+        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet_game_04),
+        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet_game_05),
+        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet_game_06),
+        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet_game_07),
+        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet_game_08)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -142,7 +143,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             y = Random.nextFloat() * 0.6f + 0.1f, // Не спавним слишком низко/высоко
                             rarity = rarity,
                             expiresAt = System.currentTimeMillis() + 60000,
-                            imageIndex = debrisImageIndex(rarity)
+                            imageIndex = debrisImageIndex(rarity),
+                            reward = rollDebrisReward(rarity)
                         )
                         state.copy(scavengeTargets = state.scavengeTargets + newTarget)
                     } else state
@@ -173,7 +175,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         return@update state
                     }
 
-                    val rarity = rollTrashRarity()
+                    val isMeteor = Random.nextInt(100) < METEOR_SPAWN_CHANCE_PERCENT
+                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity()
                     state.copy(
                         scavengeTargets = state.scavengeTargets + ScavengeTarget(
                             id = debrisId.incrementAndGet(),
@@ -184,7 +187,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             imageIndex = debrisImageIndex(rarity),
                             isFalling = true,
                             velocityX = Random.nextFloat() * 0.008f - 0.004f,
-                            velocityY = Random.nextFloat() * 0.009f + 0.012f
+                            velocityY = Random.nextFloat() * 0.009f + 0.012f,
+                            isMeteor = isMeteor,
+                            reward = rollDebrisReward(if (isMeteor) Rarity.LEGENDARY else rarity)
                         )
                     )
                 }
@@ -199,6 +204,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.EPIC -> 5
         Rarity.LEGENDARY -> 6
     }
+
+    private fun rollDebrisReward(rarity: Rarity): Double =
+        Random.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
 
     private fun rollTrashRarity(): Rarity {
         val roll = Random.nextInt(100)
@@ -315,14 +323,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val claimedTargetIds = drones.mapNotNullTo(mutableSetOf()) { it.targetId }
 
             val updatedDrones = drones.map { drone ->
+                val now = System.currentTimeMillis()
+                if (drone.disabledUntil > now) return@map drone
+
                 var nx = drone.x
                 var ny = drone.y
                 var nState = drone.state
                 var nTargetId = drone.targetId
                 var nHasCargo = drone.hasCargo
                 var nCargoRarity = drone.cargoRarity
+                var nCargoReward = drone.cargoReward
                 var nPatrolTargetX = drone.patrolTargetX
                 var nPatrolTargetY = drone.patrolTargetY
+                var nDisabledUntil = 0L
+
+                if (drone.disabledUntil != 0L) {
+                    val respawn = randomPatrolPoint()
+                    nx = respawn.first
+                    ny = respawn.second
+                    nState = DroneState.IDLE
+                    nTargetId = null
+                    nHasCargo = false
+                    nCargoRarity = null
+                    nCargoReward = 0.0
+                }
                 
                 val droneConfig = fleetItems.find { it.id == drone.type }
                 val droneRarity = droneConfig?.rarity ?: Rarity.COMMON
@@ -331,8 +355,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     DroneState.IDLE -> {
                         // Ищем самый редкий доступный мусор
                         val availableTarget = targets
-                            .filter { t -> t.id !in claimedTargetIds && droneRarity.canCollect(t.rarity) }
-                            .maxByOrNull { it.rarity.ordinal }
+                            .filter { target ->
+                                target.id !in claimedTargetIds &&
+                                    (target.isMeteor || droneRarity.canCollect(target.rarity))
+                            }
+                            .maxByOrNull { if (it.isMeteor) Int.MAX_VALUE else it.rarity.ordinal }
                         
                         if (availableTarget != null) {
                             nTargetId = availableTarget.id
@@ -368,11 +395,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
                                 nx = target.x
                                 ny = target.y
-                                nState = DroneState.RETURNING
-                                nHasCargo = true
-                                nCargoRarity = target.rarity
                                 targets.removeAll { it.id == target.id }
                                 nTargetId = null
+                                if (target.isMeteor && Random.nextBoolean()) {
+                                    nState = DroneState.IDLE
+                                    nHasCargo = false
+                                    nCargoRarity = null
+                                    nCargoReward = 0.0
+                                    nDisabledUntil = now + METEOR_DISABLE_DURATION_MS
+                                } else {
+                                    nState = DroneState.RETURNING
+                                    nHasCargo = true
+                                    nCargoRarity = if (target.isMeteor) Rarity.LEGENDARY else target.rarity
+                                    nCargoReward = target.reward
+                                }
                             } else {
                                 val dist = Math.sqrt(distSq.toDouble()).toFloat()
                                 nx += (dx / dist) * DRONE_MOVE_STEP
@@ -391,11 +427,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             ny = DRONE_HOME_POSITION
                             if (nHasCargo && nCargoRarity != null) {
                                 // The collected debris determines the entire reward.
-                                debrisGained += nCargoRarity.debrisReward
+                                debrisGained += nCargoReward
                             }
                             nState = DroneState.IDLE
                             nHasCargo = false
                             nCargoRarity = null
+                            nCargoReward = 0.0
                         } else {
                             val dist = Math.sqrt(distSq.toDouble()).toFloat()
                             nx += (dx / dist) * DRONE_MOVE_STEP
@@ -410,8 +447,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     targetId = nTargetId,
                     hasCargo = nHasCargo,
                     cargoRarity = nCargoRarity,
+                    cargoReward = nCargoReward,
                     patrolTargetX = nPatrolTargetX,
-                    patrolTargetY = nPatrolTargetY
+                    patrolTargetY = nPatrolTargetY,
+                    disabledUntil = nDisabledUntil
                 )
             }
 
@@ -655,3 +694,5 @@ private const val MAX_FALLING_DEBRIS = 12
 private const val DRONE_PATROL_STEP = 0.008f
 private const val PLANET_AVOID_RADIUS = 0.22f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
+private const val METEOR_SPAWN_CHANCE_PERCENT = 20
+private const val METEOR_DISABLE_DURATION_MS = 60_000L

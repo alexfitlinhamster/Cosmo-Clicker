@@ -20,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.myapplication.ScavengeTarget
 import com.example.myapplication.R
 import com.example.myapplication.ui.GameConstants
@@ -52,7 +51,7 @@ fun DebrisTarget(target: ScavengeTarget) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
     
-    val targetSize = (26 + target.rarity.ordinal * 3).dp
+    val targetSize = if (target.isMeteor) 40.dp else (26 + target.rarity.ordinal * 3).dp
 
     Box(
         modifier = Modifier
@@ -66,22 +65,33 @@ fun DebrisTarget(target: ScavengeTarget) {
             .alpha(0.9f),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(debrisDrawable(target.imageIndex)),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .size(targetSize - 4.dp)
-                .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
-        )
+        if (target.isMeteor) {
+            Image(
+                painter = painterResource(R.drawable.debris_meteor),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(targetSize - 2.dp)
+                    .rotate(35f)
+            )
+        } else {
+            Image(
+                painter = painterResource(debrisDrawable(target.imageIndex)),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(targetSize - 4.dp)
+                    .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
+            )
+        }
     }
 }
 
 private fun debrisDrawable(index: Int): Int = when (index) {
-    1 -> R.drawable.musor1
-    2 -> R.drawable.musor2
-    3 -> R.drawable.musor3
-    4 -> R.drawable.musor4
-    5 -> R.drawable.musor5
-    else -> R.drawable.musor6
+    1 -> R.drawable.debris_01
+    2 -> R.drawable.debris_02
+    3 -> R.drawable.debris_03
+    4 -> R.drawable.debris_04
+    5 -> R.drawable.debris_05
+    else -> R.drawable.debris_06
 }

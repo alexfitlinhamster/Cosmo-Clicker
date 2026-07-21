@@ -2,12 +2,17 @@ package com.example.myapplication
 
 import androidx.compose.ui.graphics.Color
 
-enum class Rarity(val color: Color, val spawnWeight: Int, val debrisReward: Double) {
-    COMMON(Color(0xFFB0BEC5), 60, 10.0),
-    UNCOMMON(Color(0xFF4CAF50), 25, 25.0),
-    RARE(Color(0xFF2196F3), 10, 60.0),
-    EPIC(Color(0xFF9C27B0), 4, 150.0),
-    LEGENDARY(Color(0xFFFF9800), 1, 400.0);
+enum class Rarity(
+    val color: Color,
+    val spawnWeight: Int,
+    val minReward: Long,
+    val maxReward: Long
+) {
+    COMMON(Color(0xFFB0BEC5), 60, 1, 5_000),
+    UNCOMMON(Color(0xFF4CAF50), 25, 5_001, 10_000),
+    RARE(Color(0xFF2196F3), 10, 10_001, 20_000),
+    EPIC(Color(0xFF9C27B0), 4, 20_001, 50_000),
+    LEGENDARY(Color(0xFFFF9800), 1, 250_000, 1_000_000);
 
     fun canCollect(targetRarity: Rarity): Boolean = targetRarity.ordinal <= ordinal
 }
@@ -38,8 +43,10 @@ data class DroneData(
     val hasCargo: Boolean = false,
     val type: String = "drone",
     val cargoRarity: Rarity? = null,
+    val cargoReward: Double = 0.0,
     val patrolTargetX: Float? = null,
-    val patrolTargetY: Float? = null
+    val patrolTargetY: Float? = null,
+    val disabledUntil: Long = 0L
 )
 
 enum class DroneState { IDLE, MOVING_TO_DEBRIS, RETURNING }
@@ -53,7 +60,9 @@ data class ScavengeTarget(
     val imageIndex: Int = 1,
     val isFalling: Boolean = false,
     val velocityX: Float = 0f,
-    val velocityY: Float = 0f
+    val velocityY: Float = 0f,
+    val isMeteor: Boolean = false,
+    val reward: Double = 0.0
 )
 
 enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER }
