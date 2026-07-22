@@ -17,7 +17,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.DroneData
 import com.example.myapplication.DroneState
 import com.example.myapplication.FleetConfig
-import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 
 @Composable
@@ -75,13 +73,12 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
 
 @Composable
 fun ScavengingDrone(
-    drone: DroneData, 
+    drone: DroneData,
     fleetItems: Map<String, FleetConfig>,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
     onDroneClick: (Long) -> Unit = {}
 ) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val screenHeight = LocalConfiguration.current.screenHeightDp
-    
     val fleetItem = fleetItems[drone.type]
     val isInfected = drone.state == DroneState.INFECTED
     
@@ -99,8 +96,8 @@ fun ScavengingDrone(
     Box(
         modifier = Modifier
             .offset(
-                x = (drone.x * screenWidth).dp - (droneSize / 2),
-                y = (drone.y * (screenHeight - GameConstants.GameAreaHeightOffset)).dp - (droneSize / 2)
+                x = gameAreaWidth * drone.x - (droneSize / 2),
+                y = gameAreaHeight * drone.y - (droneSize / 2)
             )
             .size(droneSize)
             .let { 

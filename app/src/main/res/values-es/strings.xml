@@ -30,6 +30,7 @@
     <string name="open_shop">Abrir tienda</string>
     <string name="mystery_case">Caja misteriosa</string>
     <string name="random_drone_count">Dron aleatorio • %1$d/5</string>
+    <string name="case_price_growth" formatted="false">El precio aumenta un 20% tras cada compra</string>
     <string name="sell">Vender</string>
     <string name="locked">Bloqueado</string>
     <string name="active">Activo</string>

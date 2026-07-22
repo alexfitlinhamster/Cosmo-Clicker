@@ -97,10 +97,10 @@ fun GameScreen(
                 onSettingsClick = { showSettings = true }
             )
             
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 state.scavengeTargets.forEach { target ->
                     key(target.id) {
-                        DebrisTarget(target)
+                        DebrisTarget(target, maxWidth, maxHeight)
                     }
                 }
 
@@ -121,7 +121,7 @@ fun GameScreen(
                 val now = System.currentTimeMillis()
                 state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
                     key(drone.id) {
-                        ScavengingDrone(drone, fleetMap) {
+                        ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
                             viewModel.onDroneClick(it)
                         }
                     }

@@ -99,7 +99,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             currentPlanetId = prefs.getString("currentPlanetId", "p1") ?: "p1",
             ownedPlanets = ownedPlanets,
             isHotelDebtActive = prefs.getBoolean("isHotelDebtActive", false),
-            currentHotelDebt = prefs.getFloat("currentHotelDebt", 0f).toDouble()
+            currentHotelDebt = prefs.getFloat("currentHotelDebt", 0f).toDouble(),
+            casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum())
         )
     }
 
@@ -113,6 +114,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putStringSet("ownedPlanets", state.ownedPlanets)
             putBoolean("isHotelDebtActive", state.isHotelDebtActive)
             putFloat("currentHotelDebt", state.currentHotelDebt.toFloat())
+            putInt("casesPurchased", state.casesPurchased)
             apply()
         }
     }
@@ -756,16 +758,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun startOpeningCase() {
         updateStoreState("case") { state ->
             val totalDrones = state.fleetCounts.values.sum()
-            if (state.isOpeningCase || totalDrones >= 5 || state.totalDebris < CASE_COST) {
+            val caseCost = calculateCaseCost(state.casesPurchased)
+            if (state.isOpeningCase || totalDrones >= 5 || state.totalDebris < caseCost) {
                 return@updateStoreState null
             }
             state.copy(
-                totalDebris = state.totalDebris - CASE_COST,
+                totalDebris = state.totalDebris - caseCost,
                 isOpeningCase = true,
+                casesPurchased = state.casesPurchased + 1,
                 lastDroppedDroneId = null
             )
         }
     }
+
+    fun calculateCaseCost(casesPurchased: Int): Double =
+        CASE_BASE_COST * CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
 
     fun finishOpeningCase() {
         val randomRoll = Random.nextInt(100)
@@ -825,12 +832,13 @@ data class PlanetConfig(val name: String, val price: Double, val desc: String, v
 private const val DRONE_MOVE_STEP = 0.025f
 private const val DRONE_HOME_POSITION = 0.5f
 private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
-private const val CASE_COST = 1000.0
+private const val CASE_BASE_COST = 1000.0
+private const val CASE_COST_MULTIPLIER = 1.2
 private const val MIN_EVENT_DURATION_MS = 20_000L
 private const val MAX_EVENT_DURATION_MS = 60_000L
 private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L
 private const val MAX_FALLING_DEBRIS = 12
 private const val DRONE_PATROL_STEP = 0.008f
-private const val PLANET_AVOID_RADIUS = 0.22f
+private const val PLANET_AVOID_RADIUS = 0.18f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
 private const val METEOR_SPAWN_CHANCE_PERCENT = 20

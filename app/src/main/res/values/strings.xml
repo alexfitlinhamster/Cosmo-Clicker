@@ -30,6 +30,7 @@
     <string name="open_shop">Open shop</string>
     <string name="mystery_case">Mystery Case</string>
     <string name="random_drone_count">Get random drone • %1$d/5</string>
+    <string name="case_price_growth" formatted="false">Price increases by 20% after each purchase</string>
     <string name="sell">Sell</string>
     <string name="locked">Locked</string>
     <string name="active">Active</string>

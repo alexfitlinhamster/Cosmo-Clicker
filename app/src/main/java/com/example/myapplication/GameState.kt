@@ -32,6 +32,7 @@ data class GameState(
     val drones: List<DroneData> = emptyList(),
     val scavengeTargets: List<ScavengeTarget> = emptyList(),
     val isOpeningCase: Boolean = false,
+    val casesPurchased: Int = 0,
     val lastDroppedDroneId: String? = null,
     val infectedDroneId: Long? = null
 )

@@ -30,6 +30,7 @@
     <string name="open_shop">Открыть магазин</string>
     <string name="mystery_case">Таинственный кейс</string>
     <string name="random_drone_count">Случайный дрон • %1$d/5</string>
+    <string name="case_price_growth" formatted="false">Цена растёт на 20% после каждой покупки</string>
     <string name="sell">Продать</string>
     <string name="locked">Закрыто</string>
     <string name="active">Активно</string>

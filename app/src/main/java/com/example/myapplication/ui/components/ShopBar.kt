@@ -176,7 +176,7 @@ fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
     val totalDrones = state.fleetCounts.values.sum()
-    val caseCost = 1000L
+    val caseCost = viewModel.calculateCaseCost(state.casesPurchased)
 
     Row(
         modifier = Modifier
@@ -188,7 +188,10 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -202,12 +205,14 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.mystery_case), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.random_drone_count, totalDrones), color = Color.Gray, fontSize = 11.sp)
+                Text(stringResource(R.string.case_price_growth), color = AppColors.Primary, fontSize = 9.sp)
             }
         }
-        
+        Spacer(modifier = Modifier.width(8.dp))
+
         Button(
             onClick = { viewModel.startOpeningCase() },
             enabled = state.totalDebris >= caseCost && totalDrones < 5,
@@ -215,7 +220,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.height(36.dp)
         ) {
-            Text(formatNum(caseCost.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(formatNum(caseCost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

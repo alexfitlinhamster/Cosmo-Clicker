@@ -19,10 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ScavengeTarget
 import com.example.myapplication.R
-import com.example.myapplication.ui.GameConstants
 import kotlin.random.Random
 
 @Composable
@@ -47,17 +47,14 @@ fun Star() {
 }
 
 @Composable
-fun DebrisTarget(target: ScavengeTarget) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val screenHeight = LocalConfiguration.current.screenHeightDp
-    
+fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) {
     val targetSize = if (target.isMeteor) 40.dp else (26 + target.rarity.ordinal * 3).dp
 
     Box(
         modifier = Modifier
             .offset(
-                x = (target.x * screenWidth).dp - 15.dp,
-                y = (target.y * (screenHeight - GameConstants.GameAreaHeightOffset)).dp - 15.dp
+                x = gameAreaWidth * target.x - (targetSize / 2),
+                y = gameAreaHeight * target.y - (targetSize / 2)
             )
             .size(targetSize)
             .background(target.rarity.color.copy(alpha = 0.18f), CircleShape)

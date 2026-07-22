@@ -1,5 +1,17 @@
 # News
 
+## 1.10.3 (version code 23) - 2026-07-22
+
+- Increased the Mystery Case price by 20% after every purchase.
+- Persisted the case purchase count across game restarts.
+- Migrated existing saves using the number of currently owned drones.
+
+## 1.10.2 (version code 22) - 2026-07-22
+
+- Aligned planet, drone, and debris rendering to the same game-area coordinates.
+- Made returning drones visibly reach the planet before delivering debris.
+- Reduced the planet avoidance radius to better match its visible size.
+
 ## 1.10.1 (version code 21) - 2026-07-22
 
 - Added a localized How to Play guide to the settings screen.
