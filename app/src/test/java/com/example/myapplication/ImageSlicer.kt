@@ -1,6 +1,8 @@
 package com.example.myapplication
 
 import org.junit.Test
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import java.awt.AlphaComposite
 import java.awt.Color
 import java.awt.Graphics2D
@@ -13,13 +15,28 @@ import kotlin.math.sqrt
 
 class ImageSlicer {
 
-    private val baseDir = "C:/Users/User/AndroidStudioProjects/MyApplication4"
-    private val drawableDir = "$baseDir/app/src/main/res/drawable"
+    private val drawableDir = File(System.getProperty("user.dir") ?: ".").let { workingDir ->
+        val appDir = if (File(workingDir, "src/main/res/drawable").isDirectory) {
+            workingDir
+        } else {
+            File(workingDir, "app")
+        }
+        File(appDir, "src/main/res/drawable").absolutePath
+    }
 
-    @Test
     fun sliceAssets() {
         slicePlanets()
         sliceFleet()
+    }
+
+    @Test
+    fun allDrawablePngFilesAreDecodable() {
+        val pngFiles = File(drawableDir).listFiles { file -> file.extension.equals("png", true) }.orEmpty()
+        assertTrue("No drawable PNG files found in $drawableDir", pngFiles.isNotEmpty())
+        pngFiles.forEach { file ->
+            assertTrue("Drawable PNG is empty: ${file.name}", file.length() > 0)
+            assertNotNull("Drawable PNG cannot be decoded: ${file.name}", ImageIO.read(file))
+        }
     }
 
     private fun slicePlanets() {

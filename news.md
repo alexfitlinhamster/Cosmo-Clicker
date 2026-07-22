@@ -1,5 +1,11 @@
 # News
 
+## 1.10.4 (version code 24) - 2026-07-22
+
+- Restored 11 empty PNG resources from the original sprite sheets.
+- Fixed the shop crash when rendering the Debris Harvester or Signal Beacon.
+- Added an automated test that validates every drawable PNG can be decoded.
+
 ## 1.10.3 (version code 23) - 2026-07-22
 
 - Increased the Mystery Case price by 20% after every purchase.
