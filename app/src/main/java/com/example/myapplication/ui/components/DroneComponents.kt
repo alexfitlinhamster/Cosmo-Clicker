@@ -2,9 +2,11 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -19,7 +21,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.myapplication.DroneData
+import com.example.myapplication.DroneState
 import com.example.myapplication.FleetConfig
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
@@ -32,7 +36,6 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
         modifier = Modifier.size(iconSize),
         contentAlignment = Alignment.Center
     ) {
-        // Свечение зависит от редкости дрона
         Box(
             modifier = Modifier
                 .size(iconSize * 0.8f)
@@ -71,11 +74,16 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
 }
 
 @Composable
-fun ScavengingDrone(drone: DroneData, fleetItems: Map<String, FleetConfig>) {
+fun ScavengingDrone(
+    drone: DroneData, 
+    fleetItems: Map<String, FleetConfig>,
+    onDroneClick: (Long) -> Unit = {}
+) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
     
     val fleetItem = fleetItems[drone.type]
+    val isInfected = drone.state == DroneState.INFECTED
     
     val droneSize = remember(drone.type, fleetItem) {
         if (fleetItem != null) {
@@ -94,7 +102,12 @@ fun ScavengingDrone(drone: DroneData, fleetItems: Map<String, FleetConfig>) {
                 x = (drone.x * screenWidth).dp - (droneSize / 2),
                 y = (drone.y * (screenHeight - GameConstants.GameAreaHeightOffset)).dp - (droneSize / 2)
             )
-            .size(droneSize),
+            .size(droneSize)
+            .let { 
+                if (isInfected) it.background(Color.Red.copy(alpha = 0.3f), CircleShape)
+                else it
+            }
+            .clickable { onDroneClick(drone.id) },
         contentAlignment = Alignment.Center
     ) {
         if (fleetItem != null) {
@@ -111,6 +124,10 @@ fun ScavengingDrone(drone: DroneData, fleetItems: Map<String, FleetConfig>) {
                     .align(Alignment.BottomCenter)
                     .offset(y = droneSize / 10)
             )
+        }
+
+        if (isInfected) {
+            Text("👾", fontSize = 12.sp, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

@@ -52,6 +52,9 @@ fun GameScreen(
             GameEventType.STORM -> R.drawable.background_storm
             GameEventType.ASTEROID -> R.drawable.background_asteroid
             GameEventType.PIRATES -> R.drawable.background_pirates
+            GameEventType.BLACK_HOLE -> R.drawable.background_storm
+            GameEventType.SOLAR_FLARE -> R.drawable.background_storm
+            GameEventType.CYBER_VIRUS -> R.drawable.background_space
             else -> R.drawable.background_space
         }
     }
@@ -118,7 +121,9 @@ fun GameScreen(
                 val now = System.currentTimeMillis()
                 state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
                     key(drone.id) {
-                        ScavengingDrone(drone, fleetMap)
+                        ScavengingDrone(drone, fleetMap) {
+                            viewModel.onDroneClick(it)
+                        }
                     }
                 }
 
@@ -129,6 +134,9 @@ fun GameScreen(
                         }
                         GameEventType.PIRATES -> {
                             PirateTarget(event, state.pirateTapsLeft) { viewModel.onPirateClick() }
+                        }
+                        GameEventType.BLACK_HOLE -> {
+                            BlackHoleComponent(event, state.eventTapsLeft) { viewModel.onBlackHoleClick() }
                         }
                         GameEventType.METEOR_SHOWER -> Unit
                         else -> {}

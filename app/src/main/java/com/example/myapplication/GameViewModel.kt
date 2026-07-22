@@ -68,7 +68,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet_game_05),
         "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet_game_06),
         "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet_game_07),
-        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet_game_08)
+        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet_game_08),
+        "p9" to PlanetConfig("Mars", 500000000.0, "Red Planet", Color(0xFFE57373), R.drawable.planet_mars)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -120,8 +121,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(1000)
-                // Passive income for drones removed per TZ. 
-                // Only planet bonus (if any) or debt processing remains.
                 processEconomyTick()
                 saveGameState()
             }
@@ -131,20 +130,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startTrashSpawnLoop() {
         viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
-                // Рандомный интервал 2-40 сек
                 delay(Random.nextLong(2000, 40000))
                 
                 _gameState.update { state ->
                     if (state.scavengeTargets.size < 3) {
-                        val rarity = rollTrashRarity()
+                        val rarity = rollTrashRarity(state.currentPlanetId)
                         val newTarget = ScavengeTarget(
                             id = debrisId.incrementAndGet(),
                             x = Random.nextFloat(),
-                            y = Random.nextFloat() * 0.6f + 0.1f, // Не спавним слишком низко/высоко
+                            y = Random.nextFloat() * 0.6f + 0.1f,
                             rarity = rarity,
                             expiresAt = System.currentTimeMillis() + 60000,
                             imageIndex = debrisImageIndex(rarity),
-                            reward = rollDebrisReward(rarity)
+                            reward = rollDebrisReward(rarity, state.currentPlanetId)
                         )
                         state.copy(scavengeTargets = state.scavengeTargets + newTarget)
                     } else state
@@ -152,7 +150,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         
-        // Цикл очистки просроченного мусора
         viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(5000)
@@ -176,7 +173,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     val isMeteor = Random.nextInt(100) < METEOR_SPAWN_CHANCE_PERCENT
-                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity()
+                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity(state.currentPlanetId)
                     state.copy(
                         scavengeTargets = state.scavengeTargets + ScavengeTarget(
                             id = debrisId.incrementAndGet(),
@@ -189,7 +186,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             velocityX = Random.nextFloat() * 0.008f - 0.004f,
                             velocityY = Random.nextFloat() * 0.009f + 0.012f,
                             isMeteor = isMeteor,
-                            reward = rollDebrisReward(if (isMeteor) Rarity.LEGENDARY else rarity)
+                            reward = rollDebrisReward(if (isMeteor) Rarity.LEGENDARY else rarity, state.currentPlanetId)
                         )
                     )
                 }
@@ -205,15 +202,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.LEGENDARY -> 6
     }
 
-    private fun rollDebrisReward(rarity: Rarity): Double =
-        Random.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
+    private fun rollDebrisReward(rarity: Rarity, planetId: String): Double {
+        var reward = Random.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
+        // Aurea: 50% chance to get +100% (x2) reward for Common
+        if (planetId == "p5" && rarity == Rarity.COMMON) {
+            if (Random.nextInt(100) < 50) {
+                reward *= 2.0
+            }
+        }
+        return reward
+    }
 
-    private fun rollTrashRarity(): Rarity {
-        val roll = Random.nextInt(100)
+    private fun rollTrashRarity(planetId: String): Rarity {
+        // Mars: Epic/Legendary weight x2
+        val weights = Rarity.entries.map { r ->
+            if (planetId == "p9" && (r == Rarity.EPIC || r == Rarity.LEGENDARY)) r.spawnWeight * 2
+            else r.spawnWeight
+        }
+        val totalWeight = weights.sum()
+        val roll = Random.nextInt(totalWeight)
         var cumulative = 0
-        for (r in Rarity.entries) {
-            cumulative += r.spawnWeight
-            if (roll < cumulative) return r
+        for (i in Rarity.entries.indices) {
+            cumulative += weights[i]
+            if (roll < cumulative) return Rarity.entries[i]
         }
         return Rarity.COMMON
     }
@@ -221,34 +232,80 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startEventLoop() {
         viewModelScope.launch(Dispatchers.Default) {
             while (isActive) {
-                delay(15000 + Random.nextLong(30000))
+                val planetId = _gameState.value.currentPlanetId
+                var baseInterval = 15000 + Random.nextLong(30000)
+                
+                // Ignis: Events 2x more often (actually requested for meteor shower, but let's apply to all or specific?)
+                // TZ says "Meteor shower occurs 2x more often". 
+                // Void-9: sync SINGULARITY - events occur very often (3x?)
+                if (planetId == "p3") baseInterval /= 2
+                if (planetId == "p8") baseInterval /= 3
+                
+                delay(baseInterval)
+                
                 if (_gameState.value.activeEvent == null) {
-                    val durationMs = Random.nextLong(MIN_EVENT_DURATION_MS, MAX_EVENT_DURATION_MS + 1)
-                    when (Random.nextInt(GameEventType.entries.size)) {
-                        0 -> spawnEvent(GameEventType.STORM, "Space Storm!", durationMs)
-                        1 -> spawnEvent(GameEventType.ASTEROID, "Gold Asteroid!", durationMs)
-                        2 -> spawnEvent(GameEventType.PIRATES, "Pirates!", durationMs)
-                        else -> spawnEvent(GameEventType.METEOR_SHOWER, "Debris Shower!", durationMs)
+                    val durationBase = Random.nextLong(MIN_EVENT_DURATION_MS, MAX_EVENT_DURATION_MS + 1)
+                    // Glacies: 40% chance for "Eternal Storm" (duration x2)
+                    val durationMs = if (planetId == "p4" && Random.nextInt(100) < 40) (durationBase * 2.0).toLong() else durationBase
+                    
+                    val eventTypes = GameEventType.entries.toMutableList()
+                    
+                    // Toxis: Immune to CYBER_VIRUS
+                    if (planetId == "p6") eventTypes.remove(GameEventType.CYBER_VIRUS)
+                    
+                    var selectedType = eventTypes.random()
+                    
+                    // Oceania: -25% chance for negative events
+                    if (planetId == "p2" && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
+                        if (Random.nextInt(100) < 25) {
+                            selectedType = GameEventType.ASTEROID // Redirect to positive
+                        }
                     }
+                    
+                    // Void-9: Higher chance for Black Hole
+                    if (planetId == "p8" && Random.nextInt(100) < 60) {
+                        selectedType = GameEventType.BLACK_HOLE
+                    }
+
+                    spawnEvent(selectedType, eventTitle(selectedType), durationMs)
                 }
             }
         }
     }
 
+    private fun eventTitle(type: GameEventType) = when(type) {
+        GameEventType.STORM -> "Space Storm!"
+        GameEventType.ASTEROID -> "Gold Asteroid!"
+        GameEventType.PIRATES -> "Pirates!"
+        GameEventType.METEOR_SHOWER -> "Debris Shower!"
+        GameEventType.BLACK_HOLE -> "Black Hole!"
+        GameEventType.SOLAR_FLARE -> "Solar Flare!"
+        GameEventType.CYBER_VIRUS -> "Cyber Virus!"
+    }
+
     private fun spawnEvent(type: GameEventType, title: String, durationMs: Long) {
         val x = Random.nextFloat()
         val y = Random.nextFloat() * 0.6f + 0.1f
-        _gameState.update { it.copy(
-            activeEvent = GameEvent(type, title, System.currentTimeMillis() + durationMs, x, y),
-            eventMultiplier = if (type == GameEventType.STORM) 3.0 else 1.0,
-            pirateTapsLeft = if (type == GameEventType.PIRATES) 5 else 0
-        ) }
+        _gameState.update { state ->
+            var infectedId: Long? = null
+            if (type == GameEventType.CYBER_VIRUS && state.drones.isNotEmpty()) {
+                infectedId = state.drones.filter { it.state != DroneState.BROKEN }.randomOrNull()?.id
+            }
+
+            state.copy(
+                activeEvent = GameEvent(type, title, System.currentTimeMillis() + durationMs, x, y),
+                eventMultiplier = if (type == GameEventType.STORM || type == GameEventType.SOLAR_FLARE) 3.0 else 1.0,
+                pirateTapsLeft = if (type == GameEventType.PIRATES) 5 else 0,
+                eventTapsLeft = if (type == GameEventType.BLACK_HOLE) 10 else 0,
+                infectedDroneId = infectedId
+            )
+        }
         
         viewModelScope.launch {
             delay(durationMs)
             _gameState.update { 
                 if (it.activeEvent?.expiresAt ?: 0 <= System.currentTimeMillis()) {
-                    it.copy(activeEvent = null, eventMultiplier = 1.0)
+                    it.copy(activeEvent = null, eventMultiplier = 1.0, infectedDroneId = null)
                 } else it
             }
         }
@@ -275,6 +332,42 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             } else state
         }
     }
+    
+    fun onBlackHoleClick() {
+        _gameState.update { state ->
+            if (state.activeEvent?.type == GameEventType.BLACK_HOLE) {
+                val taps = state.eventTapsLeft - 1
+                if (taps <= 0) {
+                    val targets = state.scavengeTargets.toMutableList()
+                    // Void-9 reward: 5 rare items
+                    if (state.currentPlanetId == "p8") {
+                        repeat(5) {
+                            targets.add(ScavengeTarget(
+                                id = debrisId.incrementAndGet(),
+                                x = state.activeEvent.x + (Random.nextFloat() - 0.5f) * 0.2f,
+                                y = state.activeEvent.y + (Random.nextFloat() - 0.5f) * 0.2f,
+                                rarity = Rarity.RARE,
+                                expiresAt = System.currentTimeMillis() + 30000,
+                                imageIndex = debrisImageIndex(Rarity.RARE),
+                                reward = rollDebrisReward(Rarity.RARE, state.currentPlanetId)
+                            ))
+                        }
+                    }
+                    state.copy(activeEvent = null, eventTapsLeft = 0, scavengeTargets = targets)
+                } else {
+                    state.copy(eventTapsLeft = taps)
+                }
+            } else state
+        }
+    }
+
+    fun onDroneClick(droneId: Long) {
+        _gameState.update { state ->
+            if (state.infectedDroneId == droneId) {
+                state.copy(infectedDroneId = null, activeEvent = null)
+            } else state
+        }
+    }
 
     private fun startDroneLoop() {
         viewModelScope.launch(Dispatchers.Default) {
@@ -286,11 +379,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun updateDrones() {
-        val state = _gameState.value
-        val fleetCounts = state.fleetCounts
+        val now = System.currentTimeMillis()
+        val currentState = _gameState.value
+        val planetId = currentState.currentPlanetId
+        val fleetCounts = currentState.fleetCounts
+        val activeEvent = currentState.activeEvent
+        val isBlackHole = activeEvent?.type == GameEventType.BLACK_HOLE
+        val isSolarFlare = activeEvent?.type == GameEventType.SOLAR_FLARE
+        val infectedId = currentState.infectedDroneId
+        val bhX = activeEvent?.x ?: 0.5f
+        val bhY = activeEvent?.y ?: 0.5f
         
-        _gameState.update { currentState ->
-            val drones = currentState.drones.toMutableList()
+        _gameState.update { state ->
+            val drones = state.drones.toMutableList()
             
             // Sync drones list with fleet counts
             fleetItems.forEach { item ->
@@ -310,21 +411,36 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            val targets = currentState.scavengeTargets.mapNotNull { target ->
+            val targets = state.scavengeTargets.mapNotNull { target ->
+                if (isBlackHole) {
+                    val dx = bhX - target.x
+                    val dy = bhY - target.y
+                    val distSq = dx * dx + dy * dy
+                    if (distSq < 0.0005f) return@mapNotNull null // Sucked in
+                    val dist = sqrt(distSq.toDouble()).toFloat()
+                    return@mapNotNull target.copy(
+                        x = target.x + (dx / dist) * 0.02f,
+                        y = target.y + (dy / dist) * 0.02f
+                    )
+                }
                 if (!target.isFalling) return@mapNotNull target
                 target.copy(
                     x = target.x + target.velocityX,
                     y = target.y + target.velocityY
                 ).takeIf { it.x in -0.15f..1.15f && it.y <= 1.1f }
             }.toMutableList()
-            if (drones.isEmpty()) return@update currentState.copy(scavengeTargets = targets)
+            if (drones.isEmpty()) return@update state.copy(scavengeTargets = targets)
 
             var debrisGained = 0.0
-            val claimedTargetIds = drones.mapNotNullTo(mutableSetOf()) { it.targetId }
+            val claimedTargetIds = drones.filter { it.state != DroneState.BROKEN }.mapNotNullTo(mutableSetOf()) { it.targetId }
 
             val updatedDrones = drones.map { drone ->
-                val now = System.currentTimeMillis()
-                if (drone.disabledUntil > now) return@map drone
+                if (drone.state == DroneState.BROKEN) {
+                    if (now >= drone.disabledUntil) {
+                        return@map drone.copy(state = DroneState.IDLE, disabledUntil = 0)
+                    }
+                    return@map drone
+                }
 
                 var nx = drone.x
                 var ny = drone.y
@@ -337,107 +453,130 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nPatrolTargetY = drone.patrolTargetY
                 var nDisabledUntil = 0L
 
-                if (drone.disabledUntil != 0L) {
-                    val respawn = randomPatrolPoint()
-                    nx = respawn.first
-                    ny = respawn.second
-                    nState = DroneState.IDLE
-                    nTargetId = null
-                    nHasCargo = false
-                    nCargoRarity = null
-                    nCargoReward = 0.0
-                }
-                
                 val droneConfig = fleetItems.find { it.id == drone.type }
                 val droneRarity = droneConfig?.rarity ?: Rarity.COMMON
 
-                when (drone.state) {
-                    DroneState.IDLE -> {
-                        // Ищем самый редкий доступный мусор
-                        val availableTarget = targets
-                            .filter { target ->
-                                target.id !in claimedTargetIds &&
-                                    (target.isMeteor || droneRarity.canCollect(target.rarity))
-                            }
-                            .maxByOrNull { if (it.isMeteor) Int.MAX_VALUE else it.rarity.ordinal }
-                        
-                        if (availableTarget != null) {
-                            nTargetId = availableTarget.id
-                            nState = DroneState.MOVING_TO_DEBRIS
-                            nPatrolTargetX = null
-                            nPatrolTargetY = null
-                            claimedTargetIds += availableTarget.id
-                        } else {
-                            if (nPatrolTargetX == null || nPatrolTargetY == null ||
-                                distanceSquared(nx, ny, nPatrolTargetX, nPatrolTargetY) <= DRONE_MOVE_STEP * DRONE_MOVE_STEP
-                            ) {
-                                val patrolTarget = randomPatrolPoint()
-                                nPatrolTargetX = patrolTarget.first
-                                nPatrolTargetY = patrolTarget.second
-                            }
-                            val moved = movePatrolDrone(
-                                nx,
-                                ny,
-                                nPatrolTargetX ?: nx,
-                                nPatrolTargetY ?: ny,
-                                drone.id
-                            )
-                            nx = moved.first
-                            ny = moved.second
-                        }
+                if (isBlackHole) {
+                    val dx = bhX - nx
+                    val dy = bhY - ny
+                    val distSq = dx * dx + dy * dy
+                    if (distSq > 0.001f) {
+                        val dist = sqrt(distSq.toDouble()).toFloat()
+                        nx += (dx / dist) * 0.005f
+                        ny += (dy / dist) * 0.005f
                     }
-                    DroneState.MOVING_TO_DEBRIS -> {
-                        val target = targets.find { it.id == drone.targetId }
-                        if (target != null) {
-                            val dx = target.x - nx
-                            val dy = target.y - ny
-                            val distSq = dx * dx + dy * dy
-                            if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
-                                nx = target.x
-                                ny = target.y
-                                targets.removeAll { it.id == target.id }
-                                nTargetId = null
-                                if (target.isMeteor && Random.nextBoolean()) {
-                                    nState = DroneState.IDLE
-                                    nHasCargo = false
-                                    nCargoRarity = null
-                                    nCargoReward = 0.0
-                                    nDisabledUntil = now + METEOR_DISABLE_DURATION_MS
+                    nState = DroneState.SUCKED_IN
+                } else if (isSolarFlare) {
+                    nx += Random.nextFloat() * 0.01f - 0.005f
+                    ny += Random.nextFloat() * 0.01f - 0.005f
+                    nState = DroneState.JAMMED
+                } else if (drone.id == infectedId) {
+                    nState = DroneState.INFECTED
+                    nx += Random.nextFloat() * 0.04f - 0.02f
+                    ny += Random.nextFloat() * 0.04f - 0.02f
+                    debrisGained -= 10.0 // Steal debris
+                } else {
+                    if (nState == DroneState.SUCKED_IN || nState == DroneState.JAMMED || nState == DroneState.INFECTED) nState = DroneState.IDLE
+                    
+                    when (nState) {
+                        DroneState.IDLE -> {
+                            val availableTarget = targets
+                                .filter { target ->
+                                    target.id !in claimedTargetIds &&
+                                        (target.isMeteor || droneRarity.canCollect(target.rarity))
+                                }
+                                .maxByOrNull { if (it.isMeteor) Int.MAX_VALUE else it.rarity.ordinal }
+
+                            if (availableTarget != null) {
+                                nTargetId = availableTarget.id
+                                nState = DroneState.MOVING_TO_DEBRIS
+                                nPatrolTargetX = null
+                                nPatrolTargetY = null
+                                claimedTargetIds += availableTarget.id
+                            } else {
+                                if (nPatrolTargetX == null || nPatrolTargetY == null ||
+                                    distanceSquared(nx, ny, nPatrolTargetX, nPatrolTargetY) <= DRONE_MOVE_STEP * DRONE_MOVE_STEP
+                                ) {
+                                    val patrolTarget = randomPatrolPoint()
+                                    nPatrolTargetX = patrolTarget.first
+                                    nPatrolTargetY = patrolTarget.second
+                                }
+                                val moved = movePatrolDrone(
+                                    nx,
+                                    ny,
+                                    nPatrolTargetX ?: nx,
+                                    nPatrolTargetY ?: ny,
+                                    drone.id
+                                )
+                                nx = moved.first
+                                ny = moved.second
+                            }
+                        }
+                        DroneState.MOVING_TO_DEBRIS -> {
+                            val target = targets.find { it.id == drone.targetId }
+                            if (target != null) {
+                                val dx = target.x - nx
+                                val dy = target.y - ny
+                                val distSq = dx * dx + dy * dy
+                                if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                                    nx = target.x
+                                    ny = target.y
+                                    
+                                    if (target.isMeteor) {
+                                        // Ignis: 70% success, others 50%
+                                        val successChance = if (planetId == "p3") 70 else 50
+                                        if (Random.nextInt(100) >= successChance) {
+                                            nState = DroneState.BROKEN
+                                            // Exo-Prime: 20s repair, others 60s
+                                            val repairDuration = if (planetId == "p7") 20000L else 60000L
+                                            nDisabledUntil = now + repairDuration
+                                            nHasCargo = false
+                                            nCargoRarity = null
+                                            nCargoReward = 0.0
+                                        } else {
+                                            nState = DroneState.RETURNING
+                                            nHasCargo = true
+                                            nCargoRarity = Rarity.LEGENDARY
+                                            nCargoReward = target.reward
+                                        }
+                                    } else {
+                                        nState = DroneState.RETURNING
+                                        nHasCargo = true
+                                        nCargoRarity = target.rarity
+                                        nCargoReward = target.reward
+                                    }
+                                    targets.removeAll { it.id == target.id }
+                                    nTargetId = null
                                 } else {
-                                    nState = DroneState.RETURNING
-                                    nHasCargo = true
-                                    nCargoRarity = if (target.isMeteor) Rarity.LEGENDARY else target.rarity
-                                    nCargoReward = target.reward
+                                    val dist = sqrt(distSq.toDouble()).toFloat()
+                                    nx += (dx / dist) * DRONE_MOVE_STEP
+                                    ny += (dy / dist) * DRONE_MOVE_STEP
                                 }
                             } else {
-                                val dist = Math.sqrt(distSq.toDouble()).toFloat()
+                                nState = DroneState.RETURNING
+                            }
+                        }
+                        DroneState.RETURNING -> {
+                            val dx = DRONE_HOME_POSITION - nx
+                            val dy = DRONE_HOME_POSITION - ny
+                            val distSq = dx * dx + dy * dy
+                            if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                                nx = DRONE_HOME_POSITION
+                                ny = DRONE_HOME_POSITION
+                                if (nHasCargo) {
+                                    debrisGained += nCargoReward
+                                }
+                                nState = DroneState.IDLE
+                                nHasCargo = false
+                                nCargoRarity = null
+                                nCargoReward = 0.0
+                            } else {
+                                val dist = sqrt(distSq.toDouble()).toFloat()
                                 nx += (dx / dist) * DRONE_MOVE_STEP
                                 ny += (dy / dist) * DRONE_MOVE_STEP
                             }
-                        } else {
-                            nState = DroneState.RETURNING
                         }
-                    }
-                    DroneState.RETURNING -> {
-                        val dx = DRONE_HOME_POSITION - nx
-                        val dy = DRONE_HOME_POSITION - ny
-                        val distSq = dx * dx + dy * dy
-                        if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
-                            nx = DRONE_HOME_POSITION
-                            ny = DRONE_HOME_POSITION
-                            if (nHasCargo && nCargoRarity != null) {
-                                // The collected debris determines the entire reward.
-                                debrisGained += nCargoReward
-                            }
-                            nState = DroneState.IDLE
-                            nHasCargo = false
-                            nCargoRarity = null
-                            nCargoReward = 0.0
-                        } else {
-                            val dist = Math.sqrt(distSq.toDouble()).toFloat()
-                            nx += (dx / dist) * DRONE_MOVE_STEP
-                            ny += (dy / dist) * DRONE_MOVE_STEP
-                        }
+                        else -> {}
                     }
                 }
                 drone.copy(
@@ -454,10 +593,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
-            currentState.copy(
+            state.copy(
                 drones = updatedDrones,
                 scavengeTargets = targets,
-                totalDebris = currentState.totalDebris + debrisGained
+                totalDebris = (state.totalDebris + debrisGained).coerceAtLeast(0.0)
             )
         }
     }
@@ -518,10 +657,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             // Если активен ивент с пиратами, они крадут 0.1% каждую секунду
             if (currentState.activeEvent?.type == GameEventType.PIRATES) newTotalDebris *= 0.999
 
-            if (hotelDebtActive) {
-                // Долг выплачивается только с активных действий теперь? 
-                // Оставим просто обработку остатка если нужно.
-            }
             currentState.copy(totalDebris = newTotalDebris, currentHotelDebt = newHotelDebt, isHotelDebtActive = hotelDebtActive)
         }
     }
@@ -534,7 +669,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         when (state.currentPlanetId) {
             "p3" -> v += 5.0
             "p2" -> v *= 1.2
-            "p8" -> v *= 2.0
+            "p8" -> {
+                // Void-9: 30% chance for Critical Tap (x4)
+                if (Random.nextInt(100) < 30) v *= 4.0
+            }
         }
         v *= state.eventMultiplier
         return v
@@ -695,4 +833,3 @@ private const val DRONE_PATROL_STEP = 0.008f
 private const val PLANET_AVOID_RADIUS = 0.22f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
 private const val METEOR_SPAWN_CHANCE_PERCENT = 20
-private const val METEOR_DISABLE_DURATION_MS = 60_000L

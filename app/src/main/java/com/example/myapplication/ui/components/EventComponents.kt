@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +30,12 @@ import com.example.myapplication.ui.theme.AppColors
 
 @Composable
 fun EventBanner(event: GameEvent) {
-    val color = if (event.type == GameEventType.STORM) AppColors.Warning else AppColors.Danger
+    val color = when (event.type) {
+        GameEventType.STORM -> AppColors.Warning
+        GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS -> AppColors.Danger
+        GameEventType.SOLAR_FLARE -> Color(0xFFFF5722)
+        else -> AppColors.Danger
+    }
     Card(
         modifier = Modifier
             .padding(16.dp)
@@ -43,6 +50,9 @@ fun EventBanner(event: GameEvent) {
                     GameEventType.ASTEROID -> R.string.event_gold_asteroid
                     GameEventType.PIRATES -> R.string.event_pirates
                     GameEventType.METEOR_SHOWER -> R.string.event_debris_shower
+                    GameEventType.BLACK_HOLE -> R.string.event_black_hole
+                    GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
+                    GameEventType.CYBER_VIRUS -> R.string.event_cyber_virus
                 }
             ),
             modifier = Modifier.padding(8.dp).fillMaxWidth(),
@@ -67,7 +77,7 @@ fun Asteroid(event: GameEvent, onClick: () -> Unit) {
             )
             .size(50.dp)
             .shadow(10.dp, RoundedCornerShape(4.dp), spotColor = Color.Red)
-            .background(Color.Red, RoundedCornerShape(4.dp)) // Red cube placeholder as requested
+            .background(Color.Red, RoundedCornerShape(4.dp))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -95,5 +105,29 @@ fun PirateTarget(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
             Text("🏴‍☠️", fontSize = 32.sp)
             Text("${5 - tapsLeft}/5", color = Color.White, fontSize = 10.sp)
         }
+    }
+}
+
+@Composable
+fun BlackHoleComponent(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val screenHeight = LocalConfiguration.current.screenHeightDp
+
+    Box(
+        modifier = Modifier
+            .offset(
+                x = (event.x * (screenWidth - 150)).dp,
+                y = (event.y * (screenHeight - GameConstants.GameAreaHeightOffset - 150)).dp
+            )
+            .size(150.dp)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.dira),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize()
+        )
+        Text("$tapsLeft", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
     }
 }

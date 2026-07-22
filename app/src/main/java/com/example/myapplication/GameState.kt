@@ -28,10 +28,12 @@ data class GameState(
     val activeEvent: GameEvent? = null,
     val eventMultiplier: Double = 1.0,
     val pirateTapsLeft: Int = 0,
+    val eventTapsLeft: Int = 0,
     val drones: List<DroneData> = emptyList(),
     val scavengeTargets: List<ScavengeTarget> = emptyList(),
     val isOpeningCase: Boolean = false,
-    val lastDroppedDroneId: String? = null 
+    val lastDroppedDroneId: String? = null,
+    val infectedDroneId: Long? = null
 )
 
 data class DroneData(
@@ -49,7 +51,7 @@ data class DroneData(
     val disabledUntil: Long = 0L
 )
 
-enum class DroneState { IDLE, MOVING_TO_DEBRIS, RETURNING }
+enum class DroneState { IDLE, MOVING_TO_DEBRIS, RETURNING, BROKEN, INFECTED, SUCKED_IN, JAMMED }
 
 data class ScavengeTarget(
     val id: Long,
@@ -65,7 +67,7 @@ data class ScavengeTarget(
     val reward: Double = 0.0
 )
 
-enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER }
+enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS }
 
 data class GameEvent(
     val type: GameEventType,

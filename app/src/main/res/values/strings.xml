@@ -43,6 +43,10 @@
     <string name="event_gold_asteroid">Gold Asteroid!</string>
     <string name="event_pirates">Pirates!</string>
     <string name="event_debris_shower">Debris Shower!</string>
+    <string name="event_black_hole">Black Hole!</string>
+    <string name="event_solar_flare">Solar Flare!</string>
+    <string name="event_cyber_virus">Cyber Virus!</string>
+    <string name="repairing_meta">Repairing: %1$d (%2$d sec)</string>
     <string name="upgrade_plasma_magnet">Plasma Magnet</string>
     <string name="upgrade_weld_torch">Weld Torch</string>
     <string name="upgrade_quantum_wrench">Quantum Wrench</string>
