@@ -51,6 +51,13 @@
     <string name="event_black_hole">Чёрная дыра!</string>
     <string name="event_solar_flare">Солнечная вспышка!</string>
     <string name="event_cyber_virus">Кибер-вирус!</string>
+    <string name="event_desc_storm">Космическая буря! Клики в 3 раза эффективнее, но вокруг царит хаос.</string>
+    <string name="event_desc_asteroid">Золотой астероид! Скорее нажми на него, чтобы получить огромный бонус!</string>
+    <string name="event_desc_pirates">Пираты! Они крадут ваши обломки! Нажимайте на них, чтобы прогнать.</string>
+    <string name="event_desc_debris_shower">Метеоритный дождь! Много падающих обломков! Опасайтесь метеоров, они ломают дроны.</string>
+    <string name="event_desc_black_hole">Черная дыра! Она засасывает всё вокруг! Нажимайте, чтобы закрыть её.</string>
+    <string name="event_desc_solar_flare">Солнечная вспышка! Клики в 3 раза сильнее, но электроника дронов барахлит.</string>
+    <string name="event_desc_cyber_virus">Кибер-вирус! Один из дронов заражен и ворует ресурсы! Найди и нажми на него.</string>
     <string name="repairing_meta">В ремонте: %1$d (%2$d сек)</string>
     <string name="upgrade_plasma_magnet">Плазменный магнит</string>
     <string name="upgrade_weld_torch">Сварочная горелка</string>

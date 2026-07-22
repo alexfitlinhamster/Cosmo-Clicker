@@ -29,7 +29,7 @@ import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 
 @Composable
-fun EventBanner(event: GameEvent) {
+fun EventBanner(event: GameEvent, onClick: () -> Unit) {
     val color = when (event.type) {
         GameEventType.STORM -> AppColors.Warning
         GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS -> AppColors.Danger
@@ -39,7 +39,8 @@ fun EventBanner(event: GameEvent) {
     Card(
         modifier = Modifier
             .padding(16.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.15f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, color)
     ) {
@@ -129,5 +130,55 @@ fun BlackHoleComponent(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
         Text("$tapsLeft", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+    }
+}
+
+@Composable
+fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(
+                    when (event.type) {
+                        GameEventType.STORM -> R.string.event_space_storm
+                        GameEventType.ASTEROID -> R.string.event_gold_asteroid
+                        GameEventType.PIRATES -> R.string.event_pirates
+                        GameEventType.METEOR_SHOWER -> R.string.event_debris_shower
+                        GameEventType.BLACK_HOLE -> R.string.event_black_hole
+                        GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
+                        GameEventType.CYBER_VIRUS -> R.string.event_cyber_virus
+                    }
+                ),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(
+                    when (event.type) {
+                        GameEventType.STORM -> R.string.event_desc_storm
+                        GameEventType.ASTEROID -> R.string.event_desc_asteroid
+                        GameEventType.PIRATES -> R.string.event_desc_pirates
+                        GameEventType.METEOR_SHOWER -> R.string.event_desc_debris_shower
+                        GameEventType.BLACK_HOLE -> R.string.event_desc_black_hole
+                        GameEventType.SOLAR_FLARE -> R.string.event_desc_solar_flare
+                        GameEventType.CYBER_VIRUS -> R.string.event_desc_cyber_virus
+                    }
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.close))
+            }
+        }
+    )
+}
+
+@Composable
+private fun TextButton(onClick: () -> Unit, content: @Composable () -> Unit) {
+    androidx.compose.material3.TextButton(onClick = onClick) {
+        content()
     }
 }

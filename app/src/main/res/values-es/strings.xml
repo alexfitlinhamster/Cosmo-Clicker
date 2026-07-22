@@ -48,6 +48,16 @@
     <string name="event_gold_asteroid">¡Asteroide dorado!</string>
     <string name="event_pirates">¡Piratas!</string>
     <string name="event_debris_shower">¡Lluvia de basura espacial!</string>
+    <string name="event_black_hole">¡Agujero negro!</string>
+    <string name="event_solar_flare">¡Llamarada solar!</string>
+    <string name="event_cyber_virus">¡Virus cibernético!</string>
+    <string name="event_desc_storm">¡Tormenta espacial! Los toques son 3 veces más efectivos, pero todo es caótico.</string>
+    <string name="event_desc_asteroid">¡Asteroide de oro! ¡Haz clic rápido para obtener un gran bono de restos!</string>
+    <string name="event_desc_pirates">¡Piratas! ¡Están robando tus restos! Tócalos para ahuyentarlos.</string>
+    <string name="event_desc_debris_shower">¡Lluvia de restos! ¡Muchos restos cayendo! Cuidado con los meteoros, pueden romper drones.</string>
+    <string name="event_desc_black_hole">¡Agujero negro! ¡Está succionando todo! Tócalo para cerrarlo.</string>
+    <string name="event_desc_solar_flare">¡Llamarada solar! Los toques son 3 veces más efectivos, pero los drones están bloqueados.</string>
+    <string name="event_desc_cyber_virus">¡Cibervirus! ¡Uno de tus drones está infectado! Tócalo para repararlo.</string>
     <string name="upgrade_plasma_magnet">Imán de plasma</string>
     <string name="upgrade_weld_torch">Soplete de soldadura</string>
     <string name="upgrade_quantum_wrench">Llave cuántica</string>

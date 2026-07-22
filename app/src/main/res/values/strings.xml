@@ -51,6 +51,13 @@
     <string name="event_black_hole">Black Hole!</string>
     <string name="event_solar_flare">Solar Flare!</string>
     <string name="event_cyber_virus">Cyber Virus!</string>
+    <string name="event_desc_storm">Space Storm! Taps are 3x more effective, but everything is chaotic.</string>
+    <string name="event_desc_asteroid">Gold Asteroid! Click it quickly to get a huge debris bonus!</string>
+    <string name="event_desc_pirates">Pirates! They are stealing your debris! Tap them to drive them away.</string>
+    <string name="event_desc_debris_shower">Debris Shower! Lots of falling debris! Careful with meteors, they can break drones.</string>
+    <string name="event_desc_black_hole">Black Hole! It\'s sucking everything in! Tap it to close it.</string>
+    <string name="event_desc_solar_flare">Solar Flare! Taps are 3x more effective, but drones are jammed.</string>
+    <string name="event_desc_cyber_virus">Cyber Virus! One of your drones is infected! Tap it to fix it.</string>
     <string name="repairing_meta">Repairing: %1$d (%2$d sec)</string>
     <string name="upgrade_plasma_magnet">Plasma Magnet</string>
     <string name="upgrade_weld_torch">Weld Torch</string>

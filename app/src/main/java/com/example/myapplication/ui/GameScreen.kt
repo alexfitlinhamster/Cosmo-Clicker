@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.FloatingTextData
+import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.R
@@ -42,6 +43,7 @@ fun GameScreen(
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
 
     // Состояние стартового экрана
     var showStartScreen by remember { mutableStateOf(true) }
@@ -115,7 +117,9 @@ fun GameScreen(
                 }
 
                 state.activeEvent?.let { event ->
-                    EventBanner(event)
+                    EventBanner(event) {
+                        showEventInfo = event
+                    }
                 }
 
                 PlanetButton(
@@ -194,6 +198,10 @@ fun GameScreen(
             )
         }
 
+        showEventInfo?.let { event ->
+            EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
+        }
+
         // СТАРТОВЫЙ ЭКРАН
         if (showStartScreen) {
             Box(
@@ -230,8 +238,10 @@ fun GameScreen(
                 Image(
                     painter = painterResource(id = R.drawable.play_fon_game),
                     contentDescription = "Start Screen",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                    contentScale = ContentScale.Crop
                 )
             }
         }
