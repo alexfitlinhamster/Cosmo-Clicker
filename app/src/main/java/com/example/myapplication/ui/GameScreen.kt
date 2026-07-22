@@ -1,13 +1,18 @@
 package com.example.myapplication.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -37,6 +42,11 @@ fun GameScreen(
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+
+    // Состояние стартового экрана
+    var showStartScreen by remember { mutableStateOf(true) }
+    val startScreenOffset = remember { Animatable(0f) }
+    val startScreenAlpha = remember { Animatable(1f) }
 
     DisposableEffect(soundManager) {
         onDispose { soundManager.close() }
@@ -182,6 +192,48 @@ fun GameScreen(
                 onLanguageSelected = onLanguageSelected,
                 onBack = { showSettings = false }
             )
+        }
+
+        // СТАРТОВЫЙ ЭКРАН
+        if (showStartScreen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationY = startScreenOffset.value
+                        alpha = startScreenAlpha.value
+                    }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        scope.launch {
+                            soundManager.playClick()
+                            // Анимация ухода вверх и исчезновения
+                            launch {
+                                startScreenOffset.animateTo(
+                                    targetValue = -1000f,
+                                    animationSpec = tween(durationMillis = 800)
+                                )
+                            }
+                            launch {
+                                startScreenAlpha.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(durationMillis = 800)
+                                )
+                            }
+                            delay(800)
+                            showStartScreen = false
+                        }
+                    }
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.play_fon_game),
+                    contentDescription = "Start Screen",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds
+                )
+            }
         }
     }
 }
