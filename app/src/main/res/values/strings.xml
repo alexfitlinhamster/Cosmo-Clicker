@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Cosmo Clicker</string>
+    <string name="app_name">Orbit Salvagers: Drone Clicker</string>
     <string name="settings">Settings</string>
     <string name="back">Back</string>
     <string name="application">Application</string>
@@ -12,6 +12,10 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Developer</string>
     <string name="telegram">Telegram</string>
+    <string name="how_to_play">How to play</string>
+    <string name="open_guide">Open guide</string>
+    <string name="close">Close</string>
+    <string name="game_guide_body" formatted="false">Tap the planet to earn debris currency. Buy click upgrades to increase every tap.\n\nSpace debris appears randomly every 2–40 seconds. Drones fly to it, collect it and deliver its reward; drones do not generate passive income. A drone can collect debris up to its own rarity.\n\nDebris rewards: Common — up to 5K; Uncommon — up to 10K; Rare — up to 20K; Epic — up to 50K; Legendary — 250K–1M.\n\nOpen cases to receive random drones. Higher-rarity drones can collect more valuable debris.\n\nTemporary events change the game. During a debris shower, a meteor has a 20% spawn chance. Collecting one may grant a Legendary reward or disable the drone for one minute.\n\nUnlock and select planets in the shop. Every planet has a unique bonus shown below its description.</string>
     <string name="debris">debris</string>
     <string name="per_second">+%1$s / sec</string>
     <string name="hotel_debt">Hotel Debt</string>
@@ -60,5 +64,15 @@
     <string name="planet_toxic_gas">Toxic Gas</string>
     <string name="planet_advanced">Advanced</string>
     <string name="planet_dark_matter">Dark Matter</string>
+    <string name="planet_red_planet">Red Planet</string>
+    <string name="planet_bonus_sylva" formatted="false">Bonus: 15% chance for x2 tap income</string>
+    <string name="planet_bonus_oceania" formatted="false">Bonus: +20% tap income; 25% chance to avoid a negative event</string>
+    <string name="planet_bonus_ignis">Bonus: +5 per tap; events occur x2 more often; 70% meteor success</string>
+    <string name="planet_bonus_glacies" formatted="false">Bonus: 40% chance for events to last x2 longer</string>
+    <string name="planet_bonus_aurea" formatted="false">Bonus: 50% chance for x2 common debris rewards</string>
+    <string name="planet_bonus_toxis">Bonus: immunity to Cyber Virus events</string>
+    <string name="planet_bonus_exo_prime">Bonus: broken drones repair in 20 seconds</string>
+    <string name="planet_bonus_void_9" formatted="false">Bonus: 30% chance for x4 taps; frequent Black Holes yield 5 rare debris</string>
+    <string name="planet_bonus_mars">Bonus: Epic and Legendary debris appear x2 more often</string>
     <string name="unknown_item">Unknown</string>
 </resources>

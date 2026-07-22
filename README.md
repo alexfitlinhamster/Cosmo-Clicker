@@ -1,6 +1,6 @@
-# Cosmo Clicker
+# Orbit Salvagers: Drone Clicker
 
-Cosmo Clicker is an incremental Android game about collecting space debris, expanding a drone fleet, and travelling between increasingly valuable planets. The interface is built entirely with Jetpack Compose.
+Orbit Salvagers: Drone Clicker is an incremental Android game about collecting space debris, expanding a drone fleet, and travelling between increasingly valuable planets. The interface is built entirely with Jetpack Compose.
 
 ## Features
 

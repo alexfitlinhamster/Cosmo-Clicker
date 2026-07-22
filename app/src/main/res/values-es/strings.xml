@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Cosmo Clicker</string>
+    <string name="app_name">Orbit Salvagers: Drone Clicker</string>
     <string name="settings">Ajustes</string>
     <string name="back">Atrás</string>
     <string name="application">Aplicación</string>
@@ -12,6 +12,10 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Desarrollador</string>
     <string name="telegram">Telegram</string>
+    <string name="how_to_play">Cómo jugar</string>
+    <string name="open_guide">Abrir guía</string>
+    <string name="close">Cerrar</string>
+    <string name="game_guide_body" formatted="false">Toca el planeta para obtener la moneda de residuos. Compra mejoras de clic para aumentar cada toque.\n\nLos residuos espaciales aparecen al azar cada 2–40 segundos. Los drones vuelan hacia ellos, los recogen y entregan la recompensa; no generan ingresos pasivos. Un dron puede recoger residuos hasta su propia rareza.\n\nRecompensas: Común — hasta 5K; Poco común — hasta 10K; Raro — hasta 20K; Épico — hasta 50K; Legendario — de 250K a 1M.\n\nAbre cajas para recibir drones aleatorios. Los drones de mayor rareza pueden recoger residuos más valiosos.\n\nLos eventos temporales cambian el juego. Durante una lluvia de residuos, hay un 20% de probabilidad de que aparezca un meteorito. Recogerlo puede dar una recompensa legendaria o averiar el dron durante un minuto.\n\nDesbloquea y selecciona planetas en la tienda. Cada planeta tiene un bonus único indicado bajo su descripción.</string>
     <string name="debris">escombros</string>
     <string name="per_second">+%1$s / s</string>
     <string name="hotel_debt">Deuda del hotel</string>
@@ -56,5 +60,15 @@
     <string name="planet_toxic_gas">Gas tóxico</string>
     <string name="planet_advanced">Avanzado</string>
     <string name="planet_dark_matter">Materia oscura</string>
+    <string name="planet_red_planet">Planeta rojo</string>
+    <string name="planet_bonus_sylva" formatted="false">Bonus: 15% de probabilidad de obtener x2 ingresos por toque</string>
+    <string name="planet_bonus_oceania" formatted="false">Bonus: +20% por toque; 25% de evitar un evento negativo</string>
+    <string name="planet_bonus_ignis">Bonus: +5 por toque; eventos x2 más frecuentes; 70% de éxito con meteoritos</string>
+    <string name="planet_bonus_glacies" formatted="false">Bonus: 40% de probabilidad de que los eventos duren x2</string>
+    <string name="planet_bonus_aurea" formatted="false">Bonus: 50% de probabilidad de obtener x2 por residuos comunes</string>
+    <string name="planet_bonus_toxis">Bonus: inmunidad a eventos de Virus Cibernético</string>
+    <string name="planet_bonus_exo_prime">Bonus: los drones averiados se reparan en 20 segundos</string>
+    <string name="planet_bonus_void_9" formatted="false">Bonus: 30% de probabilidad de toque x4; los Agujeros Negros dan 5 residuos raros</string>
+    <string name="planet_bonus_mars">Bonus: los residuos épicos y legendarios aparecen x2 más</string>
     <string name="unknown_item">Desconocido</string>
 </resources>

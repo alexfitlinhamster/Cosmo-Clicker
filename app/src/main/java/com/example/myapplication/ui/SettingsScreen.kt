@@ -2,6 +2,8 @@ package com.example.myapplication.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +47,7 @@ fun SettingsScreen(
     onBack: () -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showGameGuideDialog by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val languages = listOf(
         LanguageOption(null, R.string.language_system),
@@ -109,6 +112,14 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            SettingsCard(
+                modifier = Modifier.clickable { showGameGuideDialog = true }
+            ) {
+                SettingsRow(stringResource(R.string.how_to_play), stringResource(R.string.open_guide))
+            }
+
+            Spacer(Modifier.height(12.dp))
+
             SettingsCard {
                 SettingsRow(stringResource(R.string.developer), "Alexei Fitlin")
                 Row(
@@ -155,6 +166,25 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
                     Text(stringResource(R.string.back))
+                }
+            }
+        )
+    }
+
+    if (showGameGuideDialog) {
+        AlertDialog(
+            onDismissRequest = { showGameGuideDialog = false },
+            title = { Text(stringResource(R.string.how_to_play)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.game_guide_body),
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showGameGuideDialog = false }) {
+                    Text(stringResource(R.string.close))
                 }
             }
         )

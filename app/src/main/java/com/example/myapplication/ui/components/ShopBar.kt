@@ -96,6 +96,7 @@ fun ShopBar(
                                 PlanetRow(
                                     name = config.name,
                                     desc = localizedPlanetDescription(id),
+                                    bonus = localizedPlanetBonus(id),
                                     price = config.price.toLong(),
                                     active = active,
                                     owned = owned,
@@ -321,6 +322,7 @@ fun ShopRow(
 fun PlanetRow(
     name: String, 
     desc: String, 
+    bonus: String,
     price: Long, 
     active: Boolean, 
     owned: Boolean,
@@ -340,7 +342,10 @@ fun PlanetRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             val iconSize = 40.dp
             Box(modifier = Modifier.size(iconSize).clip(CircleShape)) {
                 if (spriteIndex >= 0) {
@@ -378,11 +383,13 @@ fun PlanetRow(
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(if(isLocked) "???" else name, color = if(isLocked) Color.Gray else Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(desc, color = Color.Gray, fontSize = 11.sp)
+                Text(bonus, color = AppColors.Primary, fontSize = 10.sp, lineHeight = 12.sp)
             }
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = onClick,
             enabled = (canBuy || owned) && !isLocked,
@@ -427,6 +434,23 @@ private fun localizedPlanetDescription(id: String): String = stringResource(
         "p6" -> R.string.planet_toxic_gas
         "p7" -> R.string.planet_advanced
         "p8" -> R.string.planet_dark_matter
+        "p9" -> R.string.planet_red_planet
+        else -> R.string.unknown_item
+    }
+)
+
+@Composable
+private fun localizedPlanetBonus(id: String): String = stringResource(
+    when (id) {
+        "p1" -> R.string.planet_bonus_sylva
+        "p2" -> R.string.planet_bonus_oceania
+        "p3" -> R.string.planet_bonus_ignis
+        "p4" -> R.string.planet_bonus_glacies
+        "p5" -> R.string.planet_bonus_aurea
+        "p6" -> R.string.planet_bonus_toxis
+        "p7" -> R.string.planet_bonus_exo_prime
+        "p8" -> R.string.planet_bonus_void_9
+        "p9" -> R.string.planet_bonus_mars
         else -> R.string.unknown_item
     }
 )

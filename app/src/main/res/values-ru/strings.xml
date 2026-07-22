@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Cosmo Clicker</string>
+    <string name="app_name">Orbit Salvagers: Drone Clicker</string>
     <string name="settings">Настройки</string>
     <string name="back">Назад</string>
     <string name="application">Приложение</string>
@@ -12,6 +12,10 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Разработчик</string>
     <string name="telegram">Telegram</string>
+    <string name="how_to_play">Как играть</string>
+    <string name="open_guide">Открыть справку</string>
+    <string name="close">Закрыть</string>
+    <string name="game_guide_body" formatted="false">Нажимайте на планету, чтобы получать валюту — обломки. Покупайте улучшения клика, чтобы увеличить доход за каждое нажатие.\n\nКосмический мусор появляется случайно каждые 2–40 секунд. Дроны летят к нему, собирают и доставляют награду; пассивного дохода дроны не дают. Дрон может собирать мусор не выше собственной редкости.\n\nНаграды за мусор: обычный — до 5K; необычный — до 10K; редкий — до 20K; эпический — до 50K; легендарный — от 250K до 1M.\n\nОткрывайте кейсы, чтобы получать случайных дронов. Чем выше редкость дрона, тем более ценный мусор он способен собрать.\n\nВременные события меняют правила игры. Во время мусорного дождя метеор появляется с шансом 20%. Его сбор может дать легендарную награду или вывести дрон из строя на одну минуту.\n\nОткрывайте и выбирайте планеты в магазине. У каждой планеты есть уникальный бонус, указанный под её описанием.</string>
     <string name="debris">обломки</string>
     <string name="per_second">+%1$s / сек</string>
     <string name="hotel_debt">Долг отелю</string>
@@ -60,5 +64,15 @@
     <string name="planet_toxic_gas">Токсичный газ</string>
     <string name="planet_advanced">Развитый мир</string>
     <string name="planet_dark_matter">Тёмная материя</string>
+    <string name="planet_red_planet">Красная планета</string>
+    <string name="planet_bonus_sylva" formatted="false">Бонус: 15% шанс получить x2 доход за клик</string>
+    <string name="planet_bonus_oceania" formatted="false">Бонус: +20% к клику; 25% шанс избежать негативного события</string>
+    <string name="planet_bonus_ignis">Бонус: +5 за клик; события в x2 чаще; 70% успеха с метеором</string>
+    <string name="planet_bonus_glacies" formatted="false">Бонус: 40% шанс увеличить длительность событий в x2</string>
+    <string name="planet_bonus_aurea" formatted="false">Бонус: 50% шанс получить x2 награду за обычный мусор</string>
+    <string name="planet_bonus_toxis">Бонус: иммунитет к событию «Кибервирус»</string>
+    <string name="planet_bonus_exo_prime">Бонус: сломанные дроны ремонтируются за 20 секунд</string>
+    <string name="planet_bonus_void_9" formatted="false">Бонус: 30% шанс на клик x4; частые чёрные дыры дают 5 редких обломков</string>
+    <string name="planet_bonus_mars">Бонус: эпический и легендарный мусор появляется в x2 чаще</string>
     <string name="unknown_item">Неизвестно</string>
 </resources>

@@ -667,6 +667,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val state = _gameState.value
         var v = 1.0 + clickItems.sumOf { (state.clickLevels[it.id] ?: 0) * it.value }
         when (state.currentPlanetId) {
+            "p1" -> if (Random.nextInt(100) < 15) v *= 2.0
             "p3" -> v += 5.0
             "p2" -> v *= 1.2
             "p8" -> {

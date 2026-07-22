@@ -1,5 +1,20 @@
 # News
 
+## 1.10.1 (version code 21) - 2026-07-22
+
+- Added a localized How to Play guide to the settings screen.
+- Documented taps, debris rarity, drone collection, cases, events, meteors, and planet bonuses.
+
+## 1.10 (version code 20) - 2026-07-22
+
+- Added localized bonus descriptions below every planet in the shop.
+- Added a 15% chance for Sylva taps to grant double income.
+- Added the missing localized description for Mars.
+
+## 1.9.1 (version code 19) - 2026-07-22
+
+- Renamed the game to Orbit Salvagers: Drone Clicker.
+
 ## 1.9 (version code 18) - 2026-07-21
 
 - Renamed drawable assets with consistent category prefixes.
