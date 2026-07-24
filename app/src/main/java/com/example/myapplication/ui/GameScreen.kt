@@ -1,12 +1,18 @@
 package com.example.myapplication.ui
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,7 +21,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEvent
@@ -200,6 +209,26 @@ fun GameScreen(
 
         // СТАРТОВЫЙ ЭКРАН
         if (showStartScreen) {
+            val promptTransition = rememberInfiniteTransition(label = "start_prompt")
+            val promptOffset by promptTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = -10f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "start_prompt_offset"
+            )
+            val promptAlpha by promptTransition.animateFloat(
+                initialValue = 0.4f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(800),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "start_prompt_alpha"
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -233,11 +262,28 @@ fun GameScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.play_fon_game),
-                    contentDescription = "Start Screen",
+                    contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black),
                     contentScale = ContentScale.Crop
+                )
+
+                Text(
+                    text = stringResource(R.string.tap_to_continue),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp, vertical = 56.dp)
+                        .offset(y = promptOffset.dp)
+                        .graphicsLayer { alpha = promptAlpha }
+                        .background(
+                            color = Color.Black.copy(alpha = 0.62f),
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .padding(horizontal = 22.dp, vertical = 12.dp)
                 )
             }
         }

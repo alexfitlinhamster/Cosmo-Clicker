@@ -1,5 +1,14 @@
 # News
 
+## 1.10.6 (version code 26) - 2026-07-24
+
+- Animated the start-screen prompt with the same floating fade style used by the case-opening text.
+
+## 1.10.5 (version code 25) - 2026-07-24
+
+- Added a localized tap-to-continue prompt to the bottom of the start screen.
+- Made the prompt update automatically when the game language changes.
+
 ## 1.10.4 (version code 24) - 2026-07-22
 
 - Restored 11 empty PNG resources from the original sprite sheets.

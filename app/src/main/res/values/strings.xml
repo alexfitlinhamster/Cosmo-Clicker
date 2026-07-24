@@ -15,6 +15,7 @@
     <string name="how_to_play">How to play</string>
     <string name="open_guide">Open guide</string>
     <string name="close">Close</string>
+    <string name="tap_to_continue">Tap me to continue</string>
     <string name="game_guide_body" formatted="false">Tap the planet to earn debris currency. Buy click upgrades to increase every tap.\n\nSpace debris appears randomly every 2–40 seconds. Drones fly to it, collect it and deliver its reward; drones do not generate passive income. A drone can collect debris up to its own rarity.\n\nDebris rewards: Common — up to 5K; Uncommon — up to 10K; Rare — up to 20K; Epic — up to 50K; Legendary — 250K–1M.\n\nOpen cases to receive random drones. Higher-rarity drones can collect more valuable debris.\n\nTemporary events change the game. During a debris shower, a meteor has a 20% spawn chance. Collecting one may grant a Legendary reward or disable the drone for one minute.\n\nUnlock and select planets in the shop. Every planet has a unique bonus shown below its description.</string>
     <string name="debris">debris</string>
     <string name="per_second">+%1$s / sec</string>

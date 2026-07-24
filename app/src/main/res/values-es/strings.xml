@@ -15,6 +15,7 @@
     <string name="how_to_play">Cómo jugar</string>
     <string name="open_guide">Abrir guía</string>
     <string name="close">Cerrar</string>
+    <string name="tap_to_continue">Tócame para continuar</string>
     <string name="game_guide_body" formatted="false">Toca el planeta para obtener la moneda de residuos. Compra mejoras de clic para aumentar cada toque.\n\nLos residuos espaciales aparecen al azar cada 2–40 segundos. Los drones vuelan hacia ellos, los recogen y entregan la recompensa; no generan ingresos pasivos. Un dron puede recoger residuos hasta su propia rareza.\n\nRecompensas: Común — hasta 5K; Poco común — hasta 10K; Raro — hasta 20K; Épico — hasta 50K; Legendario — de 250K a 1M.\n\nAbre cajas para recibir drones aleatorios. Los drones de mayor rareza pueden recoger residuos más valiosos.\n\nLos eventos temporales cambian el juego. Durante una lluvia de residuos, hay un 20% de probabilidad de que aparezca un meteorito. Recogerlo puede dar una recompensa legendaria o averiar el dron durante un minuto.\n\nDesbloquea y selecciona planetas en la tienda. Cada planeta tiene un bonus único indicado bajo su descripción.</string>
     <string name="debris">escombros</string>
     <string name="per_second">+%1$s / s</string>
