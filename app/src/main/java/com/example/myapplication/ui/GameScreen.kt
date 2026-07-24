@@ -63,7 +63,6 @@ fun GameScreen(
         when (state.activeEvent?.type) {
             GameEventType.STORM -> R.drawable.background_storm
             GameEventType.ASTEROID -> R.drawable.background_asteroid
-            GameEventType.PIRATES -> R.drawable.background_pirates
             GameEventType.BLACK_HOLE -> R.drawable.background_storm
             GameEventType.SOLAR_FLARE -> R.drawable.background_storm
             GameEventType.CYBER_VIRUS -> R.drawable.background_space
@@ -145,9 +144,6 @@ fun GameScreen(
                     when (event.type) {
                         GameEventType.ASTEROID -> {
                             Asteroid(event) { viewModel.onAsteroidClick() }
-                        }
-                        GameEventType.PIRATES -> {
-                            PirateTarget(event, state.pirateTapsLeft) { viewModel.onPirateClick() }
                         }
                         GameEventType.BLACK_HOLE -> {
                             BlackHoleComponent(event, state.eventTapsLeft) { viewModel.onBlackHoleClick() }
