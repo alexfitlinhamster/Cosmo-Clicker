@@ -434,6 +434,11 @@ private fun localizedPlanetName(id: String): String = stringResource(
         "p13" -> R.string.planet_abyss_ocean
         "p14" -> R.string.planet_ring_oasis
         "p15" -> R.string.planet_sky_haven
+        "p16" -> R.string.planet_toxic_waste
+        "p17" -> R.string.planet_pink_nebula
+        "p18" -> R.string.planet_cloud_city
+        "p19" -> R.string.planet_rocky_bastion
+        "p20" -> R.string.planet_foggy_void
         else -> R.string.unknown_item
     }
 )
@@ -468,6 +473,11 @@ private fun localizedPlanetDescription(id: String): String = stringResource(
         "p13" -> R.string.planet_desc_abyss_ocean
         "p14" -> R.string.planet_desc_ring_oasis
         "p15" -> R.string.planet_desc_sky_haven
+        "p16" -> R.string.planet_desc_toxic_waste
+        "p17" -> R.string.planet_desc_pink_nebula
+        "p18" -> R.string.planet_desc_cloud_city
+        "p19" -> R.string.planet_desc_rocky_bastion
+        "p20" -> R.string.planet_desc_foggy_void
         else -> R.string.unknown_item
     }
 )
@@ -490,6 +500,11 @@ private fun localizedPlanetBonus(id: String): String = stringResource(
         "p13" -> R.string.planet_bonus_abyss_ocean
         "p14" -> R.string.planet_bonus_ring_oasis
         "p15" -> R.string.planet_bonus_sky_haven
+        "p16" -> R.string.planet_bonus_toxic_waste
+        "p17" -> R.string.planet_bonus_pink_nebula
+        "p18" -> R.string.planet_bonus_cloud_city
+        "p19" -> R.string.planet_bonus_rocky_bastion
+        "p20" -> R.string.planet_bonus_foggy_void
         else -> R.string.unknown_item
     }
 )

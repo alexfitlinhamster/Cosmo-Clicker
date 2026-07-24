@@ -26,7 +26,7 @@
     <string name="fleet_meta">Редкость: %1$s • кол-во %2$d</string>
     <string name="click_meta">+%1$s/клик • ур. %2$d</string>
     <string name="debt_active">Долг активен</string>
-    <string name="take_hotel_debt">Взять долг отеля (x5 DPS!)</string>
+    <string name="take_hotel_debt" formatted="false">Взять заём 1M (30% клика идёт на погашение)</string>
     <string name="shop_tap_to_open">МАГАЗИН (НАЖМИТЕ, ЧТОБЫ ОТКРЫТЬ)</string>
     <string name="open_shop">Открыть магазин</string>
     <string name="mystery_case">Таинственный кейс</string>

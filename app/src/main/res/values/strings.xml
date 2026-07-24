@@ -26,7 +26,7 @@
     <string name="fleet_meta">%1$s rarity • qty %2$d</string>
     <string name="click_meta">+%1$s/tap • lvl %2$d</string>
     <string name="debt_active">Debt Active</string>
-    <string name="take_hotel_debt">Take Hotel Debt (x5 DPS!)</string>
+    <string name="take_hotel_debt" formatted="false">Take 1M hotel loan (30% of taps repay it)</string>
     <string name="shop_tap_to_open">SHOP (TAP TO OPEN)</string>
     <string name="open_shop">Open shop</string>
     <string name="mystery_case">Mystery Case</string>

@@ -1,5 +1,12 @@
 # News
 
+## 1.11 (version code 27) - 2026-07-24
+
+- Added the missing localized names, descriptions, and bonuses for planets 16–20.
+- Aligned asteroid and black-hole visuals with their logical game-area coordinates.
+- Preserved late-game currency accurately with backward-compatible 64-bit saves.
+- Reworked Hotel Debt into a 1M loan repaid by 30% of tap income without clearing the player balance.
+
 ## 1.10.6 (version code 26) - 2026-07-24
 
 - Animated the start-screen prompt with the same floating fade style used by the case-opening text.

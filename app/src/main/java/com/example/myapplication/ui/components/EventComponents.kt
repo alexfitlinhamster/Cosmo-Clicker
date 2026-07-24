@@ -15,17 +15,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.R
-import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 
 @Composable
@@ -65,17 +64,15 @@ fun EventBanner(event: GameEvent, onClick: () -> Unit) {
 }
 
 @Composable
-fun Asteroid(event: GameEvent, onClick: () -> Unit) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val screenHeight = LocalConfiguration.current.screenHeightDp
-    
+fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: () -> Unit) {
+    val asteroidSize = 50.dp
     Box(
         modifier = Modifier
             .offset(
-                x = (event.x * (screenWidth - 60)).dp,
-                y = (event.y * (screenHeight - GameConstants.GameAreaHeightOffset)).dp
+                x = gameAreaWidth * event.x - asteroidSize / 2,
+                y = gameAreaHeight * event.y - asteroidSize / 2
             )
-            .size(50.dp)
+            .size(asteroidSize)
             .shadow(10.dp, RoundedCornerShape(4.dp), spotColor = Color.Red)
             .background(Color.Red, RoundedCornerShape(4.dp))
             .clickable { onClick() },
@@ -86,17 +83,21 @@ fun Asteroid(event: GameEvent, onClick: () -> Unit) {
 }
 
 @Composable
-fun BlackHoleComponent(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp
-    val screenHeight = LocalConfiguration.current.screenHeightDp
-
+fun BlackHoleComponent(
+    event: GameEvent,
+    tapsLeft: Int,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
+    onClick: () -> Unit
+) {
+    val blackHoleSize = 150.dp
     Box(
         modifier = Modifier
             .offset(
-                x = (event.x * (screenWidth - 150)).dp,
-                y = (event.y * (screenHeight - GameConstants.GameAreaHeightOffset - 150)).dp
+                x = gameAreaWidth * event.x - blackHoleSize / 2,
+                y = gameAreaHeight * event.y - blackHoleSize / 2
             )
-            .size(150.dp)
+            .size(blackHoleSize)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {

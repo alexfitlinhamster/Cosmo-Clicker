@@ -26,7 +26,7 @@
     <string name="fleet_meta">Rareza: %1$s • cant. %2$d</string>
     <string name="click_meta">+%1$s/clic • niv. %2$d</string>
     <string name="debt_active">Deuda activa</string>
-    <string name="take_hotel_debt">Obtener deuda del hotel (¡x5 DPS!)</string>
+    <string name="take_hotel_debt" formatted="false">Pedir préstamo de 1M (30% de cada toque lo paga)</string>
     <string name="shop_tap_to_open">TIENDA (TOCA PARA ABRIR)</string>
     <string name="open_shop">Abrir tienda</string>
     <string name="mystery_case">Caja misteriosa</string>

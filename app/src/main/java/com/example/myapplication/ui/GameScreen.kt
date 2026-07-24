@@ -152,10 +152,12 @@ fun GameScreen(
                 state.activeEvent?.let { event ->
                     when (event.type) {
                         GameEventType.ASTEROID -> {
-                            Asteroid(event) { viewModel.onAsteroidClick() }
+                            Asteroid(event, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
                         }
                         GameEventType.BLACK_HOLE -> {
-                            BlackHoleComponent(event, state.eventTapsLeft) { viewModel.onBlackHoleClick() }
+                            BlackHoleComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
+                                viewModel.onBlackHoleClick()
+                            }
                         }
                         GameEventType.METEOR_SHOWER -> Unit
                         else -> {}

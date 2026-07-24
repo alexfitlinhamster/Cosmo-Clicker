@@ -104,13 +104,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val ownedPlanets = prefs.getStringSet("ownedPlanets", setOf("p1")) ?: setOf("p1")
 
         return GameState(
-            totalDebris = prefs.getFloat("totalDebris", 50f).toDouble(),
+            totalDebris = loadPreciseDouble("totalDebris", 50.0),
             clickLevels = clickLevels,
             fleetCounts = fleetCounts,
             currentPlanetId = prefs.getString("currentPlanetId", "p1") ?: "p1",
             ownedPlanets = ownedPlanets,
             isHotelDebtActive = prefs.getBoolean("isHotelDebtActive", false),
-            currentHotelDebt = prefs.getFloat("currentHotelDebt", 0f).toDouble(),
+            currentHotelDebt = loadPreciseDouble("currentHotelDebt", 0.0),
             casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum())
         )
     }
@@ -118,15 +118,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun saveGameState() {
         val state = _gameState.value
         prefs.edit().apply {
-            putFloat("totalDebris", state.totalDebris.toFloat())
+            putLong("totalDebrisBits", state.totalDebris.toRawBits())
             state.clickLevels.forEach { (id, lvl) -> putInt("click_$id", lvl) }
             state.fleetCounts.forEach { (id, count) -> putInt("fleet_$id", count) }
             putString("currentPlanetId", state.currentPlanetId)
             putStringSet("ownedPlanets", state.ownedPlanets)
             putBoolean("isHotelDebtActive", state.isHotelDebtActive)
-            putFloat("currentHotelDebt", state.currentHotelDebt.toFloat())
+            putLong("currentHotelDebtBits", state.currentHotelDebt.toRawBits())
             putInt("casesPurchased", state.casesPurchased)
             apply()
+        }
+    }
+
+    private fun loadPreciseDouble(key: String, defaultValue: Double): Double {
+        val preciseKey = "${key}Bits"
+        return if (prefs.contains(preciseKey)) {
+            Double.fromBits(prefs.getLong(preciseKey, defaultValue.toRawBits()))
+        } else {
+            prefs.getFloat(key, defaultValue.toFloat()).toDouble()
         }
     }
 
@@ -699,12 +708,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             var hotelDebtActive = currentState.isHotelDebtActive
             
             if (hotelDebtActive) {
-                val debtPayment = clickPower * 0.3
-                val actualIncome = clickPower * 0.7
+                val debtPayment = minOf(clickPower * HOTEL_DEBT_PAYMENT_SHARE, newHotelDebt)
+                val actualIncome = clickPower - debtPayment
                 newHotelDebt -= debtPayment
                 newTotalDebris += actualIncome
                 if (newHotelDebt <= 0) {
-                    newTotalDebris = 0.0
+                    newHotelDebt = 0.0
                     hotelDebtActive = false
                 }
             } else {
@@ -810,8 +819,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun takeHotelDebt() {
         updateStoreState("hotel-debt") { state ->
             if (state.isHotelDebtActive) null else state.copy(
+                totalDebris = state.totalDebris + HOTEL_LOAN_AMOUNT,
                 isHotelDebtActive = true,
-                currentHotelDebt = 1000000.0
+                currentHotelDebt = HOTEL_LOAN_AMOUNT
             )
         }
     }
@@ -844,6 +854,8 @@ private const val DRONE_HOME_POSITION = 0.5f
 private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
 private const val CASE_BASE_COST = 1000.0
 private const val CASE_COST_MULTIPLIER = 1.2
+private const val HOTEL_LOAN_AMOUNT = 1_000_000.0
+private const val HOTEL_DEBT_PAYMENT_SHARE = 0.3
 private const val MIN_EVENT_DURATION_MS = 20_000L
 private const val MAX_EVENT_DURATION_MS = 60_000L
 private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L
