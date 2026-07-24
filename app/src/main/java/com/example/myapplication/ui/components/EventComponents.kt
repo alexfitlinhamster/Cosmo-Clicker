@@ -49,7 +49,6 @@ fun EventBanner(event: GameEvent, onClick: () -> Unit) {
                 when (event.type) {
                     GameEventType.STORM -> R.string.event_space_storm
                     GameEventType.ASTEROID -> R.string.event_gold_asteroid
-                    GameEventType.PIRATES -> R.string.event_pirates
                     GameEventType.METEOR_SHOWER -> R.string.event_debris_shower
                     GameEventType.BLACK_HOLE -> R.string.event_black_hole
                     GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
@@ -87,29 +86,6 @@ fun Asteroid(event: GameEvent, onClick: () -> Unit) {
 }
 
 @Composable
-fun PirateTarget(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(top = 100.dp)
-                .size(80.dp)
-                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-                .shadow(10.dp, CircleShape, spotColor = Color.Red)
-                .border(2.dp, Color.Red, CircleShape)
-                .clickable { onClick() },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("🏴‍☠️", fontSize = 32.sp)
-            Text("${5 - tapsLeft}/5", color = Color.White, fontSize = 10.sp)
-        }
-    }
-}
-
-@Composable
 fun BlackHoleComponent(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val screenHeight = LocalConfiguration.current.screenHeightDp
@@ -143,7 +119,6 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                     when (event.type) {
                         GameEventType.STORM -> R.string.event_space_storm
                         GameEventType.ASTEROID -> R.string.event_gold_asteroid
-                        GameEventType.PIRATES -> R.string.event_pirates
                         GameEventType.METEOR_SHOWER -> R.string.event_debris_shower
                         GameEventType.BLACK_HOLE -> R.string.event_black_hole
                         GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
@@ -159,7 +134,6 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                     when (event.type) {
                         GameEventType.STORM -> R.string.event_desc_storm
                         GameEventType.ASTEROID -> R.string.event_desc_asteroid
-                        GameEventType.PIRATES -> R.string.event_desc_pirates
                         GameEventType.METEOR_SHOWER -> R.string.event_desc_debris_shower
                         GameEventType.BLACK_HOLE -> R.string.event_desc_black_hole
                         GameEventType.SOLAR_FLARE -> R.string.event_desc_solar_flare

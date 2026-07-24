@@ -46,14 +46,12 @@
     <string name="rarity_legendary">Легендарный</string>
     <string name="event_space_storm">Космическая буря!</string>
     <string name="event_gold_asteroid">Золотой астероид!</string>
-    <string name="event_pirates">Пираты!</string>
     <string name="event_debris_shower">Метеоритный дождь!</string>
     <string name="event_black_hole">Чёрная дыра!</string>
     <string name="event_solar_flare">Солнечная вспышка!</string>
     <string name="event_cyber_virus">Кибер-вирус!</string>
     <string name="event_desc_storm">Космическая буря! Клики в 3 раза эффективнее, но вокруг царит хаос.</string>
     <string name="event_desc_asteroid">Золотой астероид! Скорее нажми на него, чтобы получить огромный бонус!</string>
-    <string name="event_desc_pirates">Пираты! Они крадут ваши обломки! Нажимайте на них, чтобы прогнать.</string>
     <string name="event_desc_debris_shower">Метеоритный дождь! Много падающих обломков! Опасайтесь метеоров, они ломают дроны.</string>
     <string name="event_desc_black_hole">Черная дыра! Она засасывает всё вокруг! Нажимайте, чтобы закрыть её.</string>
     <string name="event_desc_solar_flare">Солнечная вспышка! Клики в 3 раза сильнее, но электроника дронов барахлит.</string>
@@ -64,23 +62,68 @@
     <string name="upgrade_quantum_wrench">Квантовый ключ</string>
     <string name="upgrade_debris_harvester">Сборщик обломков</string>
     <string name="upgrade_signal_beacon">Сигнальный маяк</string>
-    <string name="planet_forest_world">Лесной мир</string>
-    <string name="planet_water_world">Водный мир</string>
-    <string name="planet_volcanic">Вулканический мир</string>
-    <string name="planet_ice_world">Ледяной мир</string>
-    <string name="planet_gold_veins">Золотые жилы</string>
-    <string name="planet_toxic_gas">Токсичный газ</string>
-    <string name="planet_advanced">Развитый мир</string>
-    <string name="planet_dark_matter">Тёмная материя</string>
-    <string name="planet_red_planet">Красная планета</string>
-    <string name="planet_bonus_sylva" formatted="false">Бонус: 15% шанс получить x2 доход за клик</string>
-    <string name="planet_bonus_oceania" formatted="false">Бонус: +20% к клику; 25% шанс избежать негативного события</string>
-    <string name="planet_bonus_ignis">Бонус: +5 за клик; события в x2 чаще; 70% успеха с метеором</string>
-    <string name="planet_bonus_glacies" formatted="false">Бонус: 40% шанс увеличить длительность событий в x2</string>
-    <string name="planet_bonus_aurea" formatted="false">Бонус: 50% шанс получить x2 награду за обычный мусор</string>
-    <string name="planet_bonus_toxis">Бонус: иммунитет к событию «Кибервирус»</string>
-    <string name="planet_bonus_exo_prime">Бонус: сломанные дроны ремонтируются за 20 секунд</string>
-    <string name="planet_bonus_void_9" formatted="false">Бонус: 30% шанс на клик x4; частые чёрные дыры дают 5 редких обломков</string>
-    <string name="planet_bonus_mars">Бонус: эпический и легендарный мусор появляется в x2 чаще</string>
+    <string name="planet_azurea">Азурея</string>
+    <string name="planet_canyon_prime">Каньон-Прайм</string>
+    <string name="planet_nebula_echo">Эхо Небулы</string>
+    <string name="planet_crystal_hearth">Кристальная Обитель</string>
+    <string name="planet_dune_horizon">Горизонт Дюн</string>
+    <string name="planet_volt_nova">Вольт-Нова</string>
+    <string name="planet_gas_giant">Газовый Гигант G-7</string>
+    <string name="planet_jungle_core">Ядро Джунглей</string>
+    <string name="planet_magma_s15">Магма S-15</string>
+    <string name="planet_red_dust">Красная Пыль</string>
+    <string name="planet_mech_world">Мех-Мир X</string>
+    <string name="planet_luna_silvis">Лунная Сильва</string>
+    <string name="planet_abyss_ocean">Бездна Океана</string>
+    <string name="planet_ring_oasis">Кольцо Оазиса</string>
+    <string name="planet_sky_haven">Небесная Гавань</string>
+    <string name="planet_toxic_waste">Токсичная Свалка</string>
+    <string name="planet_pink_nebula">Розовая Туманность</string>
+    <string name="planet_cloud_city">Облачный Город</string>
+    <string name="planet_rocky_bastion">Скальный Бастион</string>
+    <string name="planet_foggy_void">Туманная Пустота</string>
+
+    <string name="planet_desc_azurea">Родная планета</string>
+    <string name="planet_desc_canyon_prime">Сухой и ветреный мир</string>
+    <string name="planet_desc_nebula_echo">Сияние далеких звезд</string>
+    <string name="planet_desc_crystal_hearth">Хрупкая красота кристаллов</string>
+    <string name="planet_desc_dune_horizon">Бесконечные пески</string>
+    <string name="planet_desc_volt_nova">Мир чистого электричества</string>
+    <string name="planet_desc_gas_giant">Плотная и опасная атмосфера</string>
+    <string name="planet_desc_jungle_core">Непроходимые чащи</string>
+    <string name="planet_desc_magma_s15">Пылающая бездна лавы</string>
+    <string name="planet_desc_red_dust">Древние руины былой цивилизации</string>
+    <string name="planet_desc_mech_world">Огромный заводской комплекс</string>
+    <string name="planet_desc_luna_silvis">Тихий страж ночного неба</string>
+    <string name="planet_desc_abyss_ocean">Мир вечного безмолвия</string>
+    <string name="planet_desc_ring_oasis">Небесный пояс жизни</string>
+    <string name="planet_desc_sky_haven">Выше всех облаков</string>
+    <string name="planet_desc_toxic_waste">Разъедающий и заброшенный мир</string>
+    <string name="planet_desc_pink_nebula">Сладкое мерцание газа</string>
+    <string name="planet_desc_cloud_city">Парящий среди штормов</string>
+    <string name="planet_desc_rocky_bastion">Неприступная крепость из камня</string>
+    <string name="planet_desc_foggy_void">Там, где исчезает свет</string>
+
+    <string name="planet_bonus_azurea" formatted="false">Бонус: 15% шанс на x2 доход за клик</string>
+    <string name="planet_bonus_canyon_prime" formatted="false">Бонус: +20% к доходу от кликов</string>
+    <string name="planet_bonus_nebula_echo" formatted="false">Бонус: События появляются на 30% чаще</string>
+    <string name="planet_bonus_crystal_hearth" formatted="false">Бонус: 50% шанс на x2 награду за обломки</string>
+    <string name="planet_bonus_dune_horizon">Бонус: +15 к доходу за каждый клик</string>
+    <string name="planet_bonus_volt_nova" formatted="false">Бонус: 30% шанс на критический клик (x4)</string>
+    <string name="planet_bonus_gas_giant">Бонус: Полный иммунитет к Кибер-вирусу</string>
+    <string name="planet_bonus_jungle_core" formatted="false">Бонус: Длительность событий увеличена в x2</string>
+    <string name="planet_bonus_magma_s15" formatted="false">Бонус: 70% шанс успеха при сборе метеора</string>
+    <string name="planet_bonus_red_dust" formatted="false">Бонус: Эпический и Легендарный мусор в x2 чаще</string>
+    <string name="planet_bonus_mech_world" formatted="false">Бонус: Дроны ремонтируются всего за 20 секунд</string>
+    <string name="planet_bonus_luna_silvis" formatted="false">Бонус: 25% шанс избежать негативных событий</string>
+    <string name="planet_bonus_abyss_ocean" formatted="false">Бонус: Черные дыры всегда дают 5 редких обломков</string>
+    <string name="planet_bonus_ring_oasis" formatted="false">Бонус: x2 доход от клика во время любого события</string>
+    <string name="planet_bonus_sky_haven">Бонус: Ультимативный мир — все шансы бонусов повышены</string>
+    <string name="planet_bonus_toxic_waste" formatted="false">Бонус: 40% шанс мгновенно прекратить негативное событие</string>
+    <string name="planet_bonus_pink_nebula" formatted="false">Бонус: +50% к награде за обломки из всех источников</string>
+    <string name="planet_bonus_cloud_city" formatted="false">Бонус: Дроны летают к мусору на 50% быстрее</string>
+    <string name="planet_bonus_rocky_bastion" formatted="false">Бонус: Дроны полностью неуязвимы к метеорам</string>
+    <string name="planet_bonus_foggy_void" formatted="false">Бонус: 10% шанс на Крит-клик x10</string>
+
     <string name="unknown_item">Неизвестно</string>
 </resources>

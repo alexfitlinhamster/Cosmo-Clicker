@@ -61,15 +61,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     val planets = mapOf(
-        "p1" to PlanetConfig("Sylva", 0.0, "Forest World", Color(0xFF2E7D32), R.drawable.planet_game_01),
-        "p2" to PlanetConfig("Oceania", 10000.0, "Water World", Color(0xFF1976D2), R.drawable.planet_game_02),
-        "p3" to PlanetConfig("Ignis", 50000.0, "Volcanic", Color(0xFFD32F2F), R.drawable.planet_game_03),
-        "p4" to PlanetConfig("Glacies", 250000.0, "Ice World", Color(0xFF00BCD4), R.drawable.planet_game_04),
-        "p5" to PlanetConfig("Aurea", 1000000.0, "Gold Veins", Color(0xFFFBC02D), R.drawable.planet_game_05),
-        "p6" to PlanetConfig("Toxis", 5000000.0, "Toxic Gas", Color(0xFF388E3C), R.drawable.planet_game_06),
-        "p7" to PlanetConfig("Exo-Prime", 25000000.0, "Advanced", Color(0xFF7B1FA2), R.drawable.planet_game_07),
-        "p8" to PlanetConfig("Void-9", 100000000.0, "Dark Matter", Color(0xFF212121), R.drawable.planet_game_08),
-        "p9" to PlanetConfig("Mars", 500000000.0, "Red Planet", Color(0xFFE57373), R.drawable.planet_mars)
+        "p1" to PlanetConfig("Azurea", 0.0, "Home planet", Color(0xFF2196F3), R.drawable.planet_blue_01),
+        "p2" to PlanetConfig("Canyon Prime", 10000.0, "Dry and windy world", Color(0xFFFFA726), R.drawable.planet_canyon_01),
+        "p3" to PlanetConfig("Nebula Echo", 50000.0, "Glow of distant stars", Color(0xFF7E57C2), R.drawable.planet_cosmic_01),
+        "p4" to PlanetConfig("Crystal Hearth", 250000.0, "Fragile beauty", Color(0xFF26C6DA), R.drawable.planet_crystal_01),
+        "p5" to PlanetConfig("Dune Horizon", 1250000.0, "Endless sands", Color(0xFFFFCC80), R.drawable.planet_desert_01),
+        "p6" to PlanetConfig("Volt Nova", 6250000.0, "World of electricity", Color(0xFFFFF176), R.drawable.planet_energy_01),
+        "p7" to PlanetConfig("Gas Giant G-7", 31250000.0, "Dense atmosphere", Color(0xFF9CCC65), R.drawable.planet_gas_01),
+        "p8" to PlanetConfig("Jungle Core", 156250000.0, "Wild nature", Color(0xFF43A047), R.drawable.planet_jungle_01),
+        "p9" to PlanetConfig("Magma S-15", 781250000.0, "Burning abyss", Color(0xFFE53935), R.drawable.planet_lava_01),
+        "p10" to PlanetConfig("Red Dust", 3906250000.0, "Ancient ruins", Color(0xFFFF7043), R.drawable.planet_mars_01),
+        "p11" to PlanetConfig("Mech World X", 19531250000.0, "Factory complex", Color(0xFF78909C), R.drawable.planet_mech_01),
+        "p12" to PlanetConfig("Luna Silvis", 97656250000.0, "Night guardian", Color(0xFFBDBDBD), R.drawable.planet_moon_01),
+        "p13" to PlanetConfig("Abyss Ocean", 488281250000.0, "Deep sea", Color(0xFF1E88E5), R.drawable.planet_ocean_01),
+        "p14" to PlanetConfig("Ring Oasis", 2441406250000.0, "Sky belt", Color(0xFFFFD54F), R.drawable.planet_ring_01),
+        "p15" to PlanetConfig("Sky Haven", 12207031250000.0, "Above clouds", Color(0xFFE1F5FE), R.drawable.planet_sky_01),
+        "p16" to PlanetConfig("Toxic Waste", 61035156250000.0, "Corrosive", Color(0xFF76FF03), R.drawable.planet_toxic_01),
+        "p17" to PlanetConfig("Pink Nebula", 305175781250000.0, "Sweet shimmer", Color(0xFFF06292), R.drawable.planet_pink_01),
+        "p18" to PlanetConfig("Cloud City", 1525878906250000.0, "Floating", Color(0xFF81D4FA), R.drawable.planet_cloud_01),
+        "p19" to PlanetConfig("Rocky Bastion", 7629394531250000.0, "Stone fortress", Color(0xFF8D6E63), R.drawable.planet_rock_01),
+        "p20" to PlanetConfig("Foggy Void", 38146972656250000.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_fog_01)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -206,19 +217,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun rollDebrisReward(rarity: Rarity, planetId: String): Double {
         var reward = Random.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
-        // Aurea: 50% chance to get +100% (x2) reward for Common
-        if (planetId == "p5" && rarity == Rarity.COMMON) {
+        // Crystal Hearth (p4) or Sky Haven (p15): 50% chance to get +100% (x2) reward for debris
+        if ((planetId == "p4" || planetId == "p15") && rarity != Rarity.LEGENDARY) {
             if (Random.nextInt(100) < 50) {
                 reward *= 2.0
             }
+        }
+        // Pink Nebula (p17): +50% reward from all sources
+        if (planetId == "p17") {
+            reward *= 1.5
         }
         return reward
     }
 
     private fun rollTrashRarity(planetId: String): Rarity {
-        // Mars: Epic/Legendary weight x2
+        // Red Dust (p10) or Sky Haven (p15): Epic/Legendary weight x2
         val weights = Rarity.entries.map { r ->
-            if (planetId == "p9" && (r == Rarity.EPIC || r == Rarity.LEGENDARY)) r.spawnWeight * 2
+            if ((planetId == "p10" || planetId == "p15") && (r == Rarity.EPIC || r == Rarity.LEGENDARY)) r.spawnWeight * 2
             else r.spawnWeight
         }
         val totalWeight = weights.sum()
@@ -237,36 +252,35 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val planetId = _gameState.value.currentPlanetId
                 var baseInterval = 15000 + Random.nextLong(30000)
                 
-                // Ignis: Events 2x more often (actually requested for meteor shower, but let's apply to all or specific?)
-                // TZ says "Meteor shower occurs 2x more often". 
-                // Void-9: sync SINGULARITY - events occur very often (3x?)
-                if (planetId == "p3") baseInterval /= 2
-                if (planetId == "p8") baseInterval /= 3
+                // Nebula Echo (p3): Events 30% more often
+                if (planetId == "p3" || planetId == "p15") baseInterval = (baseInterval / 1.3).toLong()
                 
                 delay(baseInterval)
                 
                 if (_gameState.value.activeEvent == null) {
                     val durationBase = Random.nextLong(MIN_EVENT_DURATION_MS, MAX_EVENT_DURATION_MS + 1)
-                    // Glacies: 40% chance for "Eternal Storm" (duration x2)
-                    val durationMs = if (planetId == "p4" && Random.nextInt(100) < 40) (durationBase * 2.0).toLong() else durationBase
+                    // Jungle Core (p8): Events duration x2
+                    val durationMs = if ((planetId == "p8" || planetId == "p15")) durationBase * 2 else durationBase
                     
                     val eventTypes = GameEventType.entries.toMutableList()
                     
-                    // Toxis: Immune to CYBER_VIRUS
-                    if (planetId == "p6") eventTypes.remove(GameEventType.CYBER_VIRUS)
+                    // Gas Giant (p7): Immune to CYBER_VIRUS
+                    if (planetId == "p7" || planetId == "p15") eventTypes.remove(GameEventType.CYBER_VIRUS)
                     
                     var selectedType = eventTypes.random()
                     
-                    // Oceania: -25% chance for negative events
-                    if (planetId == "p2" && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
+                    // Luna Silvis (p12): -25% chance for negative events
+                    if ((planetId == "p12" || planetId == "p15") && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
                         if (Random.nextInt(100) < 25) {
                             selectedType = GameEventType.ASTEROID // Redirect to positive
                         }
                     }
-                    
-                    // Void-9: Higher chance for Black Hole
-                    if (planetId == "p8" && Random.nextInt(100) < 60) {
-                        selectedType = GameEventType.BLACK_HOLE
+
+                    // Toxic Waste (p16): 40% chance to dissolve negative events instantly
+                    if (planetId == "p16" && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
+                        if (Random.nextInt(100) < 40) {
+                            continue // Skip event
+                        }
                     }
 
                     spawnEvent(selectedType, eventTitle(selectedType), durationMs)
@@ -278,7 +292,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun eventTitle(type: GameEventType) = when(type) {
         GameEventType.STORM -> "Space Storm!"
         GameEventType.ASTEROID -> "Gold Asteroid!"
-        GameEventType.PIRATES -> "Pirates!"
         GameEventType.METEOR_SHOWER -> "Debris Shower!"
         GameEventType.BLACK_HOLE -> "Black Hole!"
         GameEventType.SOLAR_FLARE -> "Solar Flare!"
@@ -297,7 +310,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             state.copy(
                 activeEvent = GameEvent(type, title, System.currentTimeMillis() + durationMs, x, y),
                 eventMultiplier = if (type == GameEventType.STORM || type == GameEventType.SOLAR_FLARE) 3.0 else 1.0,
-                pirateTapsLeft = if (type == GameEventType.PIRATES) 5 else 0,
                 eventTapsLeft = if (type == GameEventType.BLACK_HOLE) 10 else 0,
                 infectedDroneId = infectedId
             )
@@ -321,19 +333,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             } else state
         }
     }
-
-    fun onPirateClick() {
-        _gameState.update { state ->
-            if (state.activeEvent?.type == GameEventType.PIRATES) {
-                val taps = state.pirateTapsLeft - 1
-                if (taps <= 0) {
-                    state.copy(activeEvent = null, pirateTapsLeft = 0)
-                } else {
-                    state.copy(pirateTapsLeft = taps)
-                }
-            } else state
-        }
-    }
     
     fun onBlackHoleClick() {
         _gameState.update { state ->
@@ -341,8 +340,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val taps = state.eventTapsLeft - 1
                 if (taps <= 0) {
                     val targets = state.scavengeTargets.toMutableList()
-                    // Void-9 reward: 5 rare items
-                    if (state.currentPlanetId == "p8") {
+                    // Abyss Ocean (p13) or Sky Haven (p15) reward: 5 rare items
+                    if (state.currentPlanetId == "p13" || state.currentPlanetId == "p15") {
                         repeat(5) {
                             targets.add(ScavengeTarget(
                                 id = debrisId.incrementAndGet(),
@@ -444,6 +443,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     return@map drone
                 }
 
+                var moveStep = DRONE_MOVE_STEP
+                if (planetId == "p18") moveStep *= 1.5f // Cloud City: Drones 50% faster
+
                 var nx = drone.x
                 var ny = drone.y
                 var nState = drone.state
@@ -497,7 +499,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 claimedTargetIds += availableTarget.id
                             } else {
                                 if (nPatrolTargetX == null || nPatrolTargetY == null ||
-                                    distanceSquared(nx, ny, nPatrolTargetX, nPatrolTargetY) <= DRONE_MOVE_STEP * DRONE_MOVE_STEP
+                                    distanceSquared(nx, ny, nPatrolTargetX, nPatrolTargetY) <= moveStep * moveStep
                                 ) {
                                     val patrolTarget = randomPatrolPoint()
                                     nPatrolTargetX = patrolTarget.first
@@ -508,7 +510,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                     ny,
                                     nPatrolTargetX ?: nx,
                                     nPatrolTargetY ?: ny,
-                                    drone.id
+                                    drone.id,
+                                    moveStep
                                 )
                                 nx = moved.first
                                 ny = moved.second
@@ -520,26 +523,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 val dx = target.x - nx
                                 val dy = target.y - ny
                                 val distSq = dx * dx + dy * dy
-                                if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                                if (distSq <= moveStep * moveStep) {
                                     nx = target.x
                                     ny = target.y
                                     
                                     if (target.isMeteor) {
-                                        // Ignis: 70% success, others 50%
-                                        val successChance = if (planetId == "p3") 70 else 50
-                                        if (Random.nextInt(100) >= successChance) {
-                                            nState = DroneState.BROKEN
-                                            // Exo-Prime: 20s repair, others 60s
-                                            val repairDuration = if (planetId == "p7") 20000L else 60000L
-                                            nDisabledUntil = now + repairDuration
-                                            nHasCargo = false
-                                            nCargoRarity = null
-                                            nCargoReward = 0.0
-                                        } else {
+                                        // Rocky Bastion (p19): Immune to meteors
+                                        if (planetId == "p19") {
                                             nState = DroneState.RETURNING
                                             nHasCargo = true
                                             nCargoRarity = Rarity.LEGENDARY
                                             nCargoReward = target.reward
+                                        } else {
+                                            // Magma S-15 (p9) or Sky Haven (p15): 70% success, others 50%
+                                            val successChance = if (planetId == "p9" || planetId == "p15") 70 else 50
+                                            if (Random.nextInt(100) >= successChance) {
+                                                nState = DroneState.BROKEN
+                                                // Mech World (p11) or Sky Haven (p15): 20s repair, others 60s
+                                                val repairDuration = if (planetId == "p11" || planetId == "p15") 20000L else 60000L
+                                                nDisabledUntil = now + repairDuration
+                                                nHasCargo = false
+                                                nCargoRarity = null
+                                                nCargoReward = 0.0
+                                            } else {
+                                                nState = DroneState.RETURNING
+                                                nHasCargo = true
+                                                nCargoRarity = Rarity.LEGENDARY
+                                                nCargoReward = target.reward
+                                            }
                                         }
                                     } else {
                                         nState = DroneState.RETURNING
@@ -551,8 +562,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                     nTargetId = null
                                 } else {
                                     val dist = sqrt(distSq.toDouble()).toFloat()
-                                    nx += (dx / dist) * DRONE_MOVE_STEP
-                                    ny += (dy / dist) * DRONE_MOVE_STEP
+                                    nx += (dx / dist) * moveStep
+                                    ny += (dy / dist) * moveStep
                                 }
                             } else {
                                 nState = DroneState.RETURNING
@@ -562,7 +573,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             val dx = DRONE_HOME_POSITION - nx
                             val dy = DRONE_HOME_POSITION - ny
                             val distSq = dx * dx + dy * dy
-                            if (distSq <= DRONE_MOVE_STEP * DRONE_MOVE_STEP) {
+                            if (distSq <= moveStep * moveStep) {
                                 nx = DRONE_HOME_POSITION
                                 ny = DRONE_HOME_POSITION
                                 if (nHasCargo) {
@@ -574,8 +585,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 nCargoReward = 0.0
                             } else {
                                 val dist = sqrt(distSq.toDouble()).toFloat()
-                                nx += (dx / dist) * DRONE_MOVE_STEP
-                                ny += (dy / dist) * DRONE_MOVE_STEP
+                                nx += (dx / dist) * moveStep
+                                ny += (dy / dist) * moveStep
                             }
                         }
                         else -> {}
@@ -618,15 +629,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         y: Float,
         targetX: Float,
         targetY: Float,
-        id: Long
+        id: Long,
+        step: Float = DRONE_PATROL_STEP
     ): Pair<Float, Float> {
         val dx = targetX - x
         val dy = targetY - y
         val distance = sqrt(dx * dx + dy * dy)
-        if (distance <= DRONE_PATROL_STEP) return targetX to targetY
+        if (distance <= step) return targetX to targetY
 
-        var stepX = dx / distance * DRONE_PATROL_STEP
-        var stepY = dy / distance * DRONE_PATROL_STEP
+        var stepX = dx / distance * step
+        var stepY = dy / distance * step
         if (distanceSquared(
                 x + stepX,
                 y + stepY,
@@ -638,8 +650,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val radialY = y - DRONE_HOME_POSITION
             val clockwise = if (id and 1L == 0L) 1f else -1f
             val radialLength = sqrt(radialX * radialX + radialY * radialY).coerceAtLeast(0.001f)
-            stepX = -radialY / radialLength * DRONE_PATROL_STEP * clockwise
-            stepY = radialX / radialLength * DRONE_PATROL_STEP * clockwise
+            stepX = -radialY / radialLength * step * clockwise
+            stepY = radialX / radialLength * step * clockwise
         }
         return (x + stepX) to (y + stepY)
     }
@@ -652,14 +664,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun processEconomyTick() {
         _gameState.update { currentState ->
-            var newTotalDebris = currentState.totalDebris
-            var newHotelDebt = currentState.currentHotelDebt
-            var hotelDebtActive = currentState.isHotelDebtActive
-            
-            // Если активен ивент с пиратами, они крадут 0.1% каждую секунду
-            if (currentState.activeEvent?.type == GameEventType.PIRATES) newTotalDebris *= 0.999
-
-            currentState.copy(totalDebris = newTotalDebris, currentHotelDebt = newHotelDebt, isHotelDebtActive = hotelDebtActive)
+            currentState
         }
     }
 
@@ -668,13 +673,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun calculateClickValue(): Double {
         val state = _gameState.value
         var v = 1.0 + clickItems.sumOf { (state.clickLevels[it.id] ?: 0) * it.value }
+        
         when (state.currentPlanetId) {
-            "p1" -> if (Random.nextInt(100) < 15) v *= 2.0
-            "p3" -> v += 5.0
-            "p2" -> v *= 1.2
-            "p8" -> {
-                // Void-9: 30% chance for Critical Tap (x4)
-                if (Random.nextInt(100) < 30) v *= 4.0
+            "p1" -> if (Random.nextInt(100) < 15) v *= 2.0 // Azurea
+            "p2" -> v *= 1.2 // Canyon Prime
+            "p5" -> v += 15.0 // Dune Horizon
+            "p6" -> if (Random.nextInt(100) < 30) v *= 4.0 // Volt Nova
+            "p14" -> if (state.activeEvent != null) v *= 2.0 // Ring Oasis
+            "p20" -> if (Random.nextInt(100) < 10) v *= 10.0 // Foggy Void: x10 Critical
+            "p15" -> { // Sky Haven: Hybrid bonus
+                if (Random.nextInt(100) < 25) v *= 3.0
+                v += 20.0
+                if (state.activeEvent != null) v *= 1.5
             }
         }
         v *= state.eventMultiplier

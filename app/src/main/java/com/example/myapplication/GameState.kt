@@ -27,7 +27,6 @@ data class GameState(
     val currentHotelDebt: Double = 0.0,
     val activeEvent: GameEvent? = null,
     val eventMultiplier: Double = 1.0,
-    val pirateTapsLeft: Int = 0,
     val eventTapsLeft: Int = 0,
     val drones: List<DroneData> = emptyList(),
     val scavengeTargets: List<ScavengeTarget> = emptyList(),
@@ -68,7 +67,7 @@ data class ScavengeTarget(
     val reward: Double = 0.0
 )
 
-enum class GameEventType { STORM, ASTEROID, PIRATES, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS }
+enum class GameEventType { STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS }
 
 data class GameEvent(
     val type: GameEventType,

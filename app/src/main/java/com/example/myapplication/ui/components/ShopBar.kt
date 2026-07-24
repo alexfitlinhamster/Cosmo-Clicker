@@ -94,7 +94,7 @@ fun ShopBar(
                                 val active = state.currentPlanetId == id
                                 val owned = state.ownedPlanets.contains(id)
                                 PlanetRow(
-                                    name = config.name,
+                                    name = localizedPlanetName(id),
                                     desc = localizedPlanetDescription(id),
                                     bonus = localizedPlanetBonus(id),
                                     price = config.price.toLong(),
@@ -417,6 +417,28 @@ fun PlanetRow(
 }
 
 @Composable
+private fun localizedPlanetName(id: String): String = stringResource(
+    when (id) {
+        "p1" -> R.string.planet_azurea
+        "p2" -> R.string.planet_canyon_prime
+        "p3" -> R.string.planet_nebula_echo
+        "p4" -> R.string.planet_crystal_hearth
+        "p5" -> R.string.planet_dune_horizon
+        "p6" -> R.string.planet_volt_nova
+        "p7" -> R.string.planet_gas_giant
+        "p8" -> R.string.planet_jungle_core
+        "p9" -> R.string.planet_magma_s15
+        "p10" -> R.string.planet_red_dust
+        "p11" -> R.string.planet_mech_world
+        "p12" -> R.string.planet_luna_silvis
+        "p13" -> R.string.planet_abyss_ocean
+        "p14" -> R.string.planet_ring_oasis
+        "p15" -> R.string.planet_sky_haven
+        else -> R.string.unknown_item
+    }
+)
+
+@Composable
 private fun localizedUpgradeName(id: String): String = stringResource(
     when (id) {
         "magnet" -> R.string.upgrade_plasma_magnet
@@ -431,15 +453,21 @@ private fun localizedUpgradeName(id: String): String = stringResource(
 @Composable
 private fun localizedPlanetDescription(id: String): String = stringResource(
     when (id) {
-        "p1" -> R.string.planet_forest_world
-        "p2" -> R.string.planet_water_world
-        "p3" -> R.string.planet_volcanic
-        "p4" -> R.string.planet_ice_world
-        "p5" -> R.string.planet_gold_veins
-        "p6" -> R.string.planet_toxic_gas
-        "p7" -> R.string.planet_advanced
-        "p8" -> R.string.planet_dark_matter
-        "p9" -> R.string.planet_red_planet
+        "p1" -> R.string.planet_desc_azurea
+        "p2" -> R.string.planet_desc_canyon_prime
+        "p3" -> R.string.planet_desc_nebula_echo
+        "p4" -> R.string.planet_desc_crystal_hearth
+        "p5" -> R.string.planet_desc_dune_horizon
+        "p6" -> R.string.planet_desc_volt_nova
+        "p7" -> R.string.planet_desc_gas_giant
+        "p8" -> R.string.planet_desc_jungle_core
+        "p9" -> R.string.planet_desc_magma_s15
+        "p10" -> R.string.planet_desc_red_dust
+        "p11" -> R.string.planet_desc_mech_world
+        "p12" -> R.string.planet_desc_luna_silvis
+        "p13" -> R.string.planet_desc_abyss_ocean
+        "p14" -> R.string.planet_desc_ring_oasis
+        "p15" -> R.string.planet_desc_sky_haven
         else -> R.string.unknown_item
     }
 )
@@ -447,15 +475,21 @@ private fun localizedPlanetDescription(id: String): String = stringResource(
 @Composable
 private fun localizedPlanetBonus(id: String): String = stringResource(
     when (id) {
-        "p1" -> R.string.planet_bonus_sylva
-        "p2" -> R.string.planet_bonus_oceania
-        "p3" -> R.string.planet_bonus_ignis
-        "p4" -> R.string.planet_bonus_glacies
-        "p5" -> R.string.planet_bonus_aurea
-        "p6" -> R.string.planet_bonus_toxis
-        "p7" -> R.string.planet_bonus_exo_prime
-        "p8" -> R.string.planet_bonus_void_9
-        "p9" -> R.string.planet_bonus_mars
+        "p1" -> R.string.planet_bonus_azurea
+        "p2" -> R.string.planet_bonus_canyon_prime
+        "p3" -> R.string.planet_bonus_nebula_echo
+        "p4" -> R.string.planet_bonus_crystal_hearth
+        "p5" -> R.string.planet_bonus_dune_horizon
+        "p6" -> R.string.planet_bonus_volt_nova
+        "p7" -> R.string.planet_bonus_gas_giant
+        "p8" -> R.string.planet_bonus_jungle_core
+        "p9" -> R.string.planet_bonus_magma_s15
+        "p10" -> R.string.planet_bonus_red_dust
+        "p11" -> R.string.planet_bonus_mech_world
+        "p12" -> R.string.planet_bonus_luna_silvis
+        "p13" -> R.string.planet_bonus_abyss_ocean
+        "p14" -> R.string.planet_bonus_ring_oasis
+        "p15" -> R.string.planet_bonus_sky_haven
         else -> R.string.unknown_item
     }
 )

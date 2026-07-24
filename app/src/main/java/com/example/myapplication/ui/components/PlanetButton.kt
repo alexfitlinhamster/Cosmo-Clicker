@@ -44,18 +44,10 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
     ) {
         LaunchedEffect(scaleVal) { if (scaleVal < 1f) { delay(80); scaleVal = 1f } }
 
-        // Мощное свечение
+        // Обрезка
         Box(
             modifier = Modifier
-                .size(containerSize * 0.7f)
-                .shadow(40.dp, CircleShape, ambientColor = planetConfig.color, spotColor = planetConfig.color)
-        )
-
-        // Обрезка с внутренним запасом
-        Box(
-            modifier = Modifier
-                .size(containerSize - 4.dp) // Чуть меньше контейнера, чтобы отсечь края
-                .clip(CircleShape)
+                .fillMaxSize()
         ) {
             if (planetConfig.spriteIndex >= 0) {
                 val columns = 4
@@ -70,31 +62,17 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                     modifier = Modifier
                         .requiredSize(containerSize * columns, containerSize * rows)
                         .offset(x = -containerSize * col, y = -containerSize * row)
-                        .scale(1.5f) // Сильный зум внутри маски
                 )
             } else {
                 Image(
                     painter = painterResource(id = planetConfig.imageRes),
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxSize()
-                        .scale(2.8f) // Экстремальный зум для одиночных файлов
                         .let { if (isLocked) it.alpha(0.5f) else it }
                 )
             }
         }
-        
-        // Атмосфера
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(Color.Transparent, planetConfig.color.copy(alpha = 0.25f)),
-                    )
-                )
-        )
     }
 }

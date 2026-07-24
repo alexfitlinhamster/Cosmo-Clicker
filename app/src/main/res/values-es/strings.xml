@@ -46,14 +46,12 @@
     <string name="rarity_legendary">Legendario</string>
     <string name="event_space_storm">¡Tormenta espacial!</string>
     <string name="event_gold_asteroid">¡Asteroide dorado!</string>
-    <string name="event_pirates">¡Piratas!</string>
     <string name="event_debris_shower">¡Lluvia de basura espacial!</string>
     <string name="event_black_hole">¡Agujero negro!</string>
     <string name="event_solar_flare">¡Llamarada solar!</string>
     <string name="event_cyber_virus">¡Virus cibernético!</string>
     <string name="event_desc_storm">¡Tormenta espacial! Los toques son 3 veces más efectivos, pero todo es caótico.</string>
     <string name="event_desc_asteroid">¡Asteroide de oro! ¡Haz clic rápido para obtener un gran bono de restos!</string>
-    <string name="event_desc_pirates">¡Piratas! ¡Están robando tus restos! Tócalos para ahuyentarlos.</string>
     <string name="event_desc_debris_shower">¡Lluvia de restos! ¡Muchos restos cayendo! Cuidado con los meteoros, pueden romper drones.</string>
     <string name="event_desc_black_hole">¡Agujero negro! ¡Está succionando todo! Tócalo para cerrarlo.</string>
     <string name="event_desc_solar_flare">¡Llamarada solar! Los toques son 3 veces más efectivos, pero los drones están bloqueados.</string>
@@ -63,23 +61,68 @@
     <string name="upgrade_quantum_wrench">Llave cuántica</string>
     <string name="upgrade_debris_harvester">Recolector de escombros</string>
     <string name="upgrade_signal_beacon">Baliza de señal</string>
-    <string name="planet_forest_world">Mundo forestal</string>
-    <string name="planet_water_world">Mundo acuático</string>
-    <string name="planet_volcanic">Volcánico</string>
-    <string name="planet_ice_world">Mundo helado</string>
-    <string name="planet_gold_veins">Vetas de oro</string>
-    <string name="planet_toxic_gas">Gas tóxico</string>
-    <string name="planet_advanced">Avanzado</string>
-    <string name="planet_dark_matter">Materia oscura</string>
-    <string name="planet_red_planet">Planeta rojo</string>
-    <string name="planet_bonus_sylva" formatted="false">Bonus: 15% de probabilidad de obtener x2 ingresos por toque</string>
-    <string name="planet_bonus_oceania" formatted="false">Bonus: +20% por toque; 25% de evitar un evento negativo</string>
-    <string name="planet_bonus_ignis">Bonus: +5 por toque; eventos x2 más frecuentes; 70% de éxito con meteoritos</string>
-    <string name="planet_bonus_glacies" formatted="false">Bonus: 40% de probabilidad de que los eventos duren x2</string>
-    <string name="planet_bonus_aurea" formatted="false">Bonus: 50% de probabilidad de obtener x2 por residuos comunes</string>
-    <string name="planet_bonus_toxis">Bonus: inmunidad a eventos de Virus Cibernético</string>
-    <string name="planet_bonus_exo_prime">Bonus: los drones averiados se reparan en 20 segundos</string>
-    <string name="planet_bonus_void_9" formatted="false">Bonus: 30% de probabilidad de toque x4; los Agujeros Negros dan 5 residuos raros</string>
-    <string name="planet_bonus_mars">Bonus: los residuos épicos y legendarios aparecen x2 más</string>
+    <string name="planet_azurea">Azurea</string>
+    <string name="planet_canyon_prime">Canyon Prime</string>
+    <string name="planet_nebula_echo">Echo de Nebula</string>
+    <string name="planet_crystal_hearth">Hogar de Cristal</string>
+    <string name="planet_dune_horizon">Horizonte de Dunas</string>
+    <string name="planet_volt_nova">Volt Nova</string>
+    <string name="planet_gas_giant">Gigante Gaseoso G-7</string>
+    <string name="planet_jungle_core">Núcleo de la Selva</string>
+    <string name="planet_magma_s15">Magma S-15</string>
+    <string name="planet_red_dust">Polvo Rojo</string>
+    <string name="planet_mech_world">Mundo Mecánico X</string>
+    <string name="planet_luna_silvis">Luna Silvis</string>
+    <string name="planet_abyss_ocean">Océano del Abismo</string>
+    <string name="planet_ring_oasis">Oasis del Anillo</string>
+    <string name="planet_sky_haven">Refugio del Cielo</string>
+    <string name="planet_toxic_waste">Residuos Tóxicos</string>
+    <string name="planet_pink_nebula">Nebulosa Rosa</string>
+    <string name="planet_cloud_city">Ciudad de las Nubes</string>
+    <string name="planet_rocky_bastion">Bastión Rocoso</string>
+    <string name="planet_foggy_void">Vacío Nebuloso</string>
+
+    <string name="planet_desc_azurea">Planeta natal</string>
+    <string name="planet_desc_canyon_prime">Mundo seco y ventoso</string>
+    <string name="planet_desc_nebula_echo">Resplandor de estrellas lejanas</string>
+    <string name="planet_desc_crystal_hearth">Belleza frágil de los cristales</string>
+    <string name="planet_desc_dune_horizon">Arenas infinitas</string>
+    <string name="planet_desc_volt_nova">Mundo de pura electricidad</string>
+    <string name="planet_desc_gas_giant">Atmósfera densa y peligrosa</string>
+    <string name="planet_desc_jungle_core">Matorrales impenetrables</string>
+    <string name="planet_desc_magma_s15">Abismo ardiente de lava</string>
+    <string name="planet_desc_red_dust">Ruinas antiguas de una civilización pasada</string>
+    <string name="planet_desc_mech_world">Enorme complejo de fábricas</string>
+    <string name="planet_desc_luna_silvis">Guardián silencioso del cielo nocturno</string>
+    <string name="planet_desc_abyss_ocean">Mundo de silencio eterno</string>
+    <string name="planet_desc_ring_oasis">Cinturón de vida en el cielo</string>
+    <string name="planet_desc_sky_haven">Por encima de todas las nubes</string>
+    <string name="planet_desc_toxic_waste">Mundo corrosivo y abandonado</string>
+    <string name="planet_desc_pink_nebula">Dulce brillo de gas</string>
+    <string name="planet_desc_cloud_city">Flotando entre las tormentas</string>
+    <string name="planet_desc_rocky_bastion">Fortaleza inexpugnable de piedra</string>
+    <string name="planet_desc_foggy_void">Donde la luz desaparece</string>
+
+    <string name="planet_bonus_azurea" formatted="false">Bonus: 15% de probabilidad de x2 ingresos por toque</string>
+    <string name="planet_bonus_canyon_prime" formatted="false">Bonus: +20% ingresos por clic</string>
+    <string name="planet_bonus_nebula_echo" formatted="false">Bonus: Los eventos ocurren un 30% más a menudo</string>
+    <string name="planet_bonus_crystal_hearth" formatted="false">Bonus: 50% de probabilidad de recompensa x2 por restos</string>
+    <string name="planet_bonus_dune_horizon">Bonus: +15 ingresos por cada clic</string>
+    <string name="planet_bonus_volt_nova" formatted="false">Bonus: 30% de probabilidad de toque crítico (x4)</string>
+    <string name="planet_bonus_gas_giant">Bonus: Inmunidad total al Cibervirus</string>
+    <string name="planet_bonus_jungle_core" formatted="false">Bonus: Duración de los eventos aumentada en x2</string>
+    <string name="planet_bonus_magma_s15" formatted="false">Bonus: 70% de probabilidad de éxito en rescate de meteoritos</string>
+    <string name="planet_bonus_red_dust" formatted="false">Bonus: Los restos Épicos y Legendarios aparecen x2 más a menudo</string>
+    <string name="planet_bonus_mech_world" formatted="false">Bonus: Los drones se reparan en solo 20 segundos</string>
+    <string name="planet_bonus_luna_silvis" formatted="false">Bonus: 25% de probabilidad de evitar eventos negativos</string>
+    <string name="planet_bonus_abyss_ocean" formatted="false">Bonus: Los Agujeros Negros siempre dan 5 restos raros</string>
+    <string name="planet_bonus_ring_oasis" formatted="false">Bonus: x2 ingresos por toque durante cualquier evento</string>
+    <string name="planet_bonus_sky_haven">Bonus: Mundo definitivo — todas las probabilidades de bonus aumentadas</string>
+    <string name="planet_bonus_toxic_waste" formatted="false">Bonus: 40% de probabilidad de disolver eventos negativos al instante</string>
+    <string name="planet_bonus_pink_nebula" formatted="false">Bonus: +50% de recompensa de restos de todas las fuentes</string>
+    <string name="planet_bonus_cloud_city" formatted="false">Bonus: Los drones vuelan un 50% más rápido hacia los restos</string>
+    <string name="planet_bonus_rocky_bastion" formatted="false">Bonus: Los drones son 100% inmunes a los meteoros</string>
+    <string name="planet_bonus_foggy_void" formatted="false">Bonus: 10% de probabilidad de Toque Crítico x10</string>
+
     <string name="unknown_item">Desconocido</string>
 </resources>
