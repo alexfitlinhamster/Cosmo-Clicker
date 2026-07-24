@@ -1,5 +1,9 @@
 # News
 
+## 1.11.3 (version code 30) - 2026-07-24
+
+- Centered multiline start-screen prompts, including the Russian translation.
+
 ## 1.11.2 (version code 29) - 2026-07-24
 
 - Added regression tests for planet purchases and selection.
