@@ -166,7 +166,7 @@ fun GameScreen(
 
                 floatingTexts.forEach { data ->
                     key(data.id) {
-                        FloatingText(data)
+                        FloatingText(data, maxWidth, maxHeight)
                     }
                 }
             }

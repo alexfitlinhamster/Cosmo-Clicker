@@ -354,8 +354,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         repeat(5) {
                             targets.add(ScavengeTarget(
                                 id = debrisId.incrementAndGet(),
-                                x = state.activeEvent.x + (Random.nextFloat() - 0.5f) * 0.2f,
-                                y = state.activeEvent.y + (Random.nextFloat() - 0.5f) * 0.2f,
+                                x = (state.activeEvent.x + (Random.nextFloat() - 0.5f) * 0.2f)
+                                    .coerceIn(DEBRIS_SPAWN_MARGIN, 1f - DEBRIS_SPAWN_MARGIN),
+                                y = (state.activeEvent.y + (Random.nextFloat() - 0.5f) * 0.2f)
+                                    .coerceIn(DEBRIS_SPAWN_MARGIN, 1f - DEBRIS_SPAWN_MARGIN),
                                 rarity = Rarity.RARE,
                                 expiresAt = System.currentTimeMillis() + 30000,
                                 imageIndex = debrisImageIndex(Rarity.RARE),
@@ -864,3 +866,4 @@ private const val DRONE_PATROL_STEP = 0.008f
 private const val PLANET_AVOID_RADIUS = 0.18f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
 private const val METEOR_SPAWN_CHANCE_PERCENT = 20
+private const val DEBRIS_SPAWN_MARGIN = 0.05f

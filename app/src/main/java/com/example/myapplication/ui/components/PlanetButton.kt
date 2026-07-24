@@ -37,7 +37,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
                 if (!isLocked) {
                     scaleVal = 0.92f
-                    onClick(0f, 0f)
+                    onClick(0.5f, 0.5f)
                 }
             },
         contentAlignment = Alignment.Center

@@ -1,5 +1,11 @@
 # News
 
+## 1.11.1 (version code 28) - 2026-07-24
+
+- Kept Black Hole debris rewards within the reachable game area.
+- Fixed floating tap-income text positioning, color, rise, and fade animation.
+- Made the settings screen scrollable on small screens and with large text.
+
 ## 1.11 (version code 27) - 2026-07-24
 
 - Added the missing localized names, descriptions, and bonuses for planets 16–20.

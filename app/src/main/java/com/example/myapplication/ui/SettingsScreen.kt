@@ -76,7 +76,8 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 40.dp, start = 16.dp, end = 16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
