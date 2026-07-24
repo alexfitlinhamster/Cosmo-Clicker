@@ -118,13 +118,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun saveGameState() {
         val state = _gameState.value
         prefs.edit().apply {
-            putLong("totalDebrisBits", state.totalDebris.toRawBits())
+            putLong("totalDebrisBits", GameRules.encodeDouble(state.totalDebris))
             state.clickLevels.forEach { (id, lvl) -> putInt("click_$id", lvl) }
             state.fleetCounts.forEach { (id, count) -> putInt("fleet_$id", count) }
             putString("currentPlanetId", state.currentPlanetId)
             putStringSet("ownedPlanets", state.ownedPlanets)
             putBoolean("isHotelDebtActive", state.isHotelDebtActive)
-            putLong("currentHotelDebtBits", state.currentHotelDebt.toRawBits())
+            putLong("currentHotelDebtBits", GameRules.encodeDouble(state.currentHotelDebt))
             putInt("casesPurchased", state.casesPurchased)
             apply()
         }
@@ -133,7 +133,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadPreciseDouble(key: String, defaultValue: Double): Double {
         val preciseKey = "${key}Bits"
         return if (prefs.contains(preciseKey)) {
-            Double.fromBits(prefs.getLong(preciseKey, defaultValue.toRawBits()))
+            GameRules.decodeDouble(
+                prefs.getLong(preciseKey, GameRules.encodeDouble(defaultValue))
+            )
         } else {
             prefs.getFloat(key, defaultValue.toFloat()).toDouble()
         }
@@ -354,10 +356,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         repeat(5) {
                             targets.add(ScavengeTarget(
                                 id = debrisId.incrementAndGet(),
-                                x = (state.activeEvent.x + (Random.nextFloat() - 0.5f) * 0.2f)
-                                    .coerceIn(DEBRIS_SPAWN_MARGIN, 1f - DEBRIS_SPAWN_MARGIN),
-                                y = (state.activeEvent.y + (Random.nextFloat() - 0.5f) * 0.2f)
-                                    .coerceIn(DEBRIS_SPAWN_MARGIN, 1f - DEBRIS_SPAWN_MARGIN),
+                                x = GameRules.clampDebrisSpawnCoordinate(
+                                    state.activeEvent.x + (Random.nextFloat() - 0.5f) * 0.2f
+                                ),
+                                y = GameRules.clampDebrisSpawnCoordinate(
+                                    state.activeEvent.y + (Random.nextFloat() - 0.5f) * 0.2f
+                                ),
                                 rarity = Rarity.RARE,
                                 expiresAt = System.currentTimeMillis() + 30000,
                                 imageIndex = debrisImageIndex(Rarity.RARE),
@@ -710,14 +714,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             var hotelDebtActive = currentState.isHotelDebtActive
             
             if (hotelDebtActive) {
-                val debtPayment = minOf(clickPower * HOTEL_DEBT_PAYMENT_SHARE, newHotelDebt)
-                val actualIncome = clickPower - debtPayment
-                newHotelDebt -= debtPayment
-                newTotalDebris += actualIncome
-                if (newHotelDebt <= 0) {
-                    newHotelDebt = 0.0
-                    hotelDebtActive = false
-                }
+                val payment = GameRules.applyHotelDebtPayment(
+                    totalDebris = newTotalDebris,
+                    currentDebt = newHotelDebt,
+                    clickIncome = clickPower
+                )
+                newTotalDebris = payment.totalDebris
+                newHotelDebt = payment.remainingDebt
+                hotelDebtActive = payment.isDebtActive
             } else {
                 newTotalDebris += clickPower
             }
@@ -763,16 +767,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun buyPlanet(planetId: String) {
         val config = planets[planetId] ?: return
         updateStoreState("planet:$planetId") { state ->
-            when {
-                state.currentPlanetId == planetId -> null
-                state.ownedPlanets.contains(planetId) -> state.copy(currentPlanetId = planetId)
-                state.totalDebris >= config.price -> state.copy(
-                    totalDebris = state.totalDebris - config.price,
-                    currentPlanetId = planetId,
-                    ownedPlanets = state.ownedPlanets + planetId
-                )
-                else -> null
-            }
+            GameRules.purchaseOrSelectPlanet(state, planetId, config.price)
         }
     }
 
@@ -793,7 +788,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun calculateCaseCost(casesPurchased: Int): Double =
-        CASE_BASE_COST * CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
+        GameRules.calculateCaseCost(casesPurchased)
 
     fun finishOpeningCase() {
         val randomRoll = Random.nextInt(100)
@@ -821,9 +816,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun takeHotelDebt() {
         updateStoreState("hotel-debt") { state ->
             if (state.isHotelDebtActive) null else state.copy(
-                totalDebris = state.totalDebris + HOTEL_LOAN_AMOUNT,
+                totalDebris = state.totalDebris + GameRules.HOTEL_LOAN_AMOUNT,
                 isHotelDebtActive = true,
-                currentHotelDebt = HOTEL_LOAN_AMOUNT
+                currentHotelDebt = GameRules.HOTEL_LOAN_AMOUNT
             )
         }
     }
@@ -854,10 +849,6 @@ data class PlanetConfig(val name: String, val price: Double, val desc: String, v
 private const val DRONE_MOVE_STEP = 0.025f
 private const val DRONE_HOME_POSITION = 0.5f
 private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
-private const val CASE_BASE_COST = 1000.0
-private const val CASE_COST_MULTIPLIER = 1.2
-private const val HOTEL_LOAN_AMOUNT = 1_000_000.0
-private const val HOTEL_DEBT_PAYMENT_SHARE = 0.3
 private const val MIN_EVENT_DURATION_MS = 20_000L
 private const val MAX_EVENT_DURATION_MS = 60_000L
 private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L
@@ -866,4 +857,3 @@ private const val DRONE_PATROL_STEP = 0.008f
 private const val PLANET_AVOID_RADIUS = 0.18f
 private const val PLANET_AVOID_RADIUS_SQ = PLANET_AVOID_RADIUS * PLANET_AVOID_RADIUS
 private const val METEOR_SPAWN_CHANCE_PERCENT = 20
-private const val DEBRIS_SPAWN_MARGIN = 0.05f

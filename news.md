@@ -1,5 +1,11 @@
 # News
 
+## 1.11.2 (version code 29) - 2026-07-24
+
+- Added regression tests for planet purchases and selection.
+- Added tests for case-price growth, Hotel Debt repayment, precise large-number saves, and reward boundaries.
+- Added coverage ensuring all 20 planets have unique localized name, description, and bonus resources.
+
 ## 1.11.1 (version code 28) - 2026-07-24
 
 - Kept Black Hole debris rewards within the reachable game area.

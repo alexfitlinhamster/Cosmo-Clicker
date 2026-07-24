@@ -417,7 +417,9 @@ fun PlanetRow(
 }
 
 @Composable
-private fun localizedPlanetName(id: String): String = stringResource(
+private fun localizedPlanetName(id: String): String = stringResource(planetNameResource(id))
+
+internal fun planetNameResource(id: String): Int =
     when (id) {
         "p1" -> R.string.planet_azurea
         "p2" -> R.string.planet_canyon_prime
@@ -441,7 +443,6 @@ private fun localizedPlanetName(id: String): String = stringResource(
         "p20" -> R.string.planet_foggy_void
         else -> R.string.unknown_item
     }
-)
 
 @Composable
 private fun localizedUpgradeName(id: String): String = stringResource(
@@ -456,7 +457,10 @@ private fun localizedUpgradeName(id: String): String = stringResource(
 )
 
 @Composable
-private fun localizedPlanetDescription(id: String): String = stringResource(
+private fun localizedPlanetDescription(id: String): String =
+    stringResource(planetDescriptionResource(id))
+
+internal fun planetDescriptionResource(id: String): Int =
     when (id) {
         "p1" -> R.string.planet_desc_azurea
         "p2" -> R.string.planet_desc_canyon_prime
@@ -480,10 +484,11 @@ private fun localizedPlanetDescription(id: String): String = stringResource(
         "p20" -> R.string.planet_desc_foggy_void
         else -> R.string.unknown_item
     }
-)
 
 @Composable
-private fun localizedPlanetBonus(id: String): String = stringResource(
+private fun localizedPlanetBonus(id: String): String = stringResource(planetBonusResource(id))
+
+internal fun planetBonusResource(id: String): Int =
     when (id) {
         "p1" -> R.string.planet_bonus_azurea
         "p2" -> R.string.planet_bonus_canyon_prime
@@ -507,4 +512,3 @@ private fun localizedPlanetBonus(id: String): String = stringResource(
         "p20" -> R.string.planet_bonus_foggy_void
         else -> R.string.unknown_item
     }
-)
