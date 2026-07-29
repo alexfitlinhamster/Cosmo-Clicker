@@ -61,26 +61,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     val planets = mapOf(
-        "p1" to PlanetConfig("Azurea", 0.0, "Home planet", Color(0xFF2196F3), R.drawable.planet_blue_01),
-        "p2" to PlanetConfig("Canyon Prime", 10000.0, "Dry and windy world", Color(0xFFFFA726), R.drawable.planet_canyon_01),
-        "p3" to PlanetConfig("Nebula Echo", 50000.0, "Glow of distant stars", Color(0xFF7E57C2), R.drawable.planet_cosmic_01),
-        "p4" to PlanetConfig("Crystal Hearth", 250000.0, "Fragile beauty", Color(0xFF26C6DA), R.drawable.planet_crystal_01),
-        "p5" to PlanetConfig("Dune Horizon", 1250000.0, "Endless sands", Color(0xFFFFCC80), R.drawable.planet_desert_01),
-        "p6" to PlanetConfig("Volt Nova", 6250000.0, "World of electricity", Color(0xFFFFF176), R.drawable.planet_energy_01),
-        "p7" to PlanetConfig("Gas Giant G-7", 31250000.0, "Dense atmosphere", Color(0xFF9CCC65), R.drawable.planet_gas_01),
-        "p8" to PlanetConfig("Jungle Core", 156250000.0, "Wild nature", Color(0xFF43A047), R.drawable.planet_jungle_01),
-        "p9" to PlanetConfig("Magma S-15", 781250000.0, "Burning abyss", Color(0xFFE53935), R.drawable.planet_lava_01),
-        "p10" to PlanetConfig("Red Dust", 3906250000.0, "Ancient ruins", Color(0xFFFF7043), R.drawable.planet_mars_01),
-        "p11" to PlanetConfig("Mech World X", 19531250000.0, "Factory complex", Color(0xFF78909C), R.drawable.planet_mech_01),
-        "p12" to PlanetConfig("Luna Silvis", 97656250000.0, "Night guardian", Color(0xFFBDBDBD), R.drawable.planet_moon_01),
-        "p13" to PlanetConfig("Abyss Ocean", 488281250000.0, "Deep sea", Color(0xFF1E88E5), R.drawable.planet_ocean_01),
-        "p14" to PlanetConfig("Ring Oasis", 2441406250000.0, "Sky belt", Color(0xFFFFD54F), R.drawable.planet_ring_01),
-        "p15" to PlanetConfig("Sky Haven", 12207031250000.0, "Above clouds", Color(0xFFE1F5FE), R.drawable.planet_sky_01),
-        "p16" to PlanetConfig("Toxic Waste", 61035156250000.0, "Corrosive", Color(0xFF76FF03), R.drawable.planet_toxic_01),
-        "p17" to PlanetConfig("Pink Nebula", 305175781250000.0, "Sweet shimmer", Color(0xFFF06292), R.drawable.planet_pink_01),
-        "p18" to PlanetConfig("Cloud City", 1525878906250000.0, "Floating", Color(0xFF81D4FA), R.drawable.planet_cloud_01),
-        "p19" to PlanetConfig("Rocky Bastion", 7629394531250000.0, "Stone fortress", Color(0xFF8D6E63), R.drawable.planet_rock_01),
-        "p20" to PlanetConfig("Foggy Void", 38146972656250000.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_fog_01)
+        "p1" to PlanetConfig("Azurea", 0.0, "Home planet", Color(0xFF2196F3), R.drawable.planet_1),
+        "p2" to PlanetConfig("Canyon Prime", 10000.0, "Dry and windy world", Color(0xFFFFA726), R.drawable.planet_2),
+        "p3" to PlanetConfig("Nebula Echo", 50000.0, "Glow of distant stars", Color(0xFF7E57C2), R.drawable.planet_3),
+        "p4" to PlanetConfig("Crystal Hearth", 250000.0, "Fragile beauty", Color(0xFF26C6DA), R.drawable.planet_4),
+        "p5" to PlanetConfig("Dune Horizon", 1250000.0, "Endless sands", Color(0xFFFFCC80), R.drawable.planet_5),
+        "p6" to PlanetConfig("Volt Nova", 6250000.0, "World of electricity", Color(0xFFFFF176), R.drawable.planet_6),
+        "p7" to PlanetConfig("Gas Giant G-7", 31250000.0, "Dense atmosphere", Color(0xFF9CCC65), R.drawable.planet_7),
+        "p8" to PlanetConfig("Jungle Core", 156250000.0, "Wild nature", Color(0xFF43A047), R.drawable.planet_8),
+        "p9" to PlanetConfig("Magma S-15", 781250000.0, "Burning abyss", Color(0xFFE53935), R.drawable.planet_9),
+        "p10" to PlanetConfig("Red Dust", 3906250000.0, "Ancient ruins", Color(0xFFFF7043), R.drawable.planet_10),
+        "p11" to PlanetConfig("Mech World X", 19531250000.0, "Factory complex", Color(0xFF78909C), R.drawable.planet_11),
+        "p12" to PlanetConfig("Luna Silvis", 97656250000.0, "Night guardian", Color(0xFFBDBDBD), R.drawable.planet_12),
+        "p13" to PlanetConfig("Abyss Ocean", 488281250000.0, "Deep sea", Color(0xFF1E88E5), R.drawable.planet_1),
+        "p14" to PlanetConfig("Ring Oasis", 2441406250000.0, "Sky belt", Color(0xFFFFD54F), R.drawable.planet_2),
+        "p15" to PlanetConfig("Sky Haven", 12207031250000.0, "Above clouds", Color(0xFFE1F5FE), R.drawable.planet_3),
+        "p16" to PlanetConfig("Toxic Waste", 61035156250000.0, "Corrosive", Color(0xFF76FF03), R.drawable.planet_4),
+        "p17" to PlanetConfig("Pink Nebula", 305175781250000.0, "Sweet shimmer", Color(0xFFF06292), R.drawable.planet_5),
+        "p18" to PlanetConfig("Cloud City", 1525878906250000.0, "Floating", Color(0xFF81D4FA), R.drawable.planet_6),
+        "p19" to PlanetConfig("Rocky Bastion", 7629394531250000.0, "Stone fortress", Color(0xFF8D6E63), R.drawable.planet_7),
+        "p20" to PlanetConfig("Foggy Void", 38146972656250000.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_8)
     )
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -92,6 +92,41 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startDroneLoop()
         startTrashSpawnLoop()
         startDebrisShowerLoop()
+        
+        // Initialize quests if none are active
+        if (_gameState.value.activeQuests.isEmpty()) {
+            generateNewQuests()
+        }
+    }
+
+    private fun generateNewQuests() {
+        val newQuests = listOf(
+            Quest(
+                id = "q_click_${System.currentTimeMillis()}",
+                type = QuestType.CLICK_PLANET,
+                description = getApplication<Application>().getString(R.string.quest_click_planet, 50),
+                target = 50.0,
+                progress = 0.0,
+                rewardDebris = 5000.0
+            ),
+            Quest(
+                id = "q_debris_${System.currentTimeMillis()}",
+                type = QuestType.COLLECT_DEBRIS,
+                description = getApplication<Application>().getString(R.string.quest_collect_debris, 20),
+                target = 20.0,
+                progress = 0.0,
+                rewardDebris = 10000.0
+            ),
+            Quest(
+                id = "q_upgrade_${System.currentTimeMillis()}",
+                type = QuestType.BUY_UPGRADE,
+                description = getApplication<Application>().getString(R.string.quest_buy_upgrade, 5),
+                target = 5.0,
+                progress = 0.0,
+                rewardCases = 1
+            )
+        )
+        _gameState.update { it.copy(activeQuests = newQuests) }
     }
 
     private fun loadGameState(): GameState {
@@ -103,6 +138,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         val ownedPlanets = prefs.getStringSet("ownedPlanets", setOf("p1")) ?: setOf("p1")
 
+        // Load Quests
+        val activeQuests = mutableListOf<Quest>()
+        val questIds = prefs.getStringSet("activeQuestIds", emptySet()) ?: emptySet()
+        questIds.forEach { id ->
+            val type = QuestType.valueOf(prefs.getString("quest_${id}_type", QuestType.CLICK_PLANET.name)!!)
+            val desc = prefs.getString("quest_${id}_desc", "") ?: ""
+            val target = prefs.getFloat("quest_${id}_target", 0f).toDouble()
+            val progress = prefs.getFloat("quest_${id}_progress", 0f).toDouble()
+            val rewardDebris = prefs.getFloat("quest_${id}_rewardDebris", 0f).toDouble()
+            val rewardCases = prefs.getInt("quest_${id}_rewardCases", 0)
+            val isCompleted = prefs.getBoolean("quest_${id}_completed", false)
+            activeQuests.add(Quest(id, type, desc, target, progress, rewardDebris, rewardCases, null, isCompleted))
+        }
+
         return GameState(
             totalDebris = loadPreciseDouble("totalDebris", 50.0),
             clickLevels = clickLevels,
@@ -111,7 +160,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             ownedPlanets = ownedPlanets,
             isHotelDebtActive = prefs.getBoolean("isHotelDebtActive", false),
             currentHotelDebt = loadPreciseDouble("currentHotelDebt", 0.0),
-            casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum())
+            casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum()),
+            activeQuests = activeQuests,
+            completedQuestIds = prefs.getStringSet("completedQuestIds", emptySet()) ?: emptySet()
         )
     }
 
@@ -126,6 +177,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("isHotelDebtActive", state.isHotelDebtActive)
             putLong("currentHotelDebtBits", GameRules.encodeDouble(state.currentHotelDebt))
             putInt("casesPurchased", state.casesPurchased)
+            
+            // Save Quests
+            val activeQuestIds = state.activeQuests.map { it.id }.toSet()
+            putStringSet("activeQuestIds", activeQuestIds)
+            state.activeQuests.forEach { q ->
+                putString("quest_${q.id}_type", q.type.name)
+                putString("quest_${q.id}_desc", q.description)
+                putFloat("quest_${q.id}_target", q.target.toFloat())
+                putFloat("quest_${q.id}_progress", q.progress.toFloat())
+                putFloat("quest_${q.id}_rewardDebris", q.rewardDebris.toFloat())
+                putInt("quest_${q.id}_rewardCases", q.rewardCases)
+                putBoolean("quest_${q.id}_completed", q.isCompleted)
+            }
+            putStringSet("completedQuestIds", state.completedQuestIds)
+            
             apply()
         }
     }
@@ -219,11 +285,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun debrisImageIndex(rarity: Rarity): Int = when (rarity) {
-        Rarity.COMMON -> Random.nextInt(1, 3)
-        Rarity.UNCOMMON -> 3
-        Rarity.RARE -> 4
-        Rarity.EPIC -> 5
-        Rarity.LEGENDARY -> 6
+        Rarity.COMMON -> if (Random.nextBoolean()) Random.nextInt(1, 3) else Random.nextInt(7, 9)
+        Rarity.UNCOMMON -> if (Random.nextBoolean()) 3 else Random.nextInt(9, 11)
+        Rarity.RARE -> if (Random.nextBoolean()) 4 else Random.nextInt(11, 13)
+        Rarity.EPIC -> if (Random.nextBoolean()) 5 else 13
+        Rarity.LEGENDARY -> if (Random.nextBoolean()) 6 else 14
     }
 
     private fun rollDebrisReward(rarity: Rarity, planetId: String): Double {
@@ -449,8 +515,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             var debrisGained = 0.0
             val claimedTargetIds = drones.filter { it.state != DroneState.BROKEN }.mapNotNullTo(mutableSetOf()) { it.targetId }
+            var debrisCollectedCount = 0
 
             val updatedDrones = drones.map { drone ->
+                // ... (rest of drone logic)
                 if (drone.state == DroneState.BROKEN) {
                     if (now >= drone.disabledUntil) {
                         return@map drone.copy(state = DroneState.IDLE, disabledUntil = 0)
@@ -593,6 +661,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 ny = DRONE_HOME_POSITION
                                 if (nHasCargo) {
                                     debrisGained += nCargoReward
+                                    debrisCollectedCount++
                                 }
                                 nState = DroneState.IDLE
                                 nHasCargo = false
@@ -621,10 +690,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
+            val updatedQuests = state.activeQuests.map { q ->
+                if (q.type == QuestType.COLLECT_DEBRIS && !q.isCompleted && debrisCollectedCount > 0) {
+                    val newProgress = (q.progress + debrisCollectedCount).coerceAtMost(q.target)
+                    q.copy(progress = newProgress, isCompleted = newProgress >= q.target)
+                } else q
+            }
+
             state.copy(
                 drones = updatedDrones,
                 scavengeTargets = targets,
-                totalDebris = (state.totalDebris + debrisGained).coerceAtLeast(0.0)
+                totalDebris = (state.totalDebris + debrisGained).coerceAtLeast(0.0),
+                activeQuests = updatedQuests
             )
         }
     }
@@ -725,7 +802,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 newTotalDebris += clickPower
             }
-            currentState.copy(totalDebris = newTotalDebris, currentHotelDebt = newHotelDebt, isHotelDebtActive = hotelDebtActive)
+            
+            // Update Quest Progress
+            val updatedQuests = currentState.activeQuests.map { q ->
+                if (q.type == QuestType.CLICK_PLANET && !q.isCompleted) {
+                    val newProgress = q.progress + 1.0
+                    q.copy(progress = newProgress, isCompleted = newProgress >= q.target)
+                } else q
+            }
+            
+            currentState.copy(
+                totalDebris = newTotalDebris, 
+                currentHotelDebt = newHotelDebt, 
+                isHotelDebtActive = hotelDebtActive,
+                activeQuests = updatedQuests
+            )
         }
         return clickPower
     }
@@ -741,9 +832,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val purchaseCost = rawCost.toLong().toDouble()
             if (state.totalDebris < purchaseCost) return@updateStoreState null
 
+            val updatedQuests = state.activeQuests.map { q ->
+                if (q.type == QuestType.BUY_UPGRADE && !q.isCompleted) {
+                    val newProgress = q.progress + 1.0
+                    q.copy(progress = newProgress, isCompleted = newProgress >= q.target)
+                } else q
+            }
+
             state.copy(
                 totalDebris = state.totalDebris - purchaseCost,
-                clickLevels = state.clickLevels + (id to currentLevel + 1)
+                clickLevels = state.clickLevels + (id to currentLevel + 1),
+                activeQuests = updatedQuests
             )
         }
     }
@@ -805,7 +904,71 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val selectedDrone = availableDrones.randomOrNull() ?: fleetItems.first()
         val droneId = selectedDrone.id
         val currentCount = _gameState.value.fleetCounts[droneId] ?: 0
-        _gameState.update { it.copy(isOpeningCase = false, fleetCounts = it.fleetCounts + (droneId to currentCount + 1), lastDroppedDroneId = droneId) }
+        
+        _gameState.update { state ->
+            val updatedQuests = state.activeQuests.map { q ->
+                if (q.type == QuestType.OPEN_CASE && !q.isCompleted) {
+                    val newProgress = q.progress + 1.0
+                    q.copy(progress = newProgress, isCompleted = newProgress >= q.target)
+                } else q
+            }
+            state.copy(
+                isOpeningCase = false, 
+                fleetCounts = state.fleetCounts + (droneId to currentCount + 1), 
+                lastDroppedDroneId = droneId,
+                activeQuests = updatedQuests
+            ) 
+        }
+        saveGameState()
+    }
+
+    fun claimQuestReward(questId: String) {
+        _gameState.update { state ->
+            val quest = state.activeQuests.find { it.id == questId } ?: return@update state
+            if (!quest.isCompleted || quest.isClaimed) return@update state
+
+            var newTotalDebris = state.totalDebris + quest.rewardDebris
+            var newCasesPurchased = state.casesPurchased
+            var triggeringCaseOpening = false
+            
+            if (quest.rewardCases > 0) {
+                val totalDrones = state.fleetCounts.values.sum()
+                if (totalDrones < 5) {
+                    triggeringCaseOpening = true
+                } else {
+                    // Reward debris instead if drone limit reached
+                    newTotalDebris += 25000.0 * quest.rewardCases
+                }
+            }
+            
+            var newFleetCounts = state.fleetCounts
+            if (quest.rewardDroneId != null) {
+                val totalDrones = state.fleetCounts.values.sum()
+                if (totalDrones < 5) {
+                    newFleetCounts = newFleetCounts + (quest.rewardDroneId to (newFleetCounts[quest.rewardDroneId] ?: 0) + 1)
+                } else {
+                    newTotalDebris += 50000.0
+                }
+            }
+
+            val newActiveQuests = state.activeQuests.filter { it.id != questId }
+            val newCompletedQuestIds = state.completedQuestIds + questId
+
+            state.copy(
+                totalDebris = newTotalDebris,
+                fleetCounts = newFleetCounts,
+                activeQuests = newActiveQuests,
+                completedQuestIds = newCompletedQuestIds,
+                isOpeningCase = if (triggeringCaseOpening) true else state.isOpeningCase,
+                // Cases from quests don't increase price growth in shop, but we could make them.
+                // For now, let's keep them as a separate bonus.
+                lastDroppedDroneId = if (triggeringCaseOpening) null else state.lastDroppedDroneId
+            )
+        }
+        
+        if (_gameState.value.activeQuests.isEmpty()) {
+            generateNewQuests()
+        }
         saveGameState()
     }
 

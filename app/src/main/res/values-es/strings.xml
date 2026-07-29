@@ -126,4 +126,15 @@
     <string name="planet_bonus_foggy_void" formatted="false">Bonus: 10% de probabilidad de Toque Crítico x10</string>
 
     <string name="unknown_item">Desconocido</string>
+    <string name="quests">Misiones</string>
+    <string name="claim">Reclamar</string>
+    <string name="reward">Recompensa</string>
+    <string name="reward_debris">+%1$s Escombros</string>
+    <string name="reward_cases">+%1$d Cajas</string>
+    <string name="reward_drone">¡Nuevo dron!</string>
+    <string name="no_active_quests">No hay misiones activas. ¡Vuelve más tarde!</string>
+    <string name="quest_collect_debris">Recoge %1$d escombros</string>
+    <string name="quest_click_planet">Toca el planeta %1$d veces</string>
+    <string name="quest_buy_upgrade">Compra %1$d mejoras de clic</string>
+    <string name="quest_open_case">Abre %1$d cajas</string>
 </resources>

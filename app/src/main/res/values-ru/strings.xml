@@ -127,4 +127,15 @@
     <string name="planet_bonus_foggy_void" formatted="false">Бонус: 10% шанс на Крит-клик x10</string>
 
     <string name="unknown_item">Неизвестно</string>
+    <string name="quests">Задания</string>
+    <string name="claim">Забрать</string>
+    <string name="reward">Награда</string>
+    <string name="reward_debris">+%1$s Обломков</string>
+    <string name="reward_cases">+%1$d Кейсов</string>
+    <string name="reward_drone">Новый дрон!</string>
+    <string name="no_active_quests">Нет активных заданий. Загляните позже!</string>
+    <string name="quest_collect_debris">Собрать %1$d обломков</string>
+    <string name="quest_click_planet">Нажать на планету %1$d раз</string>
+    <string name="quest_buy_upgrade">Купить %1$d улучшений клика</string>
+    <string name="quest_open_case">Открыть %1$d кейсов</string>
 </resources>

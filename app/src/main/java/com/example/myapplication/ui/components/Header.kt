@@ -1,20 +1,23 @@
 package com.example.myapplication.ui.components
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import com.example.myapplication.R
 import com.example.myapplication.GameState
 import com.example.myapplication.ui.theme.AppColors
@@ -52,13 +55,14 @@ fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
                     fontSize = 14.sp
                 )
             }
-            IconButton(onClick = onSettingsClick) {
-                Text(
-                    text = "⚙",
-                    color = AppColors.Primary,
-                    fontSize = 28.sp
-                )
-            }
+            Image(
+                painter = painterResource(R.drawable.ui_button_seting),
+                contentDescription = stringResource(R.string.settings),
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { onSettingsClick() },
+                contentScale = ContentScale.Fit
+            )
         }
         Text(
             text = stringResource(R.string.per_second, formatNum(dps)),

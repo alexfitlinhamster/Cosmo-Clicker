@@ -51,6 +51,7 @@ fun GameScreen(
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
+    var isQuestOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
 
@@ -74,8 +75,8 @@ fun GameScreen(
             GameEventType.ASTEROID -> R.drawable.background_asteroid
             GameEventType.BLACK_HOLE -> R.drawable.background_storm
             GameEventType.SOLAR_FLARE -> R.drawable.background_storm
-            GameEventType.CYBER_VIRUS -> R.drawable.background_space
-            else -> R.drawable.background_space
+            GameEventType.CYBER_VIRUS -> R.drawable.background_fon
+            else -> R.drawable.background_fon
         }
     }
 
@@ -180,13 +181,27 @@ fun GameScreen(
                 onClose = { isShopOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
+        } else if (isQuestOpen) {
+            QuestPanel(
+                state = state,
+                onClaim = { viewModel.claimQuestReward(it) },
+                onClose = { isQuestOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         } else {
-            ShopLauncherButton(
-                onClick = { isShopOpen = true },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 16.dp)
-            )
+                    .padding(start = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuestLauncherButton(
+                    onClick = { isQuestOpen = true }
+                )
+                ShopLauncherButton(
+                    onClick = { isShopOpen = true }
+                )
+            }
         }
 
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
@@ -290,6 +305,18 @@ fun GameScreen(
             }
         }
     }
+}
+
+@Composable
+fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(R.drawable.ui_button_quest),
+        contentDescription = stringResource(R.string.quests),
+        modifier = modifier
+            .size(76.dp)
+            .clickable(onClick = onClick),
+        contentScale = ContentScale.Fit
+    )
 }
 
 private const val MAX_FLOATING_TEXTS = 40

@@ -17,6 +17,26 @@ enum class Rarity(
     fun canCollect(targetRarity: Rarity): Boolean = targetRarity.ordinal <= ordinal
 }
 
+enum class QuestType {
+    COLLECT_DEBRIS, // Collect X debris
+    CLICK_PLANET,  // Click planet X times
+    BUY_UPGRADE,   // Buy X click upgrades
+    OPEN_CASE      // Open X cases
+}
+
+data class Quest(
+    val id: String,
+    val type: QuestType,
+    val description: String,
+    val target: Double,
+    val progress: Double,
+    val rewardDebris: Double = 0.0,
+    val rewardCases: Int = 0,
+    val rewardDroneId: String? = null,
+    val isCompleted: Boolean = false,
+    val isClaimed: Boolean = false
+)
+
 data class GameState(
     val totalDebris: Double = 50.0,
     val clickLevels: Map<String, Int> = emptyMap(),
@@ -33,7 +53,10 @@ data class GameState(
     val isOpeningCase: Boolean = false,
     val casesPurchased: Int = 0,
     val lastDroppedDroneId: String? = null,
-    val infectedDroneId: Long? = null
+    val infectedDroneId: Long? = null,
+    val activeQuests: List<Quest> = emptyList(),
+    val completedQuestIds: Set<String> = emptySet(),
+    val questBonuses: Map<String, Double> = emptyMap()
 )
 
 data class DroneData(

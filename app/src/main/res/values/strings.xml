@@ -127,4 +127,15 @@
     <string name="planet_bonus_foggy_void" formatted="false">Bonus: 10% chance for x10 Critical Tap</string>
 
     <string name="unknown_item">Unknown</string>
+    <string name="quests">Quests</string>
+    <string name="claim">Claim</string>
+    <string name="reward">Reward</string>
+    <string name="reward_debris">+%1$s Debris</string>
+    <string name="reward_cases">+%1$d Cases</string>
+    <string name="reward_drone">New Drone!</string>
+    <string name="no_active_quests">No active quests. Check back later!</string>
+    <string name="quest_collect_debris">Collect %1$d debris</string>
+    <string name="quest_click_planet">Click planet %1$d times</string>
+    <string name="quest_buy_upgrade">Buy %1$d click upgrades</string>
+    <string name="quest_open_case">Open %1$d cases</string>
 </resources>
