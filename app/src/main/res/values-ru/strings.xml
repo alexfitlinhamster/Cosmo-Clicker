@@ -45,6 +45,7 @@
     <string name="rarity_rare">Редкий</string>
     <string name="rarity_epic">Эпический</string>
     <string name="rarity_legendary">Легендарный</string>
+    <string name="rarity_void">Пустота</string>
     <string name="event_space_storm">Космическая буря!</string>
     <string name="event_gold_asteroid">Золотой астероид!</string>
     <string name="event_debris_shower">Метеоритный дождь!</string>

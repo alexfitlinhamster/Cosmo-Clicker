@@ -1,39 +1,55 @@
-# Implementation Plan - New Debris and Enhanced Case System
+# Implementation Plan - Codex Feature
 
-Integrate 8 new debris types (debris_07 to debris_14) with rarities, automate case opening for quest rewards, and make the first shop case free.
+Add a "Codex" system to track and display discovered planets, drones, and debris types.
 
 ## Proposed Changes
 
-### Game Logic & Data
+### Data Model
+
+#### [GameState.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/GameState.kt)
+- Add discovered sets to `GameState`:
+```kotlin
+val discoveredPlanets: Set<String> = setOf("p1"),
+val discoveredDrones: Set<String> = emptySet(),
+val discoveredDebris: Set<Int> = emptySet()
+```
+
+### Business Logic
 
 #### [GameViewModel.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/GameViewModel.kt)
-- **New Debris Logic**:
-    - Update `debrisImageIndex(rarity)` to include indices 7–14.
-    - Rarities for new debris: 7-8 (Common), 9-10 (Uncommon), 11-12 (Rare), 13 (Epic), 14 (Legendary).
-- **Free First Case**:
-    - Update `calculateCaseCost` to return 0.0 if `casesPurchased == 0`.
-- **Quest Reward Automation**:
-    - Update `claimQuestReward` to trigger `startOpeningCase(isFree = true)` when a case reward is granted.
-    - Ensure drone limit (5) is respected even for quest rewards.
+- **Discovery Logic**:
+    - Update `buyPlanet`: Add planet to `discoveredPlanets`.
+    - Update `finishOpeningCase`: Add drone type to `discoveredDrones`.
+    - Update `claimQuestReward`: Add drone/case types to discovered sets.
+    - Update `updateDrones`: When `nHasCargo` is true and drone returns home, add `nCargoImageIndex` to `discoveredDebris`.
+- **Persistence**: Save/load discovered sets in `SharedPreferences`.
 
-#### [GameRules.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/GameRules.kt)
-- Update `calculateCaseCost` logic to handle the first free case if applicable.
+### UI Components
 
-### UI Enhancements
-
-#### [QuestPanel.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/ui/components/QuestPanel.kt)
-- No changes needed to the panel itself, but ensure reward claiming triggers the case opening animation automatically in the main screen.
+#### [NEW] [CodexPanel.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/ui/components/CodexPanel.kt)
+- Create a slide-up panel with three tabs: **Planets**, **Fleet**, **Debris**.
+- Items not discovered will show as "???" with a generic placeholder icon.
+- Discovered items will show full details (name, rarity, image).
 
 #### [GameScreen.kt](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/java/com/example/myapplication/ui/GameScreen.kt)
-- The existing `CaseOpeningOverlay` will automatically show up when `isOpeningCase` is set to true by the automated quest reward.
+- Add `isCodexOpen` state.
+- Add `CodexLauncherButton` to the bottom-left launcher column (alongside Quest and Shop).
+- Integrate `CodexPanel` into the screen overlay.
+
+### Resources
+
+#### [strings.xml](file:///C:/Users/User/AndroidStudioProjects/MyApplication4/app/src/main/res/values/strings.xml)
+- Add strings for Codex, Discovery tabs, and placeholder text.
 
 ## Verification Plan
 
-### Automated Tests
-- Build the project to ensure no syntax errors: `gradlew app:assembleDebug`
-
 ### Manual Verification
-1. **Free Case**: Open the shop and verify the first "Mystery Case" cost is displayed as "FREE" (or 0).
-2. **New Debris**: Play the game or trigger a debris shower to see `debris_07` through `debris_14` appear on screen.
-3. **Quest Case Reward**: Complete a quest that rewards a case, click claim, and verify the case opening animation starts immediately.
-4. **Drone Limit**: Reach 5 drones and verify quest cases are either blocked or handled (e.g., converted to debris) if the limit is reached.
+1. **Discovery Flow**:
+    - Collect a new type of debris and verify it appears in the Debris tab of the Codex.
+    - Buy a new planet and verify it unlocks in the Planets tab.
+    - Open a case to get a new drone and verify it unlocks in the Fleet tab.
+2. **UI Check**:
+    - Verify that locked items show as "???" and discovered items show full info.
+    - Test the tabs switching inside the Codex panel.
+3. **Persistence**:
+    - Restart the app and verify all discovery progress is saved.

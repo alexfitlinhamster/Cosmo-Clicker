@@ -45,6 +45,7 @@
     <string name="rarity_rare">Raro</string>
     <string name="rarity_epic">Épico</string>
     <string name="rarity_legendary">Legendario</string>
+    <string name="rarity_void">Vacío</string>
     <string name="event_space_storm">¡Tormenta espacial!</string>
     <string name="event_gold_asteroid">¡Asteroide dorado!</string>
     <string name="event_debris_shower">¡Lluvia de basura espacial!</string>

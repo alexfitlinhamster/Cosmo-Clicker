@@ -13,5 +13,6 @@ fun rarityLabel(rarity: Rarity): String = stringResource(
         Rarity.RARE -> R.string.rarity_rare
         Rarity.EPIC -> R.string.rarity_epic
         Rarity.LEGENDARY -> R.string.rarity_legendary
+        Rarity.VOID -> R.string.rarity_void
     }
 )

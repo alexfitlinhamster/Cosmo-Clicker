@@ -12,9 +12,15 @@ enum class Rarity(
     UNCOMMON(Color(0xFF4CAF50), 25, 5_001, 10_000),
     RARE(Color(0xFF2196F3), 10, 10_001, 20_000),
     EPIC(Color(0xFF9C27B0), 4, 20_001, 50_000),
-    LEGENDARY(Color(0xFFFF9800), 1, 250_000, 1_000_000);
+    LEGENDARY(Color(0xFFFF9800), 1, 250_000, 1_000_000),
+    VOID(Color(0xFF6200EA), 0, 1_250_000, 5_000_000);
 
     fun canCollect(targetRarity: Rarity): Boolean = targetRarity.ordinal <= ordinal
+}
+
+enum class SkillType(val id: String) {
+    TIME_WARP("time_warp"),
+    VOID_ENERGY("void_energy")
 }
 
 enum class QuestType {
@@ -56,7 +62,8 @@ data class GameState(
     val infectedDroneId: Long? = null,
     val activeQuests: List<Quest> = emptyList(),
     val completedQuestIds: Set<String> = emptySet(),
-    val questBonuses: Map<String, Double> = emptyMap()
+    val questBonuses: Map<String, Double> = emptyMap(),
+    val activeEffects: Map<String, Long> = emptyMap() // Type ID to expiresAt
 )
 
 data class DroneData(

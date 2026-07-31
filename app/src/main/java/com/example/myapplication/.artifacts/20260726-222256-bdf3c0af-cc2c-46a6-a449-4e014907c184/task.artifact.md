@@ -1,13 +1,10 @@
-# Task Management
-
 - [x] Research project structure and UI implementation
-- [/] Design and implement Quest system
+- [x] Design and implement Quest system
+- [x] Visual assets and balancing (1.12.0)
+- [/] Design and implement Codex system
 	- [x] Create implementation plan
-	- [ ] Update GameState with Quest models
-	- [ ] Implement Quest logic in GameViewModel
-	- [ ] Update UI with new icons and Quest button
-	- [ ] Implement QuestPanel UI
+	- [ ] Update GameState with discovery sets
+	- [ ] Implement discovery logic in GameViewModel
+	- [ ] Create CodexPanel UI
+	- [ ] Add Codex launcher button to GameScreen
 - [ ] Verify implementation
-	- [ ] Check new icons
-	- [ ] Test quest progress tracking
-	- [ ] Test quest reward claiming and persistence

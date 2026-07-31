@@ -199,7 +199,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.case_01),
+                    painter = painterResource(id = R.drawable.case_08),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().padding(4.dp)
                 )

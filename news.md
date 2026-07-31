@@ -1,13 +1,15 @@
 # News
 
-## 1.12.0 (version code 30) - 2026-07-29
+## 1.12.0 (version code 30) - 2026-07-29        a    
 
 - Added a new Quest system with rewards (debris, cases, and drones).
 - Integrated 12 new high-quality planet images and a new main background (`background_fon`).
 - Added 8 new debris types (`debris_07` to `debris_14`) with varying rarities.
 - Updated UI buttons for Settings, Shop, and Quests with modern icons.
-- Made the first Mystery Case in the shop free.
+- Made the first Mystery Case in the shop free and updated its visual asset.
 - Automated case opening for quest rewards with instant animations.
+- Adjusted drone flight and patrol speed (2.5x slower) for a more cinematic feel.
+- Fixed spawning logic to ensure all new debris types appear correctly.
 - Improved drone limit handling: quest rewards convert to debris if the fleet is full.
 
 ## 1.11.2 (version code 29) - 2026-07-24
