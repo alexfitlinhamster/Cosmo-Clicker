@@ -1,15 +1,19 @@
 package com.example.myapplication
 
 object EconomyEngine {
-    fun processTick(state: GameState, nowMillis: Long): GameState {
-        val total = if (state.activeEvent?.type == GameEventType.BLACK_HOLE) {
-            state.totalDebris * 0.995
+    fun processTick(state: GameState, nowMillis: Long, passiveIncome: Double = 0.0): GameState {
+        val currentState = EventEngine.resolvePendingChainIfNeeded(
+            EventEngine.expireEventIfNeeded(state, nowMillis),
+            nowMillis
+        )
+        val total = if (currentState.activeEvent?.type == GameEventType.BLACK_HOLE) {
+            currentState.totalDebris * 0.995 + passiveIncome.coerceAtLeast(0.0)
         } else {
-            state.totalDebris
+            currentState.totalDebris + passiveIncome.coerceAtLeast(0.0)
         }
-        return state.copy(
+        return currentState.copy(
             totalDebris = total,
-            activeEffects = state.activeEffects.filterValues { it > nowMillis }
+            activeEffects = currentState.activeEffects.filterValues { it > nowMillis }
         )
     }
 

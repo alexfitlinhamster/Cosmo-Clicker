@@ -34,6 +34,7 @@ import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.DistressChoice
 import com.example.myapplication.R
 import com.example.myapplication.SoundManager
 import com.example.myapplication.ui.components.*
@@ -69,6 +70,16 @@ fun GameScreen(
         onDispose { soundManager.close() }
     }
 
+    LaunchedEffect(state.activeEvent?.startedAt) {
+        if (state.activeEvent != null) soundManager.playEventStart()
+    }
+
+    LaunchedEffect(state.eventChainResult) {
+        state.eventChainResult?.let {
+            if (it.success) soundManager.playEventSuccess() else soundManager.playEventFailure()
+        }
+    }
+
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -97,6 +108,7 @@ fun GameScreen(
             GameEventType.BLACK_HOLE -> R.drawable.background_storm
             GameEventType.SOLAR_FLARE -> R.drawable.background_storm
             GameEventType.CYBER_VIRUS -> R.drawable.background_fon
+            GameEventType.DISTRESS_SIGNAL -> R.drawable.background_space
             else -> R.drawable.background_fon
         }
     }
@@ -147,9 +159,15 @@ fun GameScreen(
                 }
 
                 state.activeEvent?.let { event ->
-                    EventBanner(event) {
+                    EventBanner(event, state.eventTapsLeft) {
                         showEventInfo = event
                     }
+                }
+                state.pendingEventChain?.let { pending ->
+                    EventChainPendingBanner(
+                        pending = pending,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
                 }
 
                 PlanetButton(
@@ -182,6 +200,7 @@ fun GameScreen(
                             }
                         }
                         GameEventType.METEOR_SHOWER -> Unit
+                        GameEventType.DISTRESS_SIGNAL -> Unit
                         else -> {}
                     }
                 }
@@ -242,7 +261,26 @@ fun GameScreen(
         }
 
         showEventInfo?.let { event ->
-            EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
+            if (event.type == GameEventType.DISTRESS_SIGNAL) {
+                DistressSignalDialog(
+                    reward = event.reward,
+                    onSalvage = {
+                        viewModel.respondToDistressSignal(DistressChoice.SALVAGE)
+                        showEventInfo = null
+                    },
+                    onRescue = {
+                        viewModel.respondToDistressSignal(DistressChoice.RESCUE)
+                        showEventInfo = null
+                    },
+                    onDismiss = { showEventInfo = null }
+                )
+            } else {
+                EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
+            }
+        }
+
+        state.eventChainResult?.let { result ->
+            EventChainResultDialog(result, viewModel::clearEventChainResult)
         }
 
         // СТАРТОВЫЙ ЭКРАН

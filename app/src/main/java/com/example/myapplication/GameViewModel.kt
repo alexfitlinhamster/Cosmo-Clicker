@@ -82,7 +82,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         "p18" to PlanetConfig("Cloud City", 1525878906250000.0, "Floating", Color(0xFF81D4FA), R.drawable.planet_6),
         "p19" to PlanetConfig("Rocky Bastion", 7629394531250000.0, "Stone fortress", Color(0xFF8D6E63), R.drawable.planet_7),
         "p20" to PlanetConfig("Foggy Void", 38146972656250000.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_8)
-    )
+    ).mapValues { (id, config) -> config.copy(price = EconomyBalance.planetPrice(EconomyBalance.planetIndex(id))) }
 
     private val _gameState = MutableStateFlow(loadGameState())
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
@@ -105,7 +105,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 description = getApplication<Application>().getString(R.string.quest_click_planet, 50),
                 target = 50.0,
                 progress = 0.0,
-                rewardDebris = 5000.0
+                rewardDebris = EconomyBalance.scaledReward(5_000.0, _gameState.value.currentPlanetId)
             ),
             Quest(
                 id = "q_debris_${System.currentTimeMillis()}",
@@ -113,7 +113,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 description = getApplication<Application>().getString(R.string.quest_collect_debris, 20),
                 target = 20.0,
                 progress = 0.0,
-                rewardDebris = 10000.0
+                rewardDebris = EconomyBalance.scaledReward(10_000.0, _gameState.value.currentPlanetId)
             ),
             Quest(
                 id = "q_upgrade_${System.currentTimeMillis()}",
@@ -184,7 +184,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             nowMillis = System.currentTimeMillis(),
             fleetCounts = loadedState.fleetCounts,
             fleetRarities = fleetById.mapValues { it.value.rarity },
-            rewardMultiplier = if (Technology.OFFLINE_AI in loadedState.technologies) 2.0 else 1.0
+            rewardMultiplier = (if (Technology.OFFLINE_AI in loadedState.technologies) 2.0 else 1.0) *
+                EconomyBalance.planetIncomeMultiplier(loadedState.currentPlanetId)
         )
         return loadedState.copy(
             totalDebris = loadedState.totalDebris + offline.reward,
@@ -240,6 +241,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun resumeSimulation() {
         if (simulationJobs.any { it.isActive }) return
         simulationJobs.clear()
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.expireEventIfNeeded(it, now) }
         startGameLoop()
         startEventLoop()
         startDroneLoop()
@@ -392,7 +395,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (planetId == "p17") {
             reward *= 1.5
         }
-        return reward
+        return EconomyBalance.scaledReward(reward, planetId)
     }
 
     private fun rollTrashRarity(planetId: String): Rarity {
@@ -415,124 +418,61 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startEventLoop() {
         launchSimulationLoop {
             while (isActive) {
-                val planetId = _gameState.value.currentPlanetId
-                var baseInterval = 15000 + randomProvider.nextLong(30000)
-                
-                // Nebula Echo (p3): Events 30% more often
-                if (planetId == "p3" || planetId == "p15") baseInterval = (baseInterval / 1.3).toLong()
-                
-                delay(baseInterval)
-                
-                if (_gameState.value.activeEvent == null) {
-                    val durationBase = randomProvider.nextLong(MIN_EVENT_DURATION_MS, MAX_EVENT_DURATION_MS + 1)
-                    // Jungle Core (p8): Events duration x2
-                    val durationMs = if ((planetId == "p8" || planetId == "p15")) durationBase * 2 else durationBase
-                    
-                    val eventTypes = GameEventType.entries.toMutableList()
-                    
-                    // Gas Giant (p7): Immune to CYBER_VIRUS
-                    if (planetId == "p7" || planetId == "p15") eventTypes.remove(GameEventType.CYBER_VIRUS)
-                    
-                    var selectedType = randomProvider.choose(eventTypes)
-                    
-                    // Luna Silvis (p12): -25% chance for negative events
-                    if ((planetId == "p12" || planetId == "p15") && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
-                        if (randomProvider.nextInt(100) < 25) {
-                            selectedType = GameEventType.ASTEROID // Redirect to positive
-                        }
-                    }
+                val intervalPlanetId = _gameState.value.currentPlanetId
+                delay(EventEngine.nextIntervalMillis(intervalPlanetId, randomProvider))
 
-                    // Toxic Waste (p16): 40% chance to dissolve negative events instantly
-                    if (planetId == "p16" && (selectedType == GameEventType.SOLAR_FLARE || selectedType == GameEventType.CYBER_VIRUS || selectedType == GameEventType.STORM)) {
-                        if (randomProvider.nextInt(100) < 40) {
-                            continue // Skip event
-                        }
+                val state = _gameState.value
+                if (state.activeEvent != null || state.pendingEventChain != null) continue
+                val selectedType = EventEngine.selectType(state.currentPlanetId, randomProvider) ?: continue
+                val duration = EventEngine.nextDurationMillis(state.currentPlanetId, randomProvider)
+                val clickValue = if (
+                    selectedType == GameEventType.ASTEROID ||
+                    selectedType == GameEventType.DISTRESS_SIGNAL
+                ) calculateClickValue() else 1.0
+                val now = System.currentTimeMillis()
+                _gameState.update {
+                    if (it.activeEvent == null) {
+                        EventEngine.startEvent(it, selectedType, duration, now, randomProvider, clickValue)
+                    } else {
+                        it
                     }
-
-                    spawnEvent(selectedType, EventEngine.title(selectedType), durationMs)
                 }
-            }
-        }
-    }
-
-    private fun spawnEvent(type: GameEventType, title: String, durationMs: Long) {
-        val x = randomProvider.nextFloat()
-        val y = randomProvider.nextFloat() * 0.6f + 0.1f
-        _gameState.update { state ->
-            var infectedId: Long? = null
-            if (type == GameEventType.CYBER_VIRUS && state.drones.isNotEmpty()) {
-                infectedId = randomProvider.chooseOrNull(state.drones.filter { it.state != DroneState.BROKEN })?.id
-            }
-
-            state.copy(
-                activeEvent = GameEvent(type, title, System.currentTimeMillis() + durationMs, x, y),
-                eventMultiplier = if (type == GameEventType.STORM || type == GameEventType.SOLAR_FLARE) 3.0 else 1.0,
-                eventTapsLeft = if (type == GameEventType.BLACK_HOLE) 10 else 0,
-                infectedDroneId = infectedId
-            )
-        }
-        
-        viewModelScope.launch {
-            delay(durationMs)
-            _gameState.update { 
-                if (it.activeEvent?.expiresAt ?: 0 <= System.currentTimeMillis()) {
-                    it.copy(activeEvent = null, eventMultiplier = 1.0, infectedDroneId = null)
-                } else it
             }
         }
     }
 
     fun onAsteroidClick() {
-        _gameState.update { state ->
-            if (state.activeEvent?.type == GameEventType.ASTEROID) {
-                val bonus = 500.0 * state.eventMultiplier
-                state.copy(totalDebris = state.totalDebris + bonus, activeEvent = null)
-            } else state
-        }
+        _gameState.update(EventEngine::onAsteroidClick)
     }
     
     fun onBlackHoleClick() {
+        val now = System.currentTimeMillis()
         _gameState.update { state ->
-            if (state.activeEvent?.type == GameEventType.BLACK_HOLE) {
-                val taps = state.eventTapsLeft - 1
-                if (taps <= 0) {
-                    val targets = state.scavengeTargets.toMutableList()
-                    // Abyss Ocean (p13) or Sky Haven (p15) reward: 5 rare items
-                    if (state.currentPlanetId == "p13" || state.currentPlanetId == "p15") {
-                        repeat(5) {
-                            targets.add(ScavengeTarget(
-                                id = debrisId.incrementAndGet(),
-                                x = GameRules.clampDebrisSpawnCoordinate(
-                                    state.activeEvent.x + (randomProvider.nextFloat() - 0.5f) * 0.2f
-                                ),
-                                y = GameRules.clampDebrisSpawnCoordinate(
-                                    state.activeEvent.y + (randomProvider.nextFloat() - 0.5f) * 0.2f
-                                ),
-                                rarity = Rarity.RARE,
-                                expiresAt = System.currentTimeMillis() + 30000,
-                                imageIndex = debrisImageIndex(Rarity.RARE),
-                                reward = rollDebrisReward(Rarity.RARE, state.currentPlanetId)
-                            ))
-                        }
-                    }
-                    
-                    // Energy Burst: Speed Bonus
-                    val newEffects = state.activeEffects + (SkillType.VOID_ENERGY.id to System.currentTimeMillis() + 30000)
-                    
-                    state.copy(activeEvent = null, eventTapsLeft = 0, scavengeTargets = targets, activeEffects = newEffects)
-                } else {
-                    state.copy(eventTapsLeft = taps)
-                }
-            } else state
+            EventEngine.onBlackHoleClick(state, now, randomProvider) { x, y, expiresAt ->
+                ScavengeTarget(
+                    id = debrisId.incrementAndGet(),
+                    x = x,
+                    y = y,
+                    rarity = Rarity.RARE,
+                    expiresAt = expiresAt,
+                    imageIndex = debrisImageIndex(Rarity.RARE),
+                    reward = rollDebrisReward(Rarity.RARE, state.currentPlanetId)
+                )
+            }
         }
     }
 
     fun onDroneClick(droneId: Long) {
-        _gameState.update { state ->
-            if (state.infectedDroneId == droneId) {
-                state.copy(infectedDroneId = null, activeEvent = null)
-            } else state
-        }
+        _gameState.update { EventEngine.onInfectedDroneClick(it, droneId) }
+    }
+
+    fun respondToDistressSignal(choice: DistressChoice) {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.respondToDistressSignal(it, choice, now, randomProvider) }
+    }
+
+    fun clearEventChainResult() {
+        _gameState.update(EventEngine::clearChainResult)
     }
 
     private fun startDroneLoop() {
@@ -552,6 +492,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val activeEvent = currentState.activeEvent
         val isBlackHole = activeEvent?.type == GameEventType.BLACK_HOLE
         val isSolarFlare = activeEvent?.type == GameEventType.SOLAR_FLARE
+        val isStorm = activeEvent?.type == GameEventType.STORM
         val infectedId = currentState.infectedDroneId
         val bhX = activeEvent?.x ?: 0.5f
         val bhY = activeEvent?.y ?: 0.5f
@@ -614,6 +555,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (state.activeEffects.getOrDefault(SkillType.VOID_ENERGY.id, 0L) > now) {
                     moveMultiplier = 2.0f
                 }
+                if (isStorm) moveMultiplier *= 0.7f
 
                 var nx = drone.x
                 var ny = drone.y
@@ -654,7 +596,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     nState = DroneState.INFECTED
                     nx += randomProvider.nextFloat() * 0.04f - 0.02f
                     ny += randomProvider.nextFloat() * 0.04f - 0.02f
-                    debrisGained -= 10.0 // Steal debris
+                    debrisGained -= EventEngine.cyberVirusTheft(state.totalDebris)
                 } else {
                     if (nState == DroneState.SUCKED_IN || nState == DroneState.JAMMED || nState == DroneState.INFECTED) nState = DroneState.IDLE
                     
@@ -833,16 +775,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         DroneEngine.distanceSquared(x1, y1, x2, y2)
 
     private fun processEconomyTick() {
-        _gameState.update { EconomyEngine.processTick(it, System.currentTimeMillis()) }
+        val passiveIncome = calculateDPS()
+        _gameState.update { EconomyEngine.processTick(it, System.currentTimeMillis(), passiveIncome) }
     }
 
-    fun calculateDPS(): Double = 0.0 // Пассивный доход убран по ТЗ
+    fun calculateDPS(): Double = EconomyBalance.passiveIncome(_gameState.value, fleetById)
 
     fun calculateClickValue(): Double {
         val state = _gameState.value
         return EconomyEngine.calculateClickValue(state, clickItems, randomProvider) *
             MetaProgressEngine.collectionMultiplier(state.fleetCounts, fleetById) *
-            MetaProgressEngine.technologyMultiplier(state.technologies)
+            MetaProgressEngine.technologyMultiplier(state.technologies) *
+            EconomyBalance.planetIncomeMultiplier(state.currentPlanetId)
     }
 
     fun onPlanetClick(): Double {
@@ -930,7 +874,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         updateStoreState("case") { state ->
             val totalDrones = state.fleetCounts.values.sum()
             val caseCost = calculateCaseCost(state.casesPurchased)
-            if (state.isOpeningCase || totalDrones >= 5 || state.totalDebris < caseCost) {
+            if (state.isOpeningCase || totalDrones >= EconomyBalance.MAX_DRONES || state.totalDebris < caseCost) {
                 return@updateStoreState null
             }
             state.copy(
@@ -985,7 +929,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             
             if (quest.rewardCases > 0) {
                 val totalDrones = state.fleetCounts.values.sum()
-                if (totalDrones < 5) {
+                if (totalDrones < EconomyBalance.MAX_DRONES) {
                     triggeringCaseOpening = true
                 } else {
                     // Reward debris instead if drone limit reached
@@ -996,7 +940,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             var newFleetCounts = state.fleetCounts
             if (quest.rewardDroneId != null) {
                 val totalDrones = state.fleetCounts.values.sum()
-                if (totalDrones < 5) {
+                if (totalDrones < EconomyBalance.MAX_DRONES) {
                     newFleetCounts = newFleetCounts + (quest.rewardDroneId to (newFleetCounts[quest.rewardDroneId] ?: 0) + 1)
                 } else {
                     newTotalDebris += 50000.0
@@ -1034,8 +978,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun prestige() {
         updateStoreState("prestige") { state ->
-            if ("p20" !in state.ownedPlanets) return@updateStoreState null
-            val reward = MetaProgressEngine.prestigeReward(state.totalDebris)
+            if (!EconomyBalance.canPrestige(state)) return@updateStoreState null
+            val reward = EconomyBalance.prestigeReward(state)
             GameState(
                 prestigePoints = state.prestigePoints + reward,
                 technologies = state.technologies,
@@ -1099,8 +1043,6 @@ data class PlanetConfig(val name: String, val price: Double, val desc: String, v
 private const val DRONE_MOVE_STEP = 0.01f
 private const val DRONE_HOME_POSITION = 0.5f
 private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
-private const val MIN_EVENT_DURATION_MS = 20_000L
-private const val MAX_EVENT_DURATION_MS = 60_000L
 private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L
 private const val MAX_FALLING_DEBRIS = 12
 private const val DRONE_PATROL_STEP = 0.0032f

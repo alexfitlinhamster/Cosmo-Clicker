@@ -68,7 +68,9 @@ data class GameState(
     val prestigePoints: Int = 0,
     val technologies: Set<Technology> = emptySet(),
     val dailyQuestDay: Long = -1L,
-    val sessionStats: SessionStats = SessionStats()
+    val sessionStats: SessionStats = SessionStats(),
+    val pendingEventChain: PendingEventChain? = null,
+    val eventChainResult: EventChainResult? = null
 )
 
 data class DroneData(
@@ -102,14 +104,25 @@ data class ScavengeTarget(
     val reward: Double = 0.0
 )
 
-enum class GameEventType { STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS }
+enum class GameEventType { STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS, DISTRESS_SIGNAL }
+
+enum class DistressChoice { SALVAGE, RESCUE }
+
+data class PendingEventChain(
+    val resolvesAt: Long,
+    val success: Boolean,
+    val reward: Double
+)
+
+data class EventChainResult(val success: Boolean, val reward: Double)
 
 data class GameEvent(
     val type: GameEventType,
-    val title: String,
     val expiresAt: Long,
     val x: Float = 0.5f,
-    val y: Float = 0.5f
+    val y: Float = 0.5f,
+    val startedAt: Long = 0L,
+    val reward: Double = 0.0
 )
 
 data class FloatingTextData(

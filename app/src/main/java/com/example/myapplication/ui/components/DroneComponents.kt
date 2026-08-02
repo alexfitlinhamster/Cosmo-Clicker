@@ -2,6 +2,7 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -101,7 +102,10 @@ fun ScavengingDrone(
             )
             .size(droneSize)
             .let { 
-                if (isInfected) it.background(Color.Red.copy(alpha = 0.3f), CircleShape)
+                if (isInfected) it
+                    .background(Color.Red.copy(alpha = 0.35f), CircleShape)
+                    .border(2.dp, Color.Red, CircleShape)
+                    .shadow(12.dp, CircleShape, spotColor = Color.Red)
                 else it
             }
             .clickable { onDroneClick(drone.id) },
@@ -124,7 +128,7 @@ fun ScavengingDrone(
         }
 
         if (isInfected) {
-            Text("👾", fontSize = 12.sp, modifier = Modifier.align(Alignment.TopCenter))
+            Text("!", color = Color.White, fontSize = 14.sp, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

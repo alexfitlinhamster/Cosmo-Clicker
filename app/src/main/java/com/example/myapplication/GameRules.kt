@@ -4,7 +4,7 @@ import kotlin.math.pow
 
 object GameRules {
     private const val CASE_BASE_COST = 1_000.0
-    private const val CASE_COST_MULTIPLIER = 1.2
+    private const val CASE_COST_MULTIPLIER = 1.12
     const val HOTEL_LOAN_AMOUNT = 1_000_000.0
     private const val HOTEL_DEBT_PAYMENT_SHARE = 0.3
     private const val DEBRIS_SPAWN_MARGIN = 0.05f

@@ -13,6 +13,18 @@ class SoundManager : AutoCloseable {
         }
     }
 
+    fun playEventStart() = playTone(ToneGenerator.TONE_PROP_PROMPT, 120)
+
+    fun playEventSuccess() = playTone(ToneGenerator.TONE_PROP_ACK, 160)
+
+    fun playEventFailure() = playTone(ToneGenerator.TONE_PROP_NACK, 220)
+
+    private fun playTone(tone: Int, durationMillis: Int) {
+        synchronized(lock) {
+            toneGenerator?.startTone(tone, durationMillis)
+        }
+    }
+
     override fun close() {
         synchronized(lock) {
             toneGenerator?.release()

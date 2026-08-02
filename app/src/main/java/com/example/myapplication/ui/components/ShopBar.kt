@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.EconomyBalance
 import com.example.myapplication.MetaProgressEngine
 import com.example.myapplication.R
 import com.example.myapplication.Technology
@@ -180,8 +181,9 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
         )
         val collectionPercent = ((MetaProgressEngine.collectionMultiplier(state.fleetCounts, viewModel.fleetById) - 1.0) * 100).toInt()
         Text(stringResource(R.string.collection_bonus, collectionPercent), color = Color.LightGray)
-        Button(onClick = viewModel::prestige, enabled = "p20" in state.ownedPlanets) {
-            Text(stringResource(if ("p20" in state.ownedPlanets) R.string.prestige else R.string.prestige_requirement))
+        val canPrestige = EconomyBalance.canPrestige(state)
+        Button(onClick = viewModel::prestige, enabled = canPrestige) {
+            Text(stringResource(if (canPrestige) R.string.prestige else R.string.prestige_requirement))
         }
         Technology.entries.forEach { technology ->
             val label = when (technology) {
@@ -254,7 +256,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
 
         Button(
             onClick = { viewModel.startOpeningCase() },
-            enabled = state.totalDebris >= caseCost && totalDrones < 5,
+            enabled = state.totalDebris >= caseCost && totalDrones < EconomyBalance.MAX_DRONES,
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.height(36.dp)
