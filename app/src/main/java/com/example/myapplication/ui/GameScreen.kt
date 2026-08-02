@@ -27,6 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.myapplication.FloatingTextData
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
@@ -47,6 +50,7 @@ fun GameScreen(
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val soundManager = remember { SoundManager() }
     val floatingTextId = remember { AtomicLong(0L) }
@@ -65,9 +69,25 @@ fun GameScreen(
         onDispose { soundManager.close() }
     }
 
-    val fleetMap = remember(viewModel.fleetItems) {
-        viewModel.fleetItems.associateBy { it.id }
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> viewModel.resumeSimulation()
+                Lifecycle.Event.ON_STOP -> viewModel.pauseSimulation()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            viewModel.resumeSimulation()
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.pauseSimulation()
+        }
     }
+
+    val fleetMap = viewModel.fleetById
 
     // Логика выбора фона в зависимости от активного ивента
     val backgroundRes = remember<Int>(state.activeEvent?.type) {
@@ -226,6 +246,26 @@ fun GameScreen(
         }
 
         // СТАРТОВЫЙ ЭКРАН
+        if (state.lastOfflineReward > 0.0) {
+            AlertDialog(
+                onDismissRequest = viewModel::clearOfflineReward,
+                title = { Text(stringResource(R.string.offline_reward_title)) },
+                text = {
+                    Text(
+                        stringResource(
+                            R.string.offline_reward_message,
+                            formatNum(state.lastOfflineReward)
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = viewModel::clearOfflineReward) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                }
+            )
+        }
+
         if (showStartScreen) {
             val promptTransition = rememberInfiniteTransition(label = "start_prompt")
             val promptOffset by promptTransition.animateFloat(

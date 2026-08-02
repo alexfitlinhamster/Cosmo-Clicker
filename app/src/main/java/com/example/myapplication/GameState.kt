@@ -63,7 +63,12 @@ data class GameState(
     val activeQuests: List<Quest> = emptyList(),
     val completedQuestIds: Set<String> = emptySet(),
     val questBonuses: Map<String, Double> = emptyMap(),
-    val activeEffects: Map<String, Long> = emptyMap() // Type ID to expiresAt
+    val activeEffects: Map<String, Long> = emptyMap(), // Type ID to expiresAt
+    val lastOfflineReward: Double = 0.0,
+    val prestigePoints: Int = 0,
+    val technologies: Set<Technology> = emptySet(),
+    val dailyQuestDay: Long = -1L,
+    val sessionStats: SessionStats = SessionStats()
 )
 
 data class DroneData(

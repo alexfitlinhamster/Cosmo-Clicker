@@ -139,4 +139,16 @@
     <string name="quest_click_planet">Нажать на планету %1$d раз</string>
     <string name="quest_buy_upgrade">Купить %1$d улучшений клика</string>
     <string name="quest_open_case">Открыть %1$d кейсов</string>
+    <string name="offline_reward_title">С возвращением!</string>
+    <string name="offline_reward_message">Пока вас не было, дроны собрали %1$s обломков.</string>
+    <string name="tab_meta">Мета</string>
+    <string name="prestige">Престиж</string>
+    <string name="prestige_points">Очки престижа: %1$d</string>
+    <string name="prestige_requirement">Откройте планету 20 для престижа</string>
+    <string name="technology_power_core">Энергетическое ядро (+25%% к кликам)</string>
+    <string name="technology_offline_ai">Офлайн-ИИ</string>
+    <string name="technology_luck_matrix">Матрица удачи</string>
+    <string name="technology_cost">Цена: %1$d очков</string>
+    <string name="collection_bonus">Бонус коллекции: +%1$d%%</string>
+    <string name="session_stats">Сессия: %1$d кликов · %2$s обломков · %3$d кейсов</string>
 </resources>

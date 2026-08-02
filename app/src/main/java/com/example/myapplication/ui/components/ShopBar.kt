@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.MetaProgressEngine
 import com.example.myapplication.R
+import com.example.myapplication.Technology
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -41,7 +43,7 @@ fun ShopBar(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf(R.string.tab_planets, R.string.tab_fleet, R.string.tab_click)
+    val tabs = listOf(R.string.tab_planets, R.string.tab_fleet, R.string.tab_click, R.string.tab_meta)
 
     Card(
         modifier = modifier
@@ -155,7 +157,44 @@ fun ShopBar(
                                 )
                             }
                         }
+                        3 -> item { MetaProgressPanel(viewModel, state) }
                     }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.prestige_points, state.prestigePoints), color = Color.White)
+        Text(
+            stringResource(
+                R.string.session_stats,
+                state.sessionStats.clicks,
+                formatNum(state.sessionStats.debrisEarned),
+                state.sessionStats.casesOpened
+            ),
+            color = Color.LightGray,
+            fontSize = 12.sp
+        )
+        val collectionPercent = ((MetaProgressEngine.collectionMultiplier(state.fleetCounts, viewModel.fleetById) - 1.0) * 100).toInt()
+        Text(stringResource(R.string.collection_bonus, collectionPercent), color = Color.LightGray)
+        Button(onClick = viewModel::prestige, enabled = "p20" in state.ownedPlanets) {
+            Text(stringResource(if ("p20" in state.ownedPlanets) R.string.prestige else R.string.prestige_requirement))
+        }
+        Technology.entries.forEach { technology ->
+            val label = when (technology) {
+                Technology.POWER_CORE -> R.string.technology_power_core
+                Technology.OFFLINE_AI -> R.string.technology_offline_ai
+                Technology.LUCK_MATRIX -> R.string.technology_luck_matrix
+            }
+            Button(
+                onClick = { viewModel.buyTechnology(technology) },
+                enabled = technology !in state.technologies && state.prestigePoints >= technology.cost,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("${stringResource(label)} · ${stringResource(R.string.technology_cost, technology.cost)}")
             }
         }
     }

@@ -16,8 +16,7 @@ object GameRules {
     )
 
     fun calculateCaseCost(casesPurchased: Int): Double {
-        if (casesPurchased == 0) return 0.0
-        return CASE_BASE_COST * CASE_COST_MULTIPLIER.pow((casesPurchased - 1).coerceAtLeast(0).toDouble())
+        return CASE_BASE_COST * CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
     }
 
     fun purchaseOrSelectPlanet(state: GameState, planetId: String, price: Double): GameState? =

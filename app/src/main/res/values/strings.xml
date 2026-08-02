@@ -139,4 +139,16 @@
     <string name="quest_click_planet">Click planet %1$d times</string>
     <string name="quest_buy_upgrade">Buy %1$d click upgrades</string>
     <string name="quest_open_case">Open %1$d cases</string>
+    <string name="offline_reward_title">Welcome back!</string>
+    <string name="offline_reward_message">Your drones collected %1$s debris while you were away.</string>
+    <string name="tab_meta">Meta</string>
+    <string name="prestige">Prestige</string>
+    <string name="prestige_points">Prestige points: %1$d</string>
+    <string name="prestige_requirement">Unlock planet 20 to prestige</string>
+    <string name="technology_power_core">Power Core (+25%% clicks)</string>
+    <string name="technology_offline_ai">Offline AI</string>
+    <string name="technology_luck_matrix">Luck Matrix</string>
+    <string name="technology_cost">Cost: %1$d points</string>
+    <string name="collection_bonus">Collection bonus: +%1$d%%</string>
+    <string name="session_stats">Session: %1$d clicks · %2$s debris · %3$d cases</string>
 </resources>

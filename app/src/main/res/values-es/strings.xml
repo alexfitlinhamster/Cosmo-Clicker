@@ -138,4 +138,16 @@
     <string name="quest_click_planet">Toca el planeta %1$d veces</string>
     <string name="quest_buy_upgrade">Compra %1$d mejoras de clic</string>
     <string name="quest_open_case">Abre %1$d cajas</string>
+    <string name="offline_reward_title">¡Bienvenido de nuevo!</string>
+    <string name="offline_reward_message">Tus drones recogieron %1$s escombros mientras no estabas.</string>
+    <string name="tab_meta">Meta</string>
+    <string name="prestige">Prestigio</string>
+    <string name="prestige_points">Puntos de prestigio: %1$d</string>
+    <string name="prestige_requirement">Desbloquea el planeta 20 para obtener prestigio</string>
+    <string name="technology_power_core">Núcleo de energía (+25%% clics)</string>
+    <string name="technology_offline_ai">IA sin conexión</string>
+    <string name="technology_luck_matrix">Matriz de suerte</string>
+    <string name="technology_cost">Coste: %1$d puntos</string>
+    <string name="collection_bonus">Bonificación de colección: +%1$d%%</string>
+    <string name="session_stats">Sesión: %1$d clics · %2$s escombros · %3$d cajas</string>
 </resources>
