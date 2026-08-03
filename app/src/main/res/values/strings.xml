@@ -201,9 +201,10 @@
     <string name="quest_obtain_any_drone">Obtain the specified drone</string>
     <string name="quest_obtain_drone_number">Obtain drone №%1$d from a case</string>
     <string name="missions_subtitle">Daily and weekly contracts</string>
-    <string name="command_center">Command center</string>
+    <string name="feature_hub_title">Command center</string>
     <string name="command_center_subtitle">Planets, hangar, upgrades and progress</string>
     <string name="achievements_subtitle">Milestones and permanent rewards</string>
+    <string name="next_contracts_in">New contracts in %1$s</string>
     <string name="offline_reward_title">Welcome back!</string>
     <string name="offline_reward_message">Your drones collected %1$s debris while you were away.</string>
     <string name="tab_meta">Meta</string>
@@ -246,4 +247,36 @@
     <string name="drone_trait_reactor" formatted="false">+35% passive income • −10% tap power</string>
     <string name="drone_trait_lucky" formatted="false">Bonus: +25% tap power</string>
     <string name="drone_trait_overclock" formatted="false">+25% speed • −10% passive income</string>
+    <string name="command_center">Command center</string>
+    <string name="command_center_short">Command</string>
+    <string name="feature_hub_subtitle">Weekly galaxy • titans • station</string>
+    <string name="weekly_galaxy">Galaxy</string>
+    <string name="titans">Titans</string>
+    <string name="station">Station</string>
+    <string name="weekly_rule_clicks">Manual systems</string>
+    <string name="weekly_rule_fragile">Fragile drones</string>
+    <string name="weekly_rule_market">Volatile market</string>
+    <string name="weekly_rule_hint">A new rule and reward appear every calendar week.</string>
+    <string name="reward_claimed">Reward claimed</string>
+    <string name="claim_rare_reward">Claim rare reward</string>
+    <string name="leave_galaxy">Leave challenge</string>
+    <string name="enter_galaxy">Enter challenge</string>
+    <string name="weekly_reward">Reward: 250K debris and 2 prestige cores</string>
+    <string name="boss_asteroid">Ancient asteroid</string>
+    <string name="boss_pirate">Pirate dreadnought</string>
+    <string name="boss_colossus">Mechanical colossus</string>
+    <string name="boss_hp">Hull: %1$s / %2$s</string>
+    <string name="boss_fight_hint">Tap the planet. Your active fleet also attacks. 60 seconds.</string>
+    <string name="titan_wins">Titans defeated: %1$d</string>
+    <string name="start_battle">Start 60-second battle</string>
+    <string name="station_hangar">Hangar</string>
+    <string name="station_lab">Laboratory</string>
+    <string name="station_reactor">Reactor</string>
+    <string name="station_trade">Trade hub</string>
+    <string name="station_level">Level %1$d/%2$d</string>
+    <string name="station_max">MAX</string>
+    <string name="station_hangar_bonus">+10% titan damage per level</string>
+    <string name="station_lab_bonus">+12% tap power per level</string>
+    <string name="station_reactor_bonus">+15% passive income per level</string>
+    <string name="station_trade_bonus">+10% weekly reward per level</string>
 </resources>

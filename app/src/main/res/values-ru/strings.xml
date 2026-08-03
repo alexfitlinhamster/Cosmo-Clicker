@@ -201,9 +201,10 @@
     <string name="quest_obtain_any_drone">Получить указанного дрона</string>
     <string name="quest_obtain_drone_number">Получить дрона №%1$d из кейса</string>
     <string name="missions_subtitle">Ежедневные и недельные контракты</string>
-    <string name="command_center">Командный центр</string>
+    <string name="feature_hub_title">Командный центр</string>
     <string name="command_center_subtitle">Планеты, ангар, улучшения и прогресс</string>
     <string name="achievements_subtitle">Этапы развития и постоянные награды</string>
+    <string name="next_contracts_in">Новые задания через %1$s</string>
     <string name="offline_reward_title">С возвращением!</string>
     <string name="offline_reward_message">Пока вас не было, дроны собрали %1$s обломков.</string>
     <string name="tab_meta">Мета</string>
@@ -246,4 +247,36 @@
     <string name="drone_trait_reactor" formatted="false">+35% пассивного дохода • −10% силы клика</string>
     <string name="drone_trait_lucky" formatted="false">Бонус: +25% силы клика</string>
     <string name="drone_trait_overclock" formatted="false">+25% скорости • −10% пассивного дохода</string>
+    <string name="command_center">Командный центр</string>
+    <string name="command_center_short">Центр</string>
+    <string name="feature_hub_subtitle">Галактика • титаны • станция</string>
+    <string name="weekly_galaxy">Галактика</string>
+    <string name="titans">Титаны</string>
+    <string name="station">Станция</string>
+    <string name="weekly_rule_clicks">Ручное управление</string>
+    <string name="weekly_rule_fragile">Хрупкие дроны</string>
+    <string name="weekly_rule_market">Нестабильный рынок</string>
+    <string name="weekly_rule_hint">Каждую календарную неделю появляются новое правило и награда.</string>
+    <string name="reward_claimed">Награда получена</string>
+    <string name="claim_rare_reward">Забрать редкую награду</string>
+    <string name="leave_galaxy">Покинуть испытание</string>
+    <string name="enter_galaxy">Войти в испытание</string>
+    <string name="weekly_reward">Награда: 250 тыс. обломков и 2 ядра престижа</string>
+    <string name="boss_asteroid">Древний астероид</string>
+    <string name="boss_pirate">Пиратский дредноут</string>
+    <string name="boss_colossus">Механический колосс</string>
+    <string name="boss_hp">Корпус: %1$s / %2$s</string>
+    <string name="boss_fight_hint">Нажимайте на планету. Активный флот тоже атакует. У вас 60 секунд.</string>
+    <string name="titan_wins">Титанов побеждено: %1$d</string>
+    <string name="start_battle">Начать бой на 60 секунд</string>
+    <string name="station_hangar">Ангар</string>
+    <string name="station_lab">Лаборатория</string>
+    <string name="station_reactor">Реактор</string>
+    <string name="station_trade">Торговый отсек</string>
+    <string name="station_level">Уровень %1$d/%2$d</string>
+    <string name="station_max">МАКС.</string>
+    <string name="station_hangar_bonus">+10% урона титанам за уровень</string>
+    <string name="station_lab_bonus">+12% силы нажатия за уровень</string>
+    <string name="station_reactor_bonus">+15% пассивного дохода за уровень</string>
+    <string name="station_trade_bonus">+10% к награде недели за уровень</string>
 </resources>

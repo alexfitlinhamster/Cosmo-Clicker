@@ -236,6 +236,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 .mapNotNullTo(mutableSetOf()) { name -> Technology.entries.firstOrNull { it.name == name } },
             dailyQuestDay = prefs.getLong("dailyQuestDay", -1L),
             weeklyQuestWeek = prefs.getLong("weeklyQuestWeek", -1L),
+            dailyQuestsCompletedAt = prefs.getLong("dailyQuestsCompletedAt", -1L),
+            weeklyQuestsCompletedAt = prefs.getLong("weeklyQuestsCompletedAt", -1L),
             lifetimeStats = LifetimeStats(
                 clicks = prefs.getLong("lifetimeClicks", 0L).coerceAtLeast(0L),
                 casesOpened = prefs.getInt("lifetimeCasesOpened", 0).coerceAtLeast(0),
@@ -244,7 +246,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             ),
             unlockedAchievementIds = prefs.getStringSet("unlockedAchievementIds", emptySet()) ?: emptySet(),
             claimedAchievementIds = prefs.getStringSet("claimedAchievementIds", emptySet()) ?: emptySet(),
-            eventLog = EventLogCodec.decode(prefs.getString("eventLog", null))
+            eventLog = EventLogCodec.decode(prefs.getString("eventLog", null)),
+            weeklyGalaxy = WeeklyGalaxy(
+                weekKey = prefs.getLong("galaxyWeekKey", -1L),
+                rule = prefs.getString("galaxyRule", WeeklyRule.CLICKS_ONLY.name)
+                    ?.let { name -> WeeklyRule.entries.firstOrNull { it.name == name } } ?: WeeklyRule.CLICKS_ONLY,
+                active = prefs.getBoolean("galaxyActive", false),
+                progress = loadPreciseDouble("galaxyProgress", 0.0).coerceAtLeast(0.0),
+                target = loadPreciseDouble("galaxyTarget", 500.0).coerceAtLeast(1.0),
+                rewardClaimed = prefs.getBoolean("galaxyRewardClaimed", false)
+            ),
+            titanWins = prefs.getInt("titanWins", 0).coerceAtLeast(0),
+            stationLevels = StationModule.entries.associateWith { module ->
+                prefs.getInt("station_${module.name}", 0).coerceIn(0, 5)
+            }
         )
         val offline = OfflineProgressEngine.calculate(
             lastActiveAtMillis = prefs.getLong(LAST_ACTIVE_AT_KEY, 0L),
@@ -254,7 +269,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             rewardMultiplier = (if (Technology.OFFLINE_AI in loadedState.technologies) 2.0 else 1.0) *
                 EconomyBalance.planetIncomeMultiplier(loadedState.currentPlanetId)
         )
-        return loadedState.copy(
+        return FeatureEngine.refreshWeekly(loadedState).copy(
             totalDebris = loadedState.totalDebris + offline.reward,
             lastOfflineReward = offline.reward
         )
@@ -282,6 +297,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putStringSet("technologies", state.technologies.map { it.name }.toSet())
             putLong("dailyQuestDay", state.dailyQuestDay)
             putLong("weeklyQuestWeek", state.weeklyQuestWeek)
+            putLong("dailyQuestsCompletedAt", state.dailyQuestsCompletedAt)
+            putLong("weeklyQuestsCompletedAt", state.weeklyQuestsCompletedAt)
             putLong("lifetimeClicks", state.lifetimeStats.clicks)
             putInt("lifetimeCasesOpened", state.lifetimeStats.casesOpened)
             putInt("lifetimeEventsCompleted", state.lifetimeStats.eventsCompleted)
@@ -289,6 +306,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putStringSet("unlockedAchievementIds", state.unlockedAchievementIds)
             putStringSet("claimedAchievementIds", state.claimedAchievementIds)
             putString("eventLog", EventLogCodec.encode(state.eventLog))
+            putLong("galaxyWeekKey", state.weeklyGalaxy.weekKey)
+            putString("galaxyRule", state.weeklyGalaxy.rule.name)
+            putBoolean("galaxyActive", state.weeklyGalaxy.active)
+            putLong("galaxyProgressBits", GameRules.encodeDouble(state.weeklyGalaxy.progress))
+            putLong("galaxyTargetBits", GameRules.encodeDouble(state.weeklyGalaxy.target))
+            putBoolean("galaxyRewardClaimed", state.weeklyGalaxy.rewardClaimed)
+            putInt("titanWins", state.titanWins)
+            state.stationLevels.forEach { (module, level) -> putInt("station_${module.name}", level) }
             
             // Save Quests
             val activeQuestIds = state.activeQuests.map { it.id }.toSet()
@@ -889,12 +914,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun processEconomyTick() {
         val passiveIncome = calculateDPS()
+        val now = System.currentTimeMillis()
         _gameState.update {
-            AchievementEngine.evaluate(EconomyEngine.processTick(it, System.currentTimeMillis(), passiveIncome))
+            var next = EconomyEngine.processTick(it, now, passiveIncome)
+            val battle = next.titanBattle
+            if (battle != null) {
+                next = if (now >= battle.expiresAt) next.copy(titanBattle = null)
+                else applyTitanDamage(next, passiveIncome * FeatureEngine.stationBossMultiplier(next))
+            }
+            if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.FRAGILE_DRONES) {
+                next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
+                    progress = (next.weeklyGalaxy.progress + passiveIncome).coerceAtMost(next.weeklyGalaxy.target)
+                ))
+            }
+            markCompletedQuestCycles(
+                AchievementEngine.evaluate(next),
+                now
+            )
         }
+        refreshTimedQuests(now)
     }
 
-    fun calculateDPS(): Double = EconomyBalance.passiveIncome(_gameState.value, fleetById)
+    fun calculateDPS(): Double {
+        val state = _gameState.value
+        if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == WeeklyRule.CLICKS_ONLY) return 0.0
+        val weeklyMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == WeeklyRule.FRAGILE_DRONES) 0.5 else 1.0
+        return EconomyBalance.passiveIncome(state, fleetById) *
+            FeatureEngine.stationDpsMultiplier(state) * weeklyMultiplier
+    }
 
     fun calculateClickValue(): Double {
         val state = _gameState.value
@@ -904,7 +951,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             MetaProgressEngine.masteryMultiplier(state.droneParts) *
             DroneTraitEngine.modifiers(state.activeFleetCounts).clickMultiplier *
             MetaProgressEngine.technologyMultiplier(state.technologies) *
-            EconomyBalance.planetIncomeMultiplier(state.currentPlanetId) * tradeMultiplier
+            EconomyBalance.planetIncomeMultiplier(state.currentPlanetId) * tradeMultiplier *
+            FeatureEngine.stationClickMultiplier(state)
     }
 
     fun onPlanetClick(): Double {
@@ -930,7 +978,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             // Update Quest Progress
             val updatedQuests = QuestEngine.advance(currentState.activeQuests, QuestType.CLICK_PLANET)
             
-            currentState.copy(
+            var next = currentState.copy(
                 totalDebris = newTotalDebris, 
                 currentHotelDebt = newHotelDebt, 
                 isHotelDebtActive = hotelDebtActive,
@@ -943,8 +991,64 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     clicks = currentState.lifetimeStats.clicks + 1
                 )
             )
+            if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.CLICKS_ONLY) {
+                next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
+                    progress = (next.weeklyGalaxy.progress + 1.0).coerceAtMost(next.weeklyGalaxy.target)
+                ))
+            }
+            if (next.titanBattle != null) next = applyTitanDamage(next, clickPower * FeatureEngine.stationBossMultiplier(next))
+            next
         }
         return clickPower
+    }
+
+    private fun applyTitanDamage(state: GameState, damage: Double): GameState {
+        val battle = state.titanBattle ?: return state
+        val health = battle.health - damage.coerceAtLeast(0.0)
+        return if (health > 0.0) state.copy(titanBattle = battle.copy(health = health))
+        else state.copy(
+            titanBattle = null,
+            titanWins = state.titanWins + 1,
+            prestigePoints = state.prestigePoints + 1,
+            totalDebris = state.totalDebris + battle.maxHealth * 2.0
+        )
+    }
+
+    fun toggleWeeklyGalaxy() {
+        _gameState.update { state ->
+            val refreshed = FeatureEngine.refreshWeekly(state)
+            refreshed.copy(weeklyGalaxy = refreshed.weeklyGalaxy.copy(active = !refreshed.weeklyGalaxy.active))
+        }
+        saveGameState()
+    }
+
+    fun claimWeeklyGalaxyReward() {
+        _gameState.update { state ->
+            val galaxy = state.weeklyGalaxy
+            if (galaxy.rewardClaimed || galaxy.progress < galaxy.target) state else state.copy(
+                weeklyGalaxy = galaxy.copy(rewardClaimed = true, active = false),
+                prestigePoints = state.prestigePoints + 2,
+                totalDebris = state.totalDebris + 250_000.0 * FeatureEngine.stationRewardMultiplier(state)
+            )
+        }
+        saveGameState()
+    }
+
+    fun startTitanBattle() {
+        _gameState.update { state ->
+            if (state.titanBattle != null) state else state.copy(titanBattle = FeatureEngine.createBoss(state))
+        }
+    }
+
+    fun upgradeStation(module: StationModule) {
+        updateStoreState("station:${module.name}") { state ->
+            val level = state.stationLevels[module] ?: 0
+            val cost = FeatureEngine.stationCost(module, level)
+            if (level >= 5 || state.totalDebris < cost) null else state.copy(
+                totalDebris = state.totalDebris - cost,
+                stationLevels = state.stationLevels + (module to level + 1)
+            )
+        }
     }
 
     fun buyClickUpgrade(id: String) {
@@ -953,18 +1057,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val currentLevel = (state.clickLevels[id] ?: 0).coerceAtLeast(0)
             if (currentLevel == Int.MAX_VALUE) return@updateStoreState null
 
-            val rawCost = item.base * 1.15.pow(currentLevel.toDouble())
+            val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == WeeklyRule.VOLATILE_MARKET)
+                FeatureEngine.volatilePriceMultiplier() else 1.0
+            val rawCost = item.base * 1.15.pow(currentLevel.toDouble()) * marketMultiplier
             if (!rawCost.isFinite()) return@updateStoreState null
             val purchaseCost = rawCost.toLong().toDouble()
             if (state.totalDebris < purchaseCost) return@updateStoreState null
 
             val updatedQuests = QuestEngine.advance(state.activeQuests, QuestType.BUY_UPGRADE)
 
-            state.copy(
+            var next = state.copy(
                 totalDebris = state.totalDebris - purchaseCost,
                 clickLevels = state.clickLevels + (id to currentLevel + 1),
                 activeQuests = updatedQuests
             )
+            if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.VOLATILE_MARKET) {
+                next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
+                    progress = (next.weeklyGalaxy.progress + 1.0).coerceAtMost(next.weeklyGalaxy.target)
+                ))
+            }
+            next
         }
     }
 
@@ -1135,12 +1247,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             val newActiveQuests = state.activeQuests.filter { it.id != questId }
             val newCompletedQuestIds = state.completedQuestIds + questId
+            val now = System.currentTimeMillis()
+            val dailyFinished = quest.cadence == QuestCadence.DAILY &&
+                newActiveQuests.none { it.cadence == QuestCadence.DAILY }
+            val weeklyFinished = quest.cadence == QuestCadence.WEEKLY &&
+                newActiveQuests.none { it.cadence == QuestCadence.WEEKLY }
 
             state.copy(
                 totalDebris = newTotalDebris,
                 prestigePoints = state.prestigePoints + quest.rewardPrestigePoints,
                 fleetCounts = newFleetCounts,
                 activeQuests = newActiveQuests,
+                dailyQuestsCompletedAt = if (dailyFinished && state.dailyQuestsCompletedAt < 0L) now else state.dailyQuestsCompletedAt,
+                weeklyQuestsCompletedAt = if (weeklyFinished && state.weeklyQuestsCompletedAt < 0L) now else state.weeklyQuestsCompletedAt,
                 completedQuestIds = newCompletedQuestIds,
                 isOpeningCase = if (triggeringCaseOpening) true else state.isOpeningCase,
                 // Cases from quests don't increase price growth in shop, but we could make them.
@@ -1191,22 +1310,49 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun refreshTimedQuests() {
+    private fun markCompletedQuestCycles(state: GameState, now: Long): GameState {
+        val daily = state.activeQuests.filter { it.cadence == QuestCadence.DAILY }
+        val weekly = state.activeQuests.filter { it.cadence == QuestCadence.WEEKLY }
+        return state.copy(
+            dailyQuestsCompletedAt = if (state.dailyQuestsCompletedAt < 0L && daily.isNotEmpty() && daily.all { it.isCompleted }) now else state.dailyQuestsCompletedAt,
+            weeklyQuestsCompletedAt = if (state.weeklyQuestsCompletedAt < 0L && weekly.isNotEmpty() && weekly.all { it.isCompleted }) now else state.weeklyQuestsCompletedAt
+        )
+    }
+
+    private fun refreshTimedQuests(now: Long = System.currentTimeMillis()) {
         val calendar = java.util.Calendar.getInstance()
         val dayKey = calendar.get(java.util.Calendar.YEAR) * 1_000L +
             calendar.get(java.util.Calendar.DAY_OF_YEAR)
         val weekKey = calendar.getWeekYear() * 100L + calendar.get(java.util.Calendar.WEEK_OF_YEAR)
         _gameState.update { state ->
             var quests = state.activeQuests
-            if (state.dailyQuestDay != dayKey || quests.none { it.id.startsWith("d2_") }) {
+            var dailyCompletedAt = state.dailyQuestsCompletedAt
+            var weeklyCompletedAt = state.weeklyQuestsCompletedAt
+            val hasDaily = quests.any { it.cadence == QuestCadence.DAILY }
+            val hasWeekly = quests.any { it.cadence == QuestCadence.WEEKLY }
+            if ((!hasDaily && dailyCompletedAt < 0L) ||
+                (dailyCompletedAt > 0L && now - dailyCompletedAt >= DAILY_QUEST_COOLDOWN) ||
+                quests.any { it.cadence == QuestCadence.DAILY && !it.id.startsWith("d2_") }
+            ) {
                 quests = quests.filterNot { it.cadence == QuestCadence.DAILY } +
                     createDailyQuests(dayKey, state.currentPlanetId)
+                dailyCompletedAt = -1L
             }
-            if (state.weeklyQuestWeek != weekKey || quests.none { it.id.startsWith("w2_") }) {
+            if ((!hasWeekly && weeklyCompletedAt < 0L) ||
+                (weeklyCompletedAt > 0L && now - weeklyCompletedAt >= WEEKLY_QUEST_COOLDOWN) ||
+                quests.any { it.cadence == QuestCadence.WEEKLY && !it.id.startsWith("w2_") }
+            ) {
                 quests = quests.filterNot { it.cadence == QuestCadence.WEEKLY } +
                     createWeeklyQuests(weekKey, state.currentPlanetId)
+                weeklyCompletedAt = -1L
             }
-            state.copy(activeQuests = quests, dailyQuestDay = dayKey, weeklyQuestWeek = weekKey)
+            state.copy(
+                activeQuests = quests,
+                dailyQuestDay = dayKey,
+                weeklyQuestWeek = weekKey,
+                dailyQuestsCompletedAt = dailyCompletedAt,
+                weeklyQuestsCompletedAt = weeklyCompletedAt
+            )
         }
     }
 
@@ -1253,6 +1399,8 @@ private fun Map<String, Int>.limitActiveFleet(): Map<String, Int> {
 }
 
 private const val DRONE_MOVE_STEP = 0.01f
+private const val DAILY_QUEST_COOLDOWN = 24L * 60L * 60L * 1_000L
+private const val WEEKLY_QUEST_COOLDOWN = 7L * 24L * 60L * 60L * 1_000L
 private const val DRONE_HOME_POSITION = 0.5f
 private const val STORE_ACTION_DEBOUNCE_NANOS = 100_000_000L
 private const val DEBRIS_SHOWER_SPAWN_INTERVAL_MS = 450L

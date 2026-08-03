@@ -60,6 +60,13 @@ fun ShopBar(
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
+                Image(
+                    painter = painterResource(R.drawable.shop_command_header),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(104.dp).clip(RoundedCornerShape(18.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 SpaceSheetHeader(
                     title = stringResource(R.string.command_center),
                     subtitle = stringResource(R.string.command_center_subtitle),

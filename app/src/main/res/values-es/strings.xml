@@ -201,9 +201,10 @@
     <string name="quest_obtain_any_drone">Obtén el dron indicado</string>
     <string name="quest_obtain_drone_number">Obtén el dron n.º %1$d de una caja</string>
     <string name="missions_subtitle">Contratos diarios y semanales</string>
-    <string name="command_center">Centro de mando</string>
+    <string name="feature_hub_title">Centro de mando</string>
     <string name="command_center_subtitle">Planetas, hangar, mejoras y progreso</string>
     <string name="achievements_subtitle">Hitos y recompensas permanentes</string>
+    <string name="next_contracts_in">Nuevos contratos en %1$s</string>
     <string name="offline_reward_title">¡Bienvenido de nuevo!</string>
     <string name="offline_reward_message">Tus drones recogieron %1$s escombros mientras no estabas.</string>
     <string name="tab_meta">Meta</string>
@@ -246,4 +247,36 @@
     <string name="drone_trait_reactor" formatted="false">+35% ingresos pasivos • −10% potencia de toque</string>
     <string name="drone_trait_lucky" formatted="false">Bonus: +25% de potencia de toque</string>
     <string name="drone_trait_overclock" formatted="false">+25% velocidad • −10% ingresos pasivos</string>
+    <string name="command_center">Centro de mando</string>
+    <string name="command_center_short">Centro</string>
+    <string name="feature_hub_subtitle">Galaxia • titanes • estación</string>
+    <string name="weekly_galaxy">Galaxia</string>
+    <string name="titans">Titanes</string>
+    <string name="station">Estación</string>
+    <string name="weekly_rule_clicks">Sistemas manuales</string>
+    <string name="weekly_rule_fragile">Drones frágiles</string>
+    <string name="weekly_rule_market">Mercado volátil</string>
+    <string name="weekly_rule_hint">Cada semana aparece una regla y recompensa nuevas.</string>
+    <string name="reward_claimed">Recompensa obtenida</string>
+    <string name="claim_rare_reward">Obtener recompensa</string>
+    <string name="leave_galaxy">Salir del desafío</string>
+    <string name="enter_galaxy">Entrar al desafío</string>
+    <string name="weekly_reward">Recompensa: 250K restos y 2 núcleos de prestigio</string>
+    <string name="boss_asteroid">Asteroide antiguo</string>
+    <string name="boss_pirate">Acorazado pirata</string>
+    <string name="boss_colossus">Coloso mecánico</string>
+    <string name="boss_hp">Casco: %1$s / %2$s</string>
+    <string name="boss_fight_hint">Toca el planeta. La flota activa también ataca. 60 segundos.</string>
+    <string name="titan_wins">Titanes derrotados: %1$d</string>
+    <string name="start_battle">Iniciar batalla de 60 segundos</string>
+    <string name="station_hangar">Hangar</string>
+    <string name="station_lab">Laboratorio</string>
+    <string name="station_reactor">Reactor</string>
+    <string name="station_trade">Centro comercial</string>
+    <string name="station_level">Nivel %1$d/%2$d</string>
+    <string name="station_max">MÁX.</string>
+    <string name="station_hangar_bonus">+10% daño a titanes por nivel</string>
+    <string name="station_lab_bonus">+12% potencia de toque por nivel</string>
+    <string name="station_reactor_bonus">+15% ingresos pasivos por nivel</string>
+    <string name="station_trade_bonus">+10% recompensa semanal por nivel</string>
 </resources>

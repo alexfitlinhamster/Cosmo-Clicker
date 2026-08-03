@@ -94,6 +94,13 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
+            Image(
+                painter = painterResource(R.drawable.settings_header),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(112.dp).clip(RoundedCornerShape(20.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
                     Text("‹", color = AppColors.Primary, fontSize = 40.sp)

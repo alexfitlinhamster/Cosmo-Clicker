@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -63,6 +64,7 @@ fun GameScreen(
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
+    var isFeatureHubOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
 
@@ -78,6 +80,7 @@ fun GameScreen(
             state.lastOfflineReward > 0.0 ||
             isShopOpen ||
             isQuestOpen
+            || isFeatureHubOpen
     ) {
         when {
             showSettings -> showSettings = false
@@ -86,6 +89,7 @@ fun GameScreen(
             state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
             isShopOpen -> isShopOpen = false
             isQuestOpen -> isQuestOpen = false
+            isFeatureHubOpen -> isFeatureHubOpen = false
         }
     }
 
@@ -126,16 +130,16 @@ fun GameScreen(
     // Логика выбора фона в зависимости от активного ивента
     val backgroundRes = remember<Int>(state.activeEvent?.type) {
         when (state.activeEvent?.type) {
-            GameEventType.STORM -> R.drawable.background_storm
-            GameEventType.ASTEROID -> R.drawable.background_asteroid
-            GameEventType.BLACK_HOLE -> R.drawable.background_storm
-            GameEventType.SOLAR_FLARE -> R.drawable.background_storm
-            GameEventType.CYBER_VIRUS -> R.drawable.background_fon
-            GameEventType.DISTRESS_SIGNAL -> R.drawable.background_space
-            GameEventType.ABANDONED_STATION -> R.drawable.background_space
-            GameEventType.PIRATE_RAID -> R.drawable.background_pirates
-            GameEventType.TRADING_SHIP -> R.drawable.background_space
-            else -> R.drawable.background_fon
+            GameEventType.STORM -> R.drawable.background_storm_v2
+            GameEventType.ASTEROID -> R.drawable.background_asteroid_v2
+            GameEventType.BLACK_HOLE -> R.drawable.background_storm_v2
+            GameEventType.SOLAR_FLARE -> R.drawable.background_storm_v2
+            GameEventType.CYBER_VIRUS -> R.drawable.background_pirates_v2
+            GameEventType.DISTRESS_SIGNAL -> R.drawable.background_space_v2
+            GameEventType.ABANDONED_STATION -> R.drawable.background_space_v2
+            GameEventType.PIRATE_RAID -> R.drawable.background_pirates_v2
+            GameEventType.TRADING_SHIP -> R.drawable.background_space_v2
+            else -> R.drawable.background_minimal_space
         }
     }
 
@@ -155,7 +159,7 @@ fun GameScreen(
             painter = painterResource(id = backgroundRes),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
 
         // Затемнение для читаемости элементов
@@ -274,7 +278,12 @@ fun GameScreen(
                 ShopLauncherButton(
                     onClick = { isShopOpen = true }
                 )
+                CommandCenterButton(onClick = { isFeatureHubOpen = true })
             }
+        }
+
+        if (isFeatureHubOpen) {
+            FeatureHub(viewModel, state, onClose = { isFeatureHubOpen = false })
         }
 
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
@@ -450,23 +459,46 @@ fun GameScreen(
                     contentScale = ContentScale.Crop
                 )
 
-                Text(
-                    text = stringResource(R.string.tap_to_continue),
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
+                Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(horizontal = 24.dp, vertical = 56.dp)
+                        .padding(horizontal = 24.dp, vertical = 44.dp)
                         .offset(y = promptOffset.dp)
-                        .graphicsLayer { alpha = promptAlpha }
-                        .background(
-                            color = Color.Black.copy(alpha = 0.62f),
-                            shape = RoundedCornerShape(18.dp)
-                        )
-                        .padding(horizontal = 22.dp, vertical = 12.dp)
-                )
+                        .graphicsLayer { alpha = promptAlpha },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.size(76.dp),
+                        shape = CircleShape,
+                        color = AppColors.Primary,
+                        border = androidx.compose.foundation.BorderStroke(
+                            3.dp,
+                            Color.White.copy(alpha = 0.85f)
+                        ),
+                        shadowElevation = 12.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "▶",
+                                color = Color(0xFF071426),
+                                fontSize = 34.sp,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.offset(x = 2.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = stringResource(R.string.tap_to_continue),
+                        color = Color.White,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.68f), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 20.dp, vertical = 9.dp)
+                    )
+                }
             }
         }
     }

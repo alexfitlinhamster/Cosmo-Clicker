@@ -36,6 +36,26 @@ enum class QuestType {
 
 enum class QuestCadence { DAILY, WEEKLY }
 
+enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }
+enum class BossType { ASTEROID_TITAN, PIRATE_DREADNOUGHT, MECHANICAL_COLOSSUS }
+enum class StationModule { HANGAR, LABORATORY, REACTOR, TRADE_HUB }
+
+data class WeeklyGalaxy(
+    val weekKey: Long = -1L,
+    val rule: WeeklyRule = WeeklyRule.CLICKS_ONLY,
+    val active: Boolean = false,
+    val progress: Double = 0.0,
+    val target: Double = 500.0,
+    val rewardClaimed: Boolean = false
+)
+
+data class TitanBattle(
+    val type: BossType,
+    val health: Double,
+    val maxHealth: Double,
+    val expiresAt: Long
+)
+
 data class Quest(
     val id: String,
     val type: QuestType,
@@ -82,13 +102,19 @@ data class GameState(
     val technologies: Set<Technology> = emptySet(),
     val dailyQuestDay: Long = -1L,
     val weeklyQuestWeek: Long = -1L,
+    val dailyQuestsCompletedAt: Long = -1L,
+    val weeklyQuestsCompletedAt: Long = -1L,
     val sessionStats: SessionStats = SessionStats(),
     val pendingEventChain: PendingEventChain? = null,
     val eventChainResult: EventChainResult? = null,
     val lifetimeStats: LifetimeStats = LifetimeStats(),
     val unlockedAchievementIds: Set<String> = emptySet(),
     val claimedAchievementIds: Set<String> = emptySet(),
-    val eventLog: List<EventLogEntry> = emptyList()
+    val eventLog: List<EventLogEntry> = emptyList(),
+    val weeklyGalaxy: WeeklyGalaxy = WeeklyGalaxy(),
+    val titanBattle: TitanBattle? = null,
+    val titanWins: Int = 0,
+    val stationLevels: Map<StationModule, Int> = emptyMap()
 )
 
 data class DroneData(

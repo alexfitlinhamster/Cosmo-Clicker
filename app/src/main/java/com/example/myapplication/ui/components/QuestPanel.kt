@@ -60,11 +60,15 @@ fun QuestPanel(
                 ) {
                     val daily = state.activeQuests.filter { it.cadence == QuestCadence.DAILY }
                     val weekly = state.activeQuests.filter { it.cadence == QuestCadence.WEEKLY }
-                    item(key = "daily_header") { QuestSectionHeader(R.string.daily_quests) }
+                    item(key = "daily_header") {
+                        QuestSectionHeader(R.string.daily_quests, state.dailyQuestsCompletedAt, 24L * 60L * 60L * 1_000L)
+                    }
                     items(daily, key = { it.id }) { quest ->
                         QuestItemRow(quest, onClaim)
                     }
-                    item(key = "weekly_header") { QuestSectionHeader(R.string.weekly_quests) }
+                    item(key = "weekly_header") {
+                        QuestSectionHeader(R.string.weekly_quests, state.weeklyQuestsCompletedAt, 7L * 24L * 60L * 60L * 1_000L)
+                    }
                     items(weekly, key = { it.id }) { quest ->
                         QuestItemRow(quest, onClaim)
                     }
@@ -75,14 +79,26 @@ fun QuestPanel(
 }
 
 @Composable
-private fun QuestSectionHeader(titleRes: Int) {
-    Text(
-        stringResource(titleRes),
-        color = AppColors.Secondary,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
-    )
+private fun QuestSectionHeader(titleRes: Int, completedAt: Long, cooldown: Long) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(stringResource(titleRes), color = AppColors.Secondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        if (completedAt > 0L) {
+            val left = (cooldown - (System.currentTimeMillis() - completedAt)).coerceAtLeast(0L)
+            Text(stringResource(R.string.next_contracts_in, formatDuration(left)), color = AppColors.Warning, fontSize = 10.sp)
+        }
+    }
+}
+
+private fun formatDuration(milliseconds: Long): String {
+    val totalMinutes = milliseconds / 60_000L
+    val days = totalMinutes / (24L * 60L)
+    val hours = (totalMinutes / 60L) % 24L
+    val minutes = totalMinutes % 60L
+    return if (days > 0L) "${days}d ${hours}h ${minutes}m" else "%02d:%02d".format(hours, minutes)
 }
 
 @Composable
