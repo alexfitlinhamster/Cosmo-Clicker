@@ -32,7 +32,9 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 GameScreen(
                     selectedLanguage = getSelectedLanguage(),
-                    onLanguageSelected = ::setSelectedLanguage
+                    onLanguageSelected = ::setSelectedLanguage,
+                    reduceMotion = getReduceMotion(),
+                    onReduceMotionChanged = ::setReduceMotion
                 )
             }
         }
@@ -51,8 +53,19 @@ class MainActivity : ComponentActivity() {
         recreate()
     }
 
+    private fun getReduceMotion(): Boolean =
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).getBoolean(REDUCE_MOTION_KEY, false)
+
+    private fun setReduceMotion(enabled: Boolean) {
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
+            .putBoolean(REDUCE_MOTION_KEY, enabled)
+            .apply()
+        recreate()
+    }
+
     private companion object {
         const val PREFERENCES_NAME = "settings"
         const val LANGUAGE_KEY = "language"
+        const val REDUCE_MOTION_KEY = "reduceMotion"
     }
 }

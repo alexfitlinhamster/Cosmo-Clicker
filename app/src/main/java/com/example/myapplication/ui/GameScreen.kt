@@ -1,5 +1,6 @@
 package com.example.myapplication.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -35,6 +36,8 @@ import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.DistressChoice
+import com.example.myapplication.StationChoice
+import com.example.myapplication.TradeOffer
 import com.example.myapplication.R
 import com.example.myapplication.SoundManager
 import com.example.myapplication.ui.components.*
@@ -48,6 +51,8 @@ import java.util.concurrent.atomic.AtomicLong
 fun GameScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
+    reduceMotion: Boolean,
+    onReduceMotionChanged: (Boolean) -> Unit,
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -65,6 +70,24 @@ fun GameScreen(
     var showStartScreen by remember { mutableStateOf(true) }
     val startScreenOffset = remember { Animatable(0f) }
     val startScreenAlpha = remember { Animatable(1f) }
+
+    BackHandler(
+        enabled = showSettings ||
+            showEventInfo != null ||
+            state.eventChainResult != null ||
+            state.lastOfflineReward > 0.0 ||
+            isShopOpen ||
+            isQuestOpen
+    ) {
+        when {
+            showSettings -> showSettings = false
+            showEventInfo != null -> showEventInfo = null
+            state.eventChainResult != null -> viewModel.clearEventChainResult()
+            state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
+            isShopOpen -> isShopOpen = false
+            isQuestOpen -> isQuestOpen = false
+        }
+    }
 
     DisposableEffect(soundManager) {
         onDispose { soundManager.close() }
@@ -109,6 +132,9 @@ fun GameScreen(
             GameEventType.SOLAR_FLARE -> R.drawable.background_storm
             GameEventType.CYBER_VIRUS -> R.drawable.background_fon
             GameEventType.DISTRESS_SIGNAL -> R.drawable.background_space
+            GameEventType.ABANDONED_STATION -> R.drawable.background_space
+            GameEventType.PIRATE_RAID -> R.drawable.background_pirates
+            GameEventType.TRADING_SHIP -> R.drawable.background_space
             else -> R.drawable.background_fon
         }
     }
@@ -140,8 +166,8 @@ fun GameScreen(
         )
 
         // Звезды
-        repeat(GameConstants.StarCount) {
-            Star()
+        repeat(if (reduceMotion) GameConstants.ReducedStarCount else GameConstants.StarCount) {
+            Star(reduceMotion)
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -199,8 +225,15 @@ fun GameScreen(
                                 viewModel.onBlackHoleClick()
                             }
                         }
+                        GameEventType.PIRATE_RAID -> {
+                            PirateRaidComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
+                                viewModel.onPirateRaidClick()
+                            }
+                        }
                         GameEventType.METEOR_SHOWER -> Unit
                         GameEventType.DISTRESS_SIGNAL -> Unit
+                        GameEventType.ABANDONED_STATION -> Unit
+                        GameEventType.TRADING_SHIP -> Unit
                         else -> {}
                     }
                 }
@@ -249,13 +282,16 @@ fun GameScreen(
             isOpening = state.isOpeningCase,
             lastDroppedDrone = state.lastDroppedDroneId?.let { fleetMap[it] },
             onFinishOpening = { viewModel.finishOpeningCase() },
-            onClearReward = { viewModel.clearReward() }
+            onClearReward = { viewModel.clearReward() },
+            reduceMotion = reduceMotion
         )
 
         if (showSettings) {
             SettingsScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = onLanguageSelected,
+                reduceMotion = reduceMotion,
+                onReduceMotionChanged = onReduceMotionChanged,
                 onBack = { showSettings = false }
             )
         }
@@ -273,6 +309,49 @@ fun GameScreen(
                         showEventInfo = null
                     },
                     onDismiss = { showEventInfo = null }
+                )
+            } else if (event.type == GameEventType.ABANDONED_STATION) {
+                AbandonedStationDialog(
+                    reward = event.reward,
+                    onSafeRoute = {
+                        viewModel.respondToAbandonedStation(StationChoice.SAFE_ROUTE)
+                        showEventInfo = null
+                    },
+                    onReactorCore = {
+                        viewModel.respondToAbandonedStation(StationChoice.REACTOR_CORE)
+                        showEventInfo = null
+                    },
+                    onDismiss = { showEventInfo = null }
+                )
+            } else if (event.type == GameEventType.TRADING_SHIP) {
+                AlertDialog(
+                    onDismissRequest = { showEventInfo = null },
+                    title = { Text(stringResource(R.string.event_trading_ship)) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.event_desc_trading_ship))
+                            Text(stringResource(R.string.trade_power_offer, formatNum(event.reward)))
+                            Text(stringResource(R.string.trade_luck_offer, formatNum(event.reward * 0.75)))
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = state.totalDebris >= event.reward,
+                            onClick = {
+                                viewModel.buyTradeOffer(TradeOffer.POWER_CORE)
+                                showEventInfo = null
+                            }
+                        ) { Text(stringResource(R.string.trade_buy_power)) }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            enabled = state.totalDebris >= event.reward * 0.75,
+                            onClick = {
+                                viewModel.buyTradeOffer(TradeOffer.LUCK_SCANNER)
+                                showEventInfo = null
+                            }
+                        ) { Text(stringResource(R.string.trade_buy_luck)) }
+                    }
                 )
             } else {
                 EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
@@ -306,7 +385,7 @@ fun GameScreen(
 
         if (showStartScreen) {
             val promptTransition = rememberInfiniteTransition(label = "start_prompt")
-            val promptOffset by promptTransition.animateFloat(
+            val animatedPromptOffset by promptTransition.animateFloat(
                 initialValue = 0f,
                 targetValue = -10f,
                 animationSpec = infiniteRepeatable(
@@ -315,7 +394,7 @@ fun GameScreen(
                 ),
                 label = "start_prompt_offset"
             )
-            val promptAlpha by promptTransition.animateFloat(
+            val animatedPromptAlpha by promptTransition.animateFloat(
                 initialValue = 0.4f,
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
@@ -324,6 +403,8 @@ fun GameScreen(
                 ),
                 label = "start_prompt_alpha"
             )
+            val promptOffset = if (reduceMotion) 0f else animatedPromptOffset
+            val promptAlpha = if (reduceMotion) 1f else animatedPromptAlpha
 
             Box(
                 modifier = Modifier
@@ -338,6 +419,10 @@ fun GameScreen(
                     ) {
                         scope.launch {
                             soundManager.playClick()
+                            if (reduceMotion) {
+                                showStartScreen = false
+                                return@launch
+                            }
                             // Анимация ухода вверх и исчезновения
                             launch {
                                 startScreenOffset.animateTo(

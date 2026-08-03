@@ -14,6 +14,8 @@ data class SessionStats(
 )
 
 object MetaProgressEngine {
+    private val masteryThresholds = intArrayOf(3, 8, 15)
+
     fun prestigeReward(totalDebris: Double): Int =
         sqrt((totalDebris.coerceAtLeast(0.0) / 1_000_000_000.0)).toInt().coerceAtLeast(1)
 
@@ -21,6 +23,13 @@ object MetaProgressEngine {
         val ownedRarities = fleetCounts.filterValues { it > 0 }.keys.mapNotNull { fleetById[it]?.rarity }.toSet()
         return 1.0 + ownedRarities.size * 0.05
     }
+
+    fun masteryLevel(parts: Int): Int = masteryThresholds.count { parts >= it }
+
+    fun masteryMultiplier(droneParts: Map<String, Int>): Double =
+        1.0 + droneParts.values.sumOf(::masteryLevel) * 0.02
+
+    fun partsForNextLevel(parts: Int): Int? = masteryThresholds.firstOrNull { parts < it }
 
     fun technologyMultiplier(technologies: Set<Technology>): Double =
         if (Technology.POWER_CORE in technologies) 1.25 else 1.0

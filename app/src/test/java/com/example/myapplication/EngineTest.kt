@@ -32,6 +32,40 @@ class EngineTest {
     }
 
     @Test
+    fun oneActionAdvancesMatchingDailyAndWeeklyQuests() {
+        val quests = listOf(
+            Quest("daily", QuestType.COMPLETE_EVENT, "", 2.0, 0.0, cadence = QuestCadence.DAILY),
+            Quest("weekly", QuestType.COMPLETE_EVENT, "", 25.0, 0.0, cadence = QuestCadence.WEEKLY),
+            Quest("clicks", QuestType.CLICK_PLANET, "", 10.0, 0.0)
+        )
+
+        val result = QuestEngine.advance(quests, QuestType.COMPLETE_EVENT)
+
+        assertEquals(1.0, result[0].progress, 0.0)
+        assertEquals(1.0, result[1].progress, 0.0)
+        assertEquals(0.0, result[2].progress, 0.0)
+    }
+
+    @Test
+    fun specificDroneQuestOnlyAdvancesForRequestedDrone() {
+        val quest = Quest(
+            id = "specific-drone",
+            type = QuestType.OBTAIN_DRONE,
+            description = "",
+            target = 1.0,
+            progress = 0.0,
+            targetDroneId = "drone_07"
+        )
+
+        val wrongDrop = QuestEngine.advance(listOf(quest), QuestType.OBTAIN_DRONE, droneId = "drone_03").single()
+        val requestedDrop = QuestEngine.advance(listOf(quest), QuestType.OBTAIN_DRONE, droneId = "drone_07").single()
+
+        assertEquals(0.0, wrongDrop.progress, 0.0)
+        assertEquals(1.0, requestedDrop.progress, 0.0)
+        assertTrue(requestedDrop.isCompleted)
+    }
+
+    @Test
     fun economyTickExpiresEffectsAndAppliesBlackHoleDrain() {
         val state = GameState(
             totalDebris = 1_000.0,
@@ -105,7 +139,7 @@ class EngineTest {
             eventMultiplier = 2.0
         )
 
-        val result = EventEngine.onAsteroidClick(state)
+        val result = EventEngine.onAsteroidClick(state, 500L)
 
         assertEquals(1_100.0, result.totalDebris, 0.0)
         assertEquals(null, result.activeEvent)
@@ -164,6 +198,7 @@ class EngineTest {
         assertEquals(GameEventType.BLACK_HOLE, EventEngine.selectType("p1", FixedRandom(65)))
         assertEquals(GameEventType.SOLAR_FLARE, EventEngine.selectType("p1", FixedRandom(73)))
         assertEquals(GameEventType.CYBER_VIRUS, EventEngine.selectType("p1", FixedRandom(88)))
+        assertEquals(GameEventType.PIRATE_RAID, EventEngine.selectType("p1", FixedRandom(118)))
     }
 
     @Test
@@ -231,5 +266,86 @@ class EngineTest {
         assertEquals(1.0, EventEngine.cyberVirusTheft(0.0), 0.0)
         assertEquals(50.0, EventEngine.cyberVirusTheft(1_000_000.0), 0.0)
         assertEquals(100_000.0, EventEngine.cyberVirusTheft(Double.MAX_VALUE), 0.0)
+    }
+
+    @Test
+    fun abandonedStationSafeRouteHasShortDelayAndScaledReward() {
+        val state = GameState(
+            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)
+        )
+        val pending = EventEngine.respondToAbandonedStation(
+            state, StationChoice.SAFE_ROUTE, 1_000L, FixedRandom(0)
+        )
+
+        assertEquals(9_000L, pending.pendingEventChain?.resolvesAt)
+        assertEquals(1_500.0, pending.pendingEventChain?.reward ?: 0.0, 0.0)
+        assertEquals(GameEventType.ABANDONED_STATION, pending.pendingEventChain?.eventType)
+    }
+
+    @Test
+    fun abandonedStationReactorFailureAppliesTwoPercentPenaltyOnResolution() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)
+        )
+        val pending = EventEngine.respondToAbandonedStation(
+            state, StationChoice.REACTOR_CORE, 1_000L, FixedRandom(99)
+        )
+        assertEquals(16_000L, pending.pendingEventChain?.resolvesAt)
+        assertEquals(200.0, pending.pendingEventChain?.failurePenalty ?: 0.0, 0.0)
+
+        val resolved = EventEngine.resolvePendingChainIfNeeded(pending, 16_000L)
+        assertEquals(9_800.0, resolved.totalDebris, 0.0)
+        assertEquals(200.0, resolved.eventChainResult?.loss ?: 0.0, 0.0)
+        assertTrue(resolved.eventChainResult?.success == false)
+    }
+
+    @Test
+    fun pirateRaidStealsBoundedPercentageEachEconomyTick() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L)
+        )
+        val result = EconomyEngine.processTick(state, 1_000L)
+        assertEquals(9_980.0, result.totalDebris, 0.0)
+        assertEquals(5.0, EventEngine.pirateRaidTheft(0.0), 0.0)
+        assertEquals(5_000_000.0, EventEngine.pirateRaidTheft(Double.MAX_VALUE), 0.0)
+    }
+
+    @Test
+    fun finalPirateHitAwardsRewardAndCompletesEvent() {
+        val state = GameState(
+            totalDebris = 100.0,
+            activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L, reward = 3_000.0),
+            eventTapsLeft = 1
+        )
+        val result = EventEngine.onPirateRaidClick(state, 1_000L)
+        assertEquals(3_100.0, result.totalDebris, 0.0)
+        assertEquals(null, result.activeEvent)
+        assertEquals(EventLogOutcome.COMPLETED, result.eventLog.last().outcome)
+        assertEquals(3_000.0, result.eventLog.last().reward, 0.0)
+    }
+
+    @Test
+    fun tradingShipPowerCoreCostsDebrisAndActivatesTimedBoost() {
+        val state = GameState(
+            totalDebris = 5_000.0,
+            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0)
+        )
+        val result = EventEngine.buyTradeOffer(state, TradeOffer.POWER_CORE, 2_000L)
+
+        assertEquals(4_000.0, result.totalDebris, 0.0)
+        assertEquals(62_000L, result.activeEffects[SkillType.TRADE_POWER.id])
+        assertEquals(null, result.activeEvent)
+        assertEquals(EventLogOutcome.CHOICE, result.eventLog.last().outcome)
+    }
+
+    @Test
+    fun tradingShipDoesNotCloseWhenPlayerCannotAffordOffer() {
+        val event = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0)
+        val state = GameState(totalDebris = 100.0, activeEvent = event)
+        val result = EventEngine.buyTradeOffer(state, TradeOffer.LUCK_SCANNER, 2_000L)
+
+        assertEquals(state, result)
     }
 }

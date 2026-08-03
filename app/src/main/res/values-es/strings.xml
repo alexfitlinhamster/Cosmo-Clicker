@@ -14,9 +14,11 @@
     <string name="telegram">Telegram</string>
     <string name="how_to_play">Cómo jugar</string>
     <string name="open_guide">Abrir guía</string>
+    <string name="reduce_motion">Reducir movimiento y destellos</string>
+    <string name="reduce_motion_desc">Desactiva parpadeos y acorta las transiciones</string>
     <string name="close">Cerrar</string>
     <string name="tap_to_continue">Tócame para continuar</string>
-    <string name="game_guide_body" formatted="false">Toca el planeta para obtener la moneda de residuos. Compra mejoras de clic para aumentar cada toque.\n\nLos residuos espaciales aparecen al azar cada 2–40 segundos. Los drones vuelan hacia ellos, los recogen y entregan la recompensa; no generan ingresos pasivos. Un dron puede recoger residuos hasta su propia rareza.\n\nRecompensas: Común — hasta 5K; Poco común — hasta 10K; Raro — hasta 20K; Épico — hasta 50K; Legendario — de 250K a 1M.\n\nAbre cajas para recibir drones aleatorios. Los drones de mayor rareza pueden recoger residuos más valiosos.\n\nLos eventos temporales cambian el juego. Durante una lluvia de residuos, hay un 20% de probabilidad de que aparezca un meteorito. Recogerlo puede dar una recompensa legendaria o averiar el dron durante un minuto.\n\nDesbloquea y selecciona planetas en la tienda. Cada planeta tiene un bonus único indicado bajo su descripción.</string>
+    <string name="game_guide_body" formatted="false">Toca el planeta para obtener residuos y compra mejoras para aumentar cada toque.\n\nLos drones recogen residuos y generan ingresos pasivos según su rareza. Las recompensas, los toques y los ingresos escalan con el planeta seleccionado.\n\nAbre cajas para obtener hasta 12 drones. Los drones raros recogen mejores residuos y producen más ingresos.\n\nLos eventos temporales cambian las reglas y ofrecen riesgos o recompensas.\n\nEl prestigio se desbloquea en el planeta 10. Cada planeta tiene una bonificación y un multiplicador de ingresos.</string>
     <string name="debris">escombros</string>
     <string name="per_second">+%1$s / s</string>
     <string name="hotel_debt">Deuda del hotel</string>
@@ -30,8 +32,34 @@
     <string name="shop_tap_to_open">TIENDA (TOCA PARA ABRIR)</string>
     <string name="open_shop">Abrir tienda</string>
     <string name="mystery_case">Caja misteriosa</string>
-    <string name="random_drone_count">Dron aleatorio • %1$d/5</string>
-    <string name="case_price_growth" formatted="false">El precio aumenta un 20% tras cada compra</string>
+    <string name="random_drone_count">Capacidad de flota • %1$d/%2$d</string>
+    <string name="case_price_growth" formatted="false">El precio aumenta un 12% tras cada compra</string>
+    <string name="planet_income_multiplier">Todos los ingresos: ×%1$s</string>
+    <string name="achievements">Logros</string>
+    <string name="achievement_claim">Obtener</string>
+    <string name="achievement_claimed">Obtenido</string>
+    <string name="achievement_locked">Bloqueado</string>
+    <string name="achievement_reward_debris">Recompensa: %1$s escombros</string>
+    <string name="achievement_reward_points">Recompensa: %1$d puntos de prestigio</string>
+    <string name="achievement_click_100">Realiza 100 toques</string>
+    <string name="achievement_click_10000">Realiza 10 000 toques</string>
+    <string name="achievement_fleet_5">Forma una flota de 5 drones</string>
+    <string name="achievement_fleet_12">Forma una flota completa de 12 drones</string>
+    <string name="achievement_planets_5">Desbloquea 5 planetas</string>
+    <string name="achievement_planets_10">Desbloquea 10 planetas</string>
+    <string name="achievement_planets_20">Desbloquea los 20 planetas</string>
+    <string name="achievement_events_10">Completa 10 eventos</string>
+    <string name="achievement_prestige_1">Completa el primer prestigio</string>
+    <string name="event_log">Registro de eventos</string>
+    <string name="event_log_clear">Borrar</string>
+    <string name="event_log_empty">Aún no hay eventos registrados</string>
+    <string name="event_log_started">Iniciado</string>
+    <string name="event_log_completed">Completado</string>
+    <string name="event_log_expired">Tiempo agotado</string>
+    <string name="event_log_choice">Expedición de rescate enviada</string>
+    <string name="event_log_success">Resultado exitoso</string>
+    <string name="event_log_failure">Resultado fallido</string>
+    <string name="event_log_reward">+%1$s escombros</string>
     <string name="sell">Vender</string>
     <string name="locked">Bloqueado</string>
     <string name="active">Activo</string>
@@ -53,6 +81,17 @@
     <string name="event_solar_flare">¡Llamarada solar!</string>
     <string name="event_cyber_virus">¡Virus cibernético!</string>
     <string name="event_distress_signal">¡Señal de socorro!</string>
+    <string name="event_abandoned_station">¡Estación abandonada!</string>
+    <string name="event_pirate_raid">¡Incursión pirata!</string>
+    <string name="event_desc_pirate_raid">Los piratas roban escombros cada segundo. Golpea su nave 15 veces antes de que escape para obtener una recompensa.</string>
+    <string name="event_desc_abandoned_station">Una estación antigua aún tiene energía. Elige una ruta segura o arriesga entrar en su reactor inestable.</string>
+    <string name="event_choose_route">Elige una ruta de exploración</string>
+    <string name="event_station_choice">Ruta segura: 90%% para obtener %1$s. Reactor: 50%% para obtener %2$s; fallar cuesta 2%% de tus escombros.</string>
+    <string name="event_station_safe">Ruta segura</string>
+    <string name="event_station_reactor">Entrar al reactor</string>
+    <string name="event_station_in_progress">Exploración de estación · %1$d s</string>
+    <string name="event_expedition_reward">Recompensa de expedición: %1$s escombros.</string>
+    <string name="event_station_loss">El reactor colapsó. Perdiste %1$s escombros.</string>
     <string name="event_desc_distress_signal">Una nave abandonada transmite una débil señal de socorro. Elige cómo responder antes de que desaparezca.</string>
     <string name="repairing_meta">Reparando: %1$d (%2$d s)</string>
     <string name="event_choose_response">Elige una respuesta</string>
@@ -144,6 +183,10 @@
 
     <string name="unknown_item">Desconocido</string>
     <string name="quests">Misiones</string>
+    <string name="daily_quests">Misiones diarias</string>
+    <string name="weekly_quests">Misiones semanales</string>
+    <string name="quest_complete_event">Completa %1$d eventos</string>
+    <string name="reward_prestige_points">+%1$d puntos de prestigio</string>
     <string name="claim">Reclamar</string>
     <string name="reward">Recompensa</string>
     <string name="reward_debris">+%1$s Escombros</string>
@@ -154,6 +197,13 @@
     <string name="quest_click_planet">Toca el planeta %1$d veces</string>
     <string name="quest_buy_upgrade">Compra %1$d mejoras de clic</string>
     <string name="quest_open_case">Abre %1$d cajas</string>
+    <string name="quest_obtain_drone">Obtén %1$s de una caja</string>
+    <string name="quest_obtain_any_drone">Obtén el dron indicado</string>
+    <string name="quest_obtain_drone_number">Obtén el dron n.º %1$d de una caja</string>
+    <string name="missions_subtitle">Contratos diarios y semanales</string>
+    <string name="command_center">Centro de mando</string>
+    <string name="command_center_subtitle">Planetas, hangar, mejoras y progreso</string>
+    <string name="achievements_subtitle">Hitos y recompensas permanentes</string>
     <string name="offline_reward_title">¡Bienvenido de nuevo!</string>
     <string name="offline_reward_message">Tus drones recogieron %1$s escombros mientras no estabas.</string>
     <string name="tab_meta">Meta</string>
@@ -166,4 +216,34 @@
     <string name="technology_cost">Coste: %1$d puntos</string>
     <string name="collection_bonus">Bonificación de colección: +%1$d%%</string>
     <string name="session_stats">Sesión: %1$d clics · %2$s escombros · %3$d cajas</string>
+    <string name="event_trading_ship">Nave mercante</string>
+    <string name="event_desc_trading_ship">Un comerciante ofrece un módulo temporal. La oferta termina cuando expira el evento.</string>
+    <string name="event_choose_trade">Elige un módulo temporal</string>
+    <string name="trade_power_offer">Núcleo de potencia: x2 en clics e ingresos pasivos durante 60 s. Precio: %1$s</string>
+    <string name="trade_luck_offer">Escáner de suerte: x2 al peso de objetos raros, épicos y legendarios durante 90 s. Precio: %1$s</string>
+    <string name="trade_buy_power">Comprar núcleo</string>
+    <string name="trade_buy_luck">Comprar escáner</string>
+    <string name="next_goal">SIGUIENTE OBJETIVO</string>
+    <string name="goal_tap_100">Toca el planeta 100 veces</string>
+    <string name="goal_buy_upgrade">Compra tu primera mejora de clic</string>
+    <string name="goal_get_drone">Abre una caja y consigue tu primer dron</string>
+    <string name="goal_unlock_planet">Desbloquea tu segundo planeta</string>
+    <string name="goal_complete_event">Completa tu primer evento espacial</string>
+    <string name="goal_all_done">Todas las misiones actuales completadas</string>
+    <string name="drone_collection">Colección de drones</string>
+    <string name="collection_discovered">Descubiertos: %1$d/%2$d</string>
+    <string name="collection_drone_unknown">Dron desconocido • encuéntralo en una caja</string>
+    <string name="drone_mastery_meta">%1$s • maestría %2$d • piezas %3$d</string>
+    <string name="collection_milestone">Descubre %1$d drones</string>
+    <string name="collection_reward_amount">Recompensa: %1$s restos</string>
+    <string name="collection_claim">Recoger</string>
+    <string name="hangar_status">En vuelo: %1$d/3 • Almacén: %2$d/10</string>
+    <string name="drone_storage_meta">Almacén %1$d • activo %2$d • maestría %3$d • piezas %4$d</string>
+    <string name="send_to_flight">Desplegar</string>
+    <string name="send_to_storage">Retirar</string>
+    <string name="drone_trait_collector" formatted="false">Bonus: +20% de ingresos pasivos</string>
+    <string name="drone_trait_amplifier" formatted="false">Bonus: +15% de potencia de toque</string>
+    <string name="drone_trait_reactor" formatted="false">+35% ingresos pasivos • −10% potencia de toque</string>
+    <string name="drone_trait_lucky" formatted="false">Bonus: +25% de potencia de toque</string>
+    <string name="drone_trait_overclock" formatted="false">+25% velocidad • −10% ingresos pasivos</string>
 </resources>

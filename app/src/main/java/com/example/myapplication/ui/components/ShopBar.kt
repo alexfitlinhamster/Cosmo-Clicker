@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.EconomyBalance
+import com.example.myapplication.AchievementEngine
+import com.example.myapplication.EventLogOutcome
+import com.example.myapplication.GameEventType
 import com.example.myapplication.MetaProgressEngine
 import com.example.myapplication.R
 import com.example.myapplication.Technology
@@ -35,6 +38,8 @@ import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 import kotlin.math.pow
+import java.text.DateFormat
+import java.util.Date
 
 @Composable
 fun ShopBar(
@@ -49,42 +54,21 @@ fun ShopBar(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(GameConstants.ShopExpandedHeight),
+            .fillMaxHeight(0.80f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .clickable { onClose() },
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(4.dp)
-                        .background(AppColors.WhiteAlpha20, CircleShape)
+        Column(modifier = Modifier.padding(18.dp)) {
+                SpaceSheetHeader(
+                    title = stringResource(R.string.command_center),
+                    subtitle = stringResource(R.string.command_center_subtitle),
+                    onClose = onClose
                 )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     tabs.forEachIndexed { index, title ->
-                        Button(
-                            onClick = { selectedTab = index },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedTab == index) AppColors.Primary.copy(alpha = 0.15f) else Color.Transparent,
-                                contentColor = if (selectedTab == index) AppColors.Primary else Color.Gray
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedTab == index) AppColors.Primary else Color.White.copy(alpha = 0.1f)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(stringResource(title), fontSize = 12.sp)
-                        }
+                        SpaceTab(stringResource(title), selectedTab == index, { selectedTab = index }, Modifier.weight(1f))
                     }
                 }
                 
@@ -99,7 +83,10 @@ fun ShopBar(
                                 PlanetRow(
                                     name = localizedPlanetName(id),
                                     desc = localizedPlanetDescription(id),
-                                    bonus = localizedPlanetBonus(id),
+                                    bonus = localizedPlanetBonus(id) + "\n" + stringResource(
+                                        R.string.planet_income_multiplier,
+                                        formatNum(EconomyBalance.planetIncomeMultiplier(id))
+                                    ),
                                     price = config.price.toLong(),
                                     active = active,
                                     owned = owned,
@@ -112,23 +99,47 @@ fun ShopBar(
                         }
                         1 -> {
                             item {
+                                DroneCollectionHeader(state, viewModel)
+                            }
+                            item {
                                 MysteryCaseRow(viewModel, state)
                             }
                             items(viewModel.fleetItems, key = { it.id }) { item ->
                                 val count = state.fleetCounts[item.id] ?: 0
-                                if (count > 0) {
-                                    ShopRow(
-                                        name = item.name, 
-                                        meta = stringResource(R.string.fleet_meta, rarityLabel(item.rarity), count),
-                                        cost = 0,
-                                        canBuy = false,
-                                        canSell = true,
-                                        iconRes = item.iconRes,
-                                        spriteIndex = item.spriteIndex,
-                                        onBuy = { },
-                                        onSell = { viewModel.sellFleet(item.id) }
-                                    )
-                                }
+                                val discovered = item.id in state.discoveredDroneIds || count > 0
+                                val parts = state.droneParts[item.id] ?: 0
+                                val mastery = MetaProgressEngine.masteryLevel(parts)
+                                val activeCount = state.activeFleetCounts[item.id] ?: 0
+                                val activeTotal = state.activeFleetCounts.values.sum()
+                                val trait = droneTraitDescription(item.id)
+                                ShopRow(
+                                    name = if (discovered) item.name else "???",
+                                    meta = if (discovered) {
+                                        buildString {
+                                            append(stringResource(R.string.drone_storage_meta, count, activeCount, mastery, parts))
+                                            if (trait != null) append("\n").append(trait)
+                                        }
+                                    } else {
+                                        stringResource(R.string.collection_drone_unknown)
+                                    },
+                                    cost = 0,
+                                    canBuy = false,
+                                    canSell = count > 0,
+                                    iconRes = item.iconRes,
+                                    spriteIndex = item.spriteIndex,
+                                    showLock = !discovered,
+                                    fleetActionLabel = when {
+                                        activeCount > 0 -> stringResource(R.string.send_to_storage)
+                                        count > 0 -> stringResource(R.string.send_to_flight)
+                                        else -> null
+                                    },
+                                    fleetActionEnabled = activeCount > 0 || activeTotal < com.example.myapplication.DroneTraitEngine.MAX_ACTIVE_DRONES,
+                                    onFleetAction = {
+                                        if (activeCount > 0) viewModel.recallDrone(item.id) else viewModel.deployDrone(item.id)
+                                    },
+                                    onBuy = { },
+                                    onSell = { viewModel.sellFleet(item.id) }
+                                )
                             }
                             item {
                                 Button(
@@ -166,6 +177,57 @@ fun ShopBar(
 }
 
 @Composable
+private fun DroneCollectionHeader(state: GameState, viewModel: GameViewModel) {
+    val discovered = viewModel.fleetItems.count { it.id in state.discoveredDroneIds || (state.fleetCounts[it.id] ?: 0) > 0 }
+    val total = viewModel.fleetItems.size.coerceAtLeast(1)
+    val milestones = listOf(3, 6, 12, total).distinct()
+    val nextMilestone = milestones.firstOrNull { it.toString() !in state.claimedCollectionMilestones }
+    val activeCount = state.activeFleetCounts.values.sum()
+    val storedCount = state.fleetCounts.values.sum()
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF071329))
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().height(158.dp)) {
+            Image(
+                painter = painterResource(R.drawable.hangar_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
+            Column(modifier = Modifier.align(Alignment.BottomStart).padding(14.dp)) {
+                Text(stringResource(R.string.drone_collection), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(stringResource(R.string.collection_discovered, discovered, total), color = AppColors.Secondary, fontSize = 12.sp)
+                Text(stringResource(R.string.hangar_status, activeCount, storedCount), color = Color.White, fontSize = 11.sp)
+                LinearProgressIndicator(
+                    progress = { discovered.toFloat() / total },
+                    modifier = Modifier.fillMaxWidth().padding(top = 7.dp).height(5.dp).clip(CircleShape),
+                    color = AppColors.Primary,
+                    trackColor = Color.White.copy(alpha = 0.18f)
+                )
+            }
+        }
+        if (nextMilestone != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.collection_milestone, nextMilestone), color = Color.White, fontSize = 12.sp)
+                    Text(stringResource(R.string.collection_reward_amount, formatNum(viewModel.collectionReward(nextMilestone))), color = AppColors.Secondary, fontSize = 10.sp)
+                }
+                Button(
+                    onClick = { viewModel.claimCollectionReward(nextMilestone) },
+                    enabled = discovered >= nextMilestone
+                ) { Text(stringResource(R.string.collection_claim), fontSize = 10.sp) }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.prestige_points, state.prestigePoints), color = Color.White)
@@ -179,7 +241,8 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
             color = Color.LightGray,
             fontSize = 12.sp
         )
-        val collectionPercent = ((MetaProgressEngine.collectionMultiplier(state.fleetCounts, viewModel.fleetById) - 1.0) * 100).toInt()
+        val collectionPercent = (((MetaProgressEngine.collectionMultiplier(state.fleetCounts, viewModel.fleetById) *
+            MetaProgressEngine.masteryMultiplier(state.droneParts)) - 1.0) * 100).toInt()
         Text(stringResource(R.string.collection_bonus, collectionPercent), color = Color.LightGray)
         val canPrestige = EconomyBalance.canPrestige(state)
         Button(onClick = viewModel::prestige, enabled = canPrestige) {
@@ -199,7 +262,144 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 Text("${stringResource(label)} · ${stringResource(R.string.technology_cost, technology.cost)}")
             }
         }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(34.dp).background(AppColors.Warning.copy(alpha = 0.14f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) { Text("★", color = AppColors.Warning, fontSize = 17.sp) }
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(stringResource(R.string.achievements), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(stringResource(R.string.achievements_subtitle), color = Color.Gray, fontSize = 10.sp)
+            }
+        }
+        AchievementEngine.definitions.forEach { achievement ->
+            val unlocked = achievement.id in state.unlockedAchievementIds
+            val claimed = achievement.id in state.claimedAchievementIds
+            val rewardText = when {
+                achievement.rewardPrestigePoints > 0 -> stringResource(
+                    R.string.achievement_reward_points,
+                    achievement.rewardPrestigePoints
+                )
+                else -> stringResource(
+                    R.string.achievement_reward_debris,
+                    formatNum(EconomyBalance.scaledReward(achievement.rewardDebris, state.currentPlanetId))
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .background(if (unlocked) AppColors.Warning.copy(alpha = 0.09f) else Color.White.copy(alpha = 0.035f), RoundedCornerShape(14.dp))
+                    .border(1.dp, if (unlocked) AppColors.Warning.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text((if (unlocked) "◆  " else "◇  ") + stringResource(achievementNameResource(achievement.id)), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(rewardText, color = AppColors.Secondary, fontSize = 10.sp)
+                }
+                Button(
+                    onClick = { viewModel.claimAchievement(achievement.id) },
+                    enabled = unlocked && !claimed,
+                    contentPadding = PaddingValues(horizontal = 10.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            when {
+                                claimed -> R.string.achievement_claimed
+                                unlocked -> R.string.achievement_claim
+                                else -> R.string.achievement_locked
+                            }
+                        ),
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.event_log),
+                modifier = Modifier.weight(1f),
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            TextButton(onClick = viewModel::clearEventLog, enabled = state.eventLog.isNotEmpty()) {
+                Text(stringResource(R.string.event_log_clear))
+            }
+        }
+        if (state.eventLog.isEmpty()) {
+            Text(stringResource(R.string.event_log_empty), color = Color.Gray, fontSize = 11.sp)
+        } else {
+            state.eventLog.asReversed().forEach { entry ->
+                val time = remember(entry.timestamp) {
+                    DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(entry.timestamp))
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Row {
+                        Text(
+                            stringResource(eventLogNameResource(entry.eventType)),
+                            modifier = Modifier.weight(1f),
+                            color = Color.White,
+                            fontSize = 11.sp
+                        )
+                        Text(time, color = Color.Gray, fontSize = 10.sp)
+                    }
+                    Text(
+                        stringResource(eventLogOutcomeResource(entry.outcome)),
+                        color = AppColors.Secondary,
+                        fontSize = 10.sp
+                    )
+                    if (entry.reward > 0.0) {
+                        Text(
+                            stringResource(R.string.event_log_reward, formatNum(entry.reward)),
+                            color = AppColors.Primary,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
+        }
     }
+}
+
+private fun eventLogNameResource(type: GameEventType): Int = when (type) {
+    GameEventType.STORM -> R.string.event_space_storm
+    GameEventType.ASTEROID -> R.string.event_gold_asteroid
+    GameEventType.METEOR_SHOWER -> R.string.event_debris_shower
+    GameEventType.BLACK_HOLE -> R.string.event_black_hole
+    GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
+    GameEventType.CYBER_VIRUS -> R.string.event_cyber_virus
+    GameEventType.DISTRESS_SIGNAL -> R.string.event_distress_signal
+    GameEventType.ABANDONED_STATION -> R.string.event_abandoned_station
+    GameEventType.PIRATE_RAID -> R.string.event_pirate_raid
+    GameEventType.TRADING_SHIP -> R.string.event_trading_ship
+}
+
+private fun eventLogOutcomeResource(outcome: EventLogOutcome): Int = when (outcome) {
+    EventLogOutcome.STARTED -> R.string.event_log_started
+    EventLogOutcome.COMPLETED -> R.string.event_log_completed
+    EventLogOutcome.EXPIRED -> R.string.event_log_expired
+    EventLogOutcome.CHOICE -> R.string.event_log_choice
+    EventLogOutcome.SUCCESS -> R.string.event_log_success
+    EventLogOutcome.FAILURE -> R.string.event_log_failure
+}
+
+private fun achievementNameResource(id: String): Int = when (id) {
+    "click_100" -> R.string.achievement_click_100
+    "click_10000" -> R.string.achievement_click_10000
+    "fleet_5" -> R.string.achievement_fleet_5
+    "fleet_12" -> R.string.achievement_fleet_12
+    "planets_5" -> R.string.achievement_planets_5
+    "planets_10" -> R.string.achievement_planets_10
+    "planets_20" -> R.string.achievement_planets_20
+    "events_10" -> R.string.achievement_events_10
+    "prestige_1" -> R.string.achievement_prestige_1
+    else -> R.string.unknown_item
 }
 
 @Composable
@@ -248,7 +448,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.mystery_case), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.random_drone_count, totalDrones), color = Color.Gray, fontSize = 11.sp)
+                Text(stringResource(R.string.random_drone_count, totalDrones, EconomyBalance.MAX_DRONES), color = Color.Gray, fontSize = 11.sp)
                 Text(stringResource(R.string.case_price_growth), color = AppColors.Primary, fontSize = 9.sp)
             }
         }
@@ -256,7 +456,7 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
 
         Button(
             onClick = { viewModel.startOpeningCase() },
-            enabled = state.totalDebris >= caseCost && totalDrones < EconomyBalance.MAX_DRONES,
+            enabled = state.totalDebris >= caseCost,
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.height(36.dp)
@@ -276,6 +476,9 @@ fun ShopRow(
     iconRes: Int, 
     spriteIndex: Int = -1, 
     showLock: Boolean = false,
+    fleetActionLabel: String? = null,
+    fleetActionEnabled: Boolean = true,
+    onFleetAction: () -> Unit = {},
     onBuy: () -> Unit,
     onSell: () -> Unit = {}
 ) {
@@ -337,6 +540,18 @@ fun ShopRow(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (fleetActionLabel != null) {
+                Button(
+                    onClick = onFleetAction,
+                    enabled = fleetActionEnabled,
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary.copy(alpha = 0.18f), contentColor = AppColors.Primary),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.height(36.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    Text(fleetActionLabel, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                }
+            }
             if (canSell) {
                 Button(
                     onClick = onSell,
@@ -362,6 +577,16 @@ fun ShopRow(
             }
         }
     }
+}
+
+@Composable
+private fun droneTraitDescription(id: String): String? = when (id) {
+    "drone_5" -> stringResource(R.string.drone_trait_collector)
+    "drone_9" -> stringResource(R.string.drone_trait_amplifier)
+    "drone_13" -> stringResource(R.string.drone_trait_reactor)
+    "drone_17" -> stringResource(R.string.drone_trait_lucky)
+    "drone_21" -> stringResource(R.string.drone_trait_overclock)
+    else -> null
 }
 
 @Composable

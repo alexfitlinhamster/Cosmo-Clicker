@@ -19,13 +19,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.FleetConfig
+import com.example.myapplication.GameResourceRegistry
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import kotlinx.coroutines.delay
@@ -35,11 +35,11 @@ fun CaseOpeningOverlay(
     isOpening: Boolean,
     lastDroppedDrone: FleetConfig?,
     onFinishOpening: () -> Unit,
-    onClearReward: () -> Unit
+    onClearReward: () -> Unit,
+    reduceMotion: Boolean = false
 ) {
     var hasClickedToOpen by remember { mutableStateOf(false) }
-    var currentFrame by remember { mutableStateOf(1) }
-    val context = LocalContext.current
+    var currentFrame by remember { mutableIntStateOf(1) }
 
     // Сброс состояния при закрытии
     LaunchedEffect(isOpening) {
@@ -52,6 +52,12 @@ fun CaseOpeningOverlay(
     // Анимация открытия запускается ТОЛЬКО после клика
     LaunchedEffect(hasClickedToOpen) {
         if (hasClickedToOpen) {
+            if (reduceMotion) {
+                currentFrame = 8
+                delay(100)
+                onFinishOpening()
+                return@LaunchedEffect
+            }
             // Проигрываем анимацию 1..8 один раз
             for (frame in 1..8) {
                 currentFrame = frame
@@ -104,15 +110,11 @@ fun CaseOpeningOverlay(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        val drawableName = "case_${currentFrame.toString().padStart(2, '0')}"
-                        val resId = context.resources.getIdentifier(drawableName, "drawable", context.packageName)
-                        if (resId != 0) {
-                            Image(
-                                painter = painterResource(id = resId),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = GameResourceRegistry.caseFrame(currentFrame)),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }

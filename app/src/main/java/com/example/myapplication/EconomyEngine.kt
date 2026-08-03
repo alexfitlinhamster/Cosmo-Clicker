@@ -6,10 +6,13 @@ object EconomyEngine {
             EventEngine.expireEventIfNeeded(state, nowMillis),
             nowMillis
         )
-        val total = if (currentState.activeEvent?.type == GameEventType.BLACK_HOLE) {
-            currentState.totalDebris * 0.995 + passiveIncome.coerceAtLeast(0.0)
-        } else {
-            currentState.totalDebris + passiveIncome.coerceAtLeast(0.0)
+        val income = passiveIncome.coerceAtLeast(0.0)
+        val total = when (currentState.activeEvent?.type) {
+            GameEventType.BLACK_HOLE -> currentState.totalDebris * 0.995 + income
+            GameEventType.PIRATE_RAID ->
+                (currentState.totalDebris - EventEngine.pirateRaidTheft(currentState.totalDebris))
+                    .coerceAtLeast(0.0) + income
+            else -> currentState.totalDebris + income
         }
         return currentState.copy(
             totalDebris = total,

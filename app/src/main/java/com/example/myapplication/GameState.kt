@@ -20,15 +20,21 @@ enum class Rarity(
 
 enum class SkillType(val id: String) {
     TIME_WARP("time_warp"),
-    VOID_ENERGY("void_energy")
+    VOID_ENERGY("void_energy"),
+    TRADE_POWER("trade_power"),
+    TRADE_LUCK("trade_luck")
 }
 
 enum class QuestType {
     COLLECT_DEBRIS, // Collect X debris
     CLICK_PLANET,  // Click planet X times
     BUY_UPGRADE,   // Buy X click upgrades
-    OPEN_CASE      // Open X cases
+    OPEN_CASE,     // Open X cases
+    COMPLETE_EVENT,
+    OBTAIN_DRONE
 }
+
+enum class QuestCadence { DAILY, WEEKLY }
 
 data class Quest(
     val id: String,
@@ -39,14 +45,21 @@ data class Quest(
     val rewardDebris: Double = 0.0,
     val rewardCases: Int = 0,
     val rewardDroneId: String? = null,
+    val targetDroneId: String? = null,
     val isCompleted: Boolean = false,
-    val isClaimed: Boolean = false
+    val isClaimed: Boolean = false,
+    val cadence: QuestCadence = QuestCadence.DAILY,
+    val rewardPrestigePoints: Int = 0
 )
 
 data class GameState(
     val totalDebris: Double = 50.0,
     val clickLevels: Map<String, Int> = emptyMap(),
     val fleetCounts: Map<String, Int> = emptyMap(),
+    val activeFleetCounts: Map<String, Int> = emptyMap(),
+    val discoveredDroneIds: Set<String> = emptySet(),
+    val droneParts: Map<String, Int> = emptyMap(),
+    val claimedCollectionMilestones: Set<String> = emptySet(),
     val currentPlanetId: String = "p1",
     val ownedPlanets: Set<String> = setOf("p1"),
     val isHotelDebtActive: Boolean = false,
@@ -68,9 +81,14 @@ data class GameState(
     val prestigePoints: Int = 0,
     val technologies: Set<Technology> = emptySet(),
     val dailyQuestDay: Long = -1L,
+    val weeklyQuestWeek: Long = -1L,
     val sessionStats: SessionStats = SessionStats(),
     val pendingEventChain: PendingEventChain? = null,
-    val eventChainResult: EventChainResult? = null
+    val eventChainResult: EventChainResult? = null,
+    val lifetimeStats: LifetimeStats = LifetimeStats(),
+    val unlockedAchievementIds: Set<String> = emptySet(),
+    val claimedAchievementIds: Set<String> = emptySet(),
+    val eventLog: List<EventLogEntry> = emptyList()
 )
 
 data class DroneData(
@@ -104,17 +122,38 @@ data class ScavengeTarget(
     val reward: Double = 0.0
 )
 
-enum class GameEventType { STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS, DISTRESS_SIGNAL }
+enum class GameEventType {
+    STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS,
+    DISTRESS_SIGNAL, ABANDONED_STATION, PIRATE_RAID, TRADING_SHIP
+}
 
 enum class DistressChoice { SALVAGE, RESCUE }
+enum class StationChoice { SAFE_ROUTE, REACTOR_CORE }
+enum class TradeOffer { POWER_CORE, LUCK_SCANNER }
 
 data class PendingEventChain(
     val resolvesAt: Long,
     val success: Boolean,
-    val reward: Double
+    val reward: Double,
+    val eventType: GameEventType = GameEventType.DISTRESS_SIGNAL,
+    val failurePenalty: Double = 0.0
 )
 
-data class EventChainResult(val success: Boolean, val reward: Double)
+data class EventChainResult(
+    val success: Boolean,
+    val reward: Double,
+    val eventType: GameEventType = GameEventType.DISTRESS_SIGNAL,
+    val loss: Double = 0.0
+)
+
+enum class EventLogOutcome { STARTED, COMPLETED, EXPIRED, CHOICE, SUCCESS, FAILURE }
+
+data class EventLogEntry(
+    val timestamp: Long,
+    val eventType: GameEventType,
+    val outcome: EventLogOutcome,
+    val reward: Double = 0.0
+)
 
 data class GameEvent(
     val type: GameEventType,

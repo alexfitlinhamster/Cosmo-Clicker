@@ -59,6 +59,9 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
         GameEventType.ASTEROID -> Color(0xFF4CAF50)
         GameEventType.METEOR_SHOWER -> AppColors.Warning
         GameEventType.DISTRESS_SIGNAL -> AppColors.Primary
+        GameEventType.ABANDONED_STATION -> Color(0xFF80CBC4)
+        GameEventType.PIRATE_RAID -> AppColors.Danger
+        GameEventType.TRADING_SHIP -> Color(0xFF66E0FF)
     }
     Card(
         modifier = Modifier
@@ -91,6 +94,9 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
                     formatNum(event.reward)
                 )
                 GameEventType.DISTRESS_SIGNAL -> stringResource(R.string.event_choose_response)
+                GameEventType.ABANDONED_STATION -> stringResource(R.string.event_choose_route)
+                GameEventType.PIRATE_RAID -> stringResource(R.string.event_taps_left, tapsLeft)
+                GameEventType.TRADING_SHIP -> stringResource(R.string.event_choose_trade)
                 else -> null
             }
             objective?.let {
@@ -115,6 +121,9 @@ private fun eventTitleResource(type: GameEventType): Int = when (type) {
     GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
     GameEventType.CYBER_VIRUS -> R.string.event_cyber_virus
     GameEventType.DISTRESS_SIGNAL -> R.string.event_distress_signal
+    GameEventType.ABANDONED_STATION -> R.string.event_abandoned_station
+    GameEventType.PIRATE_RAID -> R.string.event_pirate_raid
+    GameEventType.TRADING_SHIP -> R.string.event_trading_ship
 }
 
 @Composable
@@ -133,7 +142,14 @@ fun EventChainPendingBanner(pending: PendingEventChain, modifier: Modifier = Mod
         border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary)
     ) {
         Text(
-            text = stringResource(R.string.event_rescue_in_progress, secondsLeft),
+            text = stringResource(
+                if (pending.eventType == GameEventType.ABANDONED_STATION) {
+                    R.string.event_station_in_progress
+                } else {
+                    R.string.event_rescue_in_progress
+                },
+                secondsLeft
+            ),
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = AppColors.Primary,
@@ -191,6 +207,41 @@ fun BlackHoleComponent(
 }
 
 @Composable
+fun PirateRaidComponent(
+    event: GameEvent,
+    tapsLeft: Int,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
+    onClick: () -> Unit
+) {
+    val shipSize = 96.dp
+    Box(
+        modifier = Modifier
+            .offset(
+                x = gameAreaWidth * event.x - shipSize / 2,
+                y = gameAreaHeight * event.y - shipSize / 2
+            )
+            .size(shipSize)
+            .shadow(14.dp, CircleShape, spotColor = AppColors.Danger)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(R.drawable.fleet_ufo_alien),
+            contentDescription = stringResource(R.string.event_pirate_raid),
+            modifier = Modifier.fillMaxSize()
+        )
+        Text(
+            tapsLeft.toString(),
+            color = Color.White,
+            fontWeight = FontWeight.Black,
+            fontSize = 18.sp,
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape).padding(5.dp)
+        )
+    }
+}
+
+@Composable
 fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
@@ -205,6 +256,9 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                         GameEventType.SOLAR_FLARE -> R.string.event_solar_flare
                         GameEventType.CYBER_VIRUS -> R.string.event_cyber_virus
                         GameEventType.DISTRESS_SIGNAL -> R.string.event_distress_signal
+                        GameEventType.ABANDONED_STATION -> R.string.event_abandoned_station
+                        GameEventType.PIRATE_RAID -> R.string.event_pirate_raid
+                        GameEventType.TRADING_SHIP -> R.string.event_trading_ship
                     }
                 ),
                 fontWeight = FontWeight.Bold
@@ -221,6 +275,9 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                         GameEventType.SOLAR_FLARE -> R.string.event_desc_solar_flare
                         GameEventType.CYBER_VIRUS -> R.string.event_desc_cyber_virus
                         GameEventType.DISTRESS_SIGNAL -> R.string.event_desc_distress_signal
+                        GameEventType.ABANDONED_STATION -> R.string.event_desc_abandoned_station
+                        GameEventType.PIRATE_RAID -> R.string.event_desc_pirate_raid
+                        GameEventType.TRADING_SHIP -> R.string.event_desc_trading_ship
                     }
                 )
             )
@@ -259,18 +316,57 @@ fun DistressSignalDialog(
 
 @Composable
 fun EventChainResultDialog(result: EventChainResult, onDismiss: () -> Unit) {
+    val isStation = result.eventType == GameEventType.ABANDONED_STATION
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(if (result.success) R.string.event_action_success else R.string.event_rescue_failed)) },
         text = {
             Text(
-                if (result.success) stringResource(R.string.event_rescue_reward, formatNum(result.reward))
-                else stringResource(R.string.event_rescue_no_reward)
+                when {
+                    result.success -> stringResource(R.string.event_expedition_reward, formatNum(result.reward))
+                    isStation && result.loss > 0.0 -> stringResource(
+                        R.string.event_station_loss,
+                        formatNum(result.loss)
+                    )
+                    else -> stringResource(R.string.event_rescue_no_reward)
+                }
             )
         },
         confirmButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.ok))
+            }
+        }
+    )
+}
+
+@Composable
+fun AbandonedStationDialog(
+    reward: Double,
+    onSafeRoute: () -> Unit,
+    onReactorCore: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.event_abandoned_station), fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                stringResource(
+                    R.string.event_station_choice,
+                    formatNum(reward * 1.5),
+                    formatNum(reward * 5.0)
+                )
+            )
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onReactorCore) {
+                Text(stringResource(R.string.event_station_reactor))
+            }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onSafeRoute) {
+                Text(stringResource(R.string.event_station_safe))
             }
         }
     )

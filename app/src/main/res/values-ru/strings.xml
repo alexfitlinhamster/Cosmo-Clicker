@@ -14,9 +14,11 @@
     <string name="telegram">Telegram</string>
     <string name="how_to_play">Как играть</string>
     <string name="open_guide">Открыть справку</string>
+    <string name="reduce_motion">Уменьшить анимации и вспышки</string>
+    <string name="reduce_motion_desc">Отключает мерцание и сокращает переходы</string>
     <string name="close">Закрыть</string>
     <string name="tap_to_continue">Нажми на меня, чтобы продолжить</string>
-    <string name="game_guide_body" formatted="false">Нажимайте на планету, чтобы получать валюту — обломки. Покупайте улучшения клика, чтобы увеличить доход за каждое нажатие.\n\nКосмический мусор появляется случайно каждые 2–40 секунд. Дроны летят к нему, собирают и доставляют награду; пассивного дохода дроны не дают. Дрон может собирать мусор не выше собственной редкости.\n\nНаграды за мусор: обычный — до 5K; необычный — до 10K; редкий — до 20K; эпический — до 50K; легендарный — от 250K до 1M.\n\nОткрывайте кейсы, чтобы получать случайных дронов. Чем выше редкость дрона, тем более ценный мусор он способен собрать.\n\nВременные события меняют правила игры. Во время мусорного дождя метеор появляется с шансом 20%. Его сбор может дать легендарную награду или вывести дрон из строя на одну минуту.\n\nОткрывайте и выбирайте планеты в магазине. У каждой планеты есть уникальный бонус, указанный под её описанием.</string>
+    <string name="game_guide_body" formatted="false">Нажимайте на планету, чтобы получать обломки, и покупайте улучшения клика.\n\nДроны собирают космический мусор и дают пассивный доход в зависимости от редкости. Награды, клики и пассивный доход масштабируются выбранной планетой.\n\nОткрывайте кейсы, чтобы получить до 12 дронов. Редкие дроны собирают лучшие обломки и дают больше дохода.\n\nВременные события меняют правила и предлагают риск или награду.\n\nПрестиж открывается на планете 10. У каждой планеты есть уникальный бонус и множитель дохода.</string>
     <string name="debris">обломки</string>
     <string name="per_second">+%1$s / сек</string>
     <string name="hotel_debt">Долг отелю</string>
@@ -30,8 +32,34 @@
     <string name="shop_tap_to_open">МАГАЗИН (НАЖМИТЕ, ЧТОБЫ ОТКРЫТЬ)</string>
     <string name="open_shop">Открыть магазин</string>
     <string name="mystery_case">Таинственный кейс</string>
-    <string name="random_drone_count">Случайный дрон • %1$d/5</string>
-    <string name="case_price_growth" formatted="false">Цена растёт на 20% после каждой покупки</string>
+    <string name="random_drone_count">Вместимость флота • %1$d/%2$d</string>
+    <string name="case_price_growth" formatted="false">Цена растёт на 12% после каждой покупки</string>
+    <string name="planet_income_multiplier">Весь доход: ×%1$s</string>
+    <string name="achievements">Достижения</string>
+    <string name="achievement_claim">Получить</string>
+    <string name="achievement_claimed">Получено</string>
+    <string name="achievement_locked">Закрыто</string>
+    <string name="achievement_reward_debris">Награда: %1$s обломков</string>
+    <string name="achievement_reward_points">Награда: %1$d очков престижа</string>
+    <string name="achievement_click_100">Сделать 100 нажатий</string>
+    <string name="achievement_click_10000">Сделать 10 000 нажатий</string>
+    <string name="achievement_fleet_5">Собрать флот из 5 дронов</string>
+    <string name="achievement_fleet_12">Собрать полный флот из 12 дронов</string>
+    <string name="achievement_planets_5">Открыть 5 планет</string>
+    <string name="achievement_planets_10">Открыть 10 планет</string>
+    <string name="achievement_planets_20">Открыть все 20 планет</string>
+    <string name="achievement_events_10">Завершить 10 событий</string>
+    <string name="achievement_prestige_1">Выполнить первый престиж</string>
+    <string name="event_log">Журнал событий</string>
+    <string name="event_log_clear">Очистить</string>
+    <string name="event_log_empty">Событий пока нет</string>
+    <string name="event_log_started">Началось</string>
+    <string name="event_log_completed">Завершено</string>
+    <string name="event_log_expired">Время истекло</string>
+    <string name="event_log_choice">Спасательная экспедиция отправлена</string>
+    <string name="event_log_success">Успешный исход</string>
+    <string name="event_log_failure">Неудачный исход</string>
+    <string name="event_log_reward">+%1$s обломков</string>
     <string name="sell">Продать</string>
     <string name="locked">Закрыто</string>
     <string name="active">Активно</string>
@@ -53,6 +81,17 @@
     <string name="event_solar_flare">Солнечная вспышка!</string>
     <string name="event_cyber_virus">Кибер-вирус!</string>
     <string name="event_distress_signal">Сигнал бедствия!</string>
+    <string name="event_abandoned_station">Заброшенная станция!</string>
+    <string name="event_pirate_raid">Пиратский рейд!</string>
+    <string name="event_desc_pirate_raid">Пираты крадут обломки каждую секунду. Попадите по кораблю 15 раз до его побега, чтобы получить награду.</string>
+    <string name="event_desc_abandoned_station">Древняя станция всё ещё получает энергию. Выберите безопасный грузовой маршрут или рискните войти в нестабильный реактор.</string>
+    <string name="event_choose_route">Выберите маршрут исследования</string>
+    <string name="event_station_choice">Безопасный путь: 90%% шанс получить %1$s. Реактор: 50%% шанс получить %2$s, провал заберёт 2%% обломков.</string>
+    <string name="event_station_safe">Безопасный путь</string>
+    <string name="event_station_reactor">Войти в реактор</string>
+    <string name="event_station_in_progress">Исследование станции · %1$d сек.</string>
+    <string name="event_expedition_reward">Награда экспедиции: %1$s обломков.</string>
+    <string name="event_station_loss">Реактор разрушился. Потеряно %1$s обломков.</string>
     <string name="event_desc_distress_signal">Заброшенный корабль передаёт слабый сигнал бедствия. Выберите действие, пока он не исчез.</string>
     <string name="event_choose_response">Выберите действие</string>
     <string name="event_distress_choice">Разобрать: гарантированно %1$s обломков. Спасти: 70%% шанс получить %2$s через 10 секунд.</string>
@@ -144,6 +183,10 @@
 
     <string name="unknown_item">Неизвестно</string>
     <string name="quests">Задания</string>
+    <string name="daily_quests">Ежедневные задания</string>
+    <string name="weekly_quests">Еженедельные задания</string>
+    <string name="quest_complete_event">Завершить %1$d событий</string>
+    <string name="reward_prestige_points">+%1$d очков престижа</string>
     <string name="claim">Забрать</string>
     <string name="reward">Награда</string>
     <string name="reward_debris">+%1$s Обломков</string>
@@ -154,6 +197,13 @@
     <string name="quest_click_planet">Нажать на планету %1$d раз</string>
     <string name="quest_buy_upgrade">Купить %1$d улучшений клика</string>
     <string name="quest_open_case">Открыть %1$d кейсов</string>
+    <string name="quest_obtain_drone">Получить %1$s из кейса</string>
+    <string name="quest_obtain_any_drone">Получить указанного дрона</string>
+    <string name="quest_obtain_drone_number">Получить дрона №%1$d из кейса</string>
+    <string name="missions_subtitle">Ежедневные и недельные контракты</string>
+    <string name="command_center">Командный центр</string>
+    <string name="command_center_subtitle">Планеты, ангар, улучшения и прогресс</string>
+    <string name="achievements_subtitle">Этапы развития и постоянные награды</string>
     <string name="offline_reward_title">С возвращением!</string>
     <string name="offline_reward_message">Пока вас не было, дроны собрали %1$s обломков.</string>
     <string name="tab_meta">Мета</string>
@@ -166,4 +216,34 @@
     <string name="technology_cost">Цена: %1$d очков</string>
     <string name="collection_bonus">Бонус коллекции: +%1$d%%</string>
     <string name="session_stats">Сессия: %1$d кликов · %2$s обломков · %3$d кейсов</string>
+    <string name="event_trading_ship">Торговый корабль</string>
+    <string name="event_desc_trading_ship">Торговец предлагает один временный модуль. Сделка исчезнет после окончания события.</string>
+    <string name="event_choose_trade">Выберите временный модуль</string>
+    <string name="trade_power_offer">Силовое ядро: x2 к клику и пассивному доходу на 60 сек. Цена: %1$s</string>
+    <string name="trade_luck_offer">Сканер удачи: x2 к весу редких, эпических и легендарных обломков на 90 сек. Цена: %1$s</string>
+    <string name="trade_buy_power">Купить ядро</string>
+    <string name="trade_buy_luck">Купить сканер</string>
+    <string name="next_goal">СЛЕДУЮЩАЯ ЦЕЛЬ</string>
+    <string name="goal_tap_100">Нажмите на планету 100 раз</string>
+    <string name="goal_buy_upgrade">Купите первое улучшение клика</string>
+    <string name="goal_get_drone">Откройте кейс и получите первого дрона</string>
+    <string name="goal_unlock_planet">Откройте вторую планету</string>
+    <string name="goal_complete_event">Завершите первое космическое событие</string>
+    <string name="goal_all_done">Все текущие задания выполнены</string>
+    <string name="drone_collection">Коллекция дронов</string>
+    <string name="collection_discovered">Обнаружено: %1$d/%2$d</string>
+    <string name="collection_drone_unknown">Неизвестный дрон • найдите его в кейсе</string>
+    <string name="drone_mastery_meta">%1$s • мастерство %2$d • детали %3$d</string>
+    <string name="collection_milestone">Обнаружьте %1$d дронов</string>
+    <string name="collection_reward_amount">Награда: %1$s обломков</string>
+    <string name="collection_claim">Получить</string>
+    <string name="hangar_status">В полёте: %1$d/3 • На складе: %2$d/10</string>
+    <string name="drone_storage_meta">На складе %1$d • активно %2$d • мастерство %3$d • детали %4$d</string>
+    <string name="send_to_flight">В полёт</string>
+    <string name="send_to_storage">На склад</string>
+    <string name="drone_trait_collector" formatted="false">Бонус: +20% пассивного дохода</string>
+    <string name="drone_trait_amplifier" formatted="false">Бонус: +15% силы клика</string>
+    <string name="drone_trait_reactor" formatted="false">+35% пассивного дохода • −10% силы клика</string>
+    <string name="drone_trait_lucky" formatted="false">Бонус: +25% силы клика</string>
+    <string name="drone_trait_overclock" formatted="false">+25% скорости • −10% пассивного дохода</string>
 </resources>

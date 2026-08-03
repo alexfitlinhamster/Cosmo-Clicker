@@ -26,15 +26,16 @@ import com.example.myapplication.R
 import kotlin.random.Random
 
 @Composable
-fun Star() {
+fun Star(reduceMotion: Boolean = false) {
     val x = remember { Random.nextFloat() }
     val y = remember { Random.nextFloat() }
     val size = remember { Random.nextFloat() * 2 + 1 }
-    val alpha by rememberInfiniteTransition(label = "").animateFloat(
+    val animatedAlpha by rememberInfiniteTransition(label = "").animateFloat(
         initialValue = 0.2f, targetValue = 1f,
         animationSpec = infiniteRepeatable(tween(1000 + Random.nextInt(2000)), RepeatMode.Reverse),
         label = ""
     )
+    val alpha = if (reduceMotion) 0.55f else animatedAlpha
     Box(
         modifier = Modifier
             .offset(
@@ -84,11 +85,20 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) 
     }
 }
 
-private fun debrisDrawable(index: Int): Int = when (index) {
+internal fun debrisDrawable(index: Int): Int = when (index) {
     1 -> R.drawable.debris_01
     2 -> R.drawable.debris_02
     3 -> R.drawable.debris_03
     4 -> R.drawable.debris_04
     5 -> R.drawable.debris_05
-    else -> R.drawable.debris_06
+    6 -> R.drawable.debris_06
+    7 -> R.drawable.debris_07
+    8 -> R.drawable.debris_08
+    9 -> R.drawable.debris_09
+    10 -> R.drawable.debris_10
+    11 -> R.drawable.debris_11
+    12 -> R.drawable.debris_12
+    13 -> R.drawable.debris_13
+    14 -> R.drawable.debris_14
+    else -> R.drawable.debris_01
 }

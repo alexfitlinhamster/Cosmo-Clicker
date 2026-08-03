@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.Quest
+import com.example.myapplication.QuestCadence
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -35,34 +36,18 @@ fun QuestPanel(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(400.dp),
+            .fillMaxHeight(0.72f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .clickable { onClose() },
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(4.dp)
-                        .background(AppColors.WhiteAlpha20, CircleShape)
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.quests),
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
+        Column(modifier = Modifier.padding(18.dp)) {
+            SpaceSheetHeader(
+                title = stringResource(R.string.quests),
+                subtitle = stringResource(R.string.missions_subtitle),
+                onClose = onClose
             )
+            Spacer(Modifier.height(14.dp))
 
             if (state.activeQuests.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -73,13 +58,31 @@ fun QuestPanel(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.activeQuests, key = { it.id }) { quest ->
+                    val daily = state.activeQuests.filter { it.cadence == QuestCadence.DAILY }
+                    val weekly = state.activeQuests.filter { it.cadence == QuestCadence.WEEKLY }
+                    item(key = "daily_header") { QuestSectionHeader(R.string.daily_quests) }
+                    items(daily, key = { it.id }) { quest ->
+                        QuestItemRow(quest, onClaim)
+                    }
+                    item(key = "weekly_header") { QuestSectionHeader(R.string.weekly_quests) }
+                    items(weekly, key = { it.id }) { quest ->
                         QuestItemRow(quest, onClaim)
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun QuestSectionHeader(titleRes: Int) {
+    Text(
+        stringResource(titleRes),
+        color = AppColors.Secondary,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+    )
 }
 
 @Composable
@@ -95,7 +98,7 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(quest.description, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(localizedQuestDescription(quest), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { progress },
@@ -112,7 +115,13 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                     color = Color.Gray,
                     fontSize = 10.sp
                 )
-                if (quest.rewardDebris > 0) {
+                if (quest.rewardPrestigePoints > 0) {
+                    Text(
+                        stringResource(R.string.reward_prestige_points, quest.rewardPrestigePoints),
+                        color = AppColors.Warning,
+                        fontSize = 10.sp
+                    )
+                } else if (quest.rewardDebris > 0) {
                     Text(
                         stringResource(R.string.reward_debris, formatNum(quest.rewardDebris)),
                         color = AppColors.Primary,

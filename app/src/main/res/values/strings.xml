@@ -14,9 +14,11 @@
     <string name="telegram">Telegram</string>
     <string name="how_to_play">How to play</string>
     <string name="open_guide">Open guide</string>
+    <string name="reduce_motion">Reduce motion and flashes</string>
+    <string name="reduce_motion_desc">Disables blinking effects and shortens transitions</string>
     <string name="close">Close</string>
     <string name="tap_to_continue">Tap me to continue</string>
-    <string name="game_guide_body" formatted="false">Tap the planet to earn debris currency. Buy click upgrades to increase every tap.\n\nSpace debris appears randomly every 2–40 seconds. Drones fly to it, collect it and deliver its reward; drones do not generate passive income. A drone can collect debris up to its own rarity.\n\nDebris rewards: Common — up to 5K; Uncommon — up to 10K; Rare — up to 20K; Epic — up to 50K; Legendary — 250K–1M.\n\nOpen cases to receive random drones. Higher-rarity drones can collect more valuable debris.\n\nTemporary events change the game. During a debris shower, a meteor has a 20% spawn chance. Collecting one may grant a Legendary reward or disable the drone for one minute.\n\nUnlock and select planets in the shop. Every planet has a unique bonus shown below its description.</string>
+    <string name="game_guide_body" formatted="false">Tap the planet to earn debris and buy upgrades to increase every tap.\n\nDrones collect space debris and generate passive income based on rarity. Rewards, clicks, and passive income scale with the selected planet.\n\nOpen cases to receive up to 12 drones. Higher-rarity drones collect better debris and produce more income.\n\nTemporary events change the rules and offer risks or rewards.\n\nPrestige unlocks at planet 10. Every planet has a unique bonus and an income multiplier.</string>
     <string name="debris">debris</string>
     <string name="per_second">+%1$s / sec</string>
     <string name="hotel_debt">Hotel Debt</string>
@@ -30,8 +32,34 @@
     <string name="shop_tap_to_open">SHOP (TAP TO OPEN)</string>
     <string name="open_shop">Open shop</string>
     <string name="mystery_case">Mystery Case</string>
-    <string name="random_drone_count">Get random drone • %1$d/5</string>
-    <string name="case_price_growth" formatted="false">Price increases by 20% after each purchase</string>
+    <string name="random_drone_count">Fleet capacity • %1$d/%2$d</string>
+    <string name="case_price_growth" formatted="false">Price increases by 12% after each purchase</string>
+    <string name="planet_income_multiplier">All income: ×%1$s</string>
+    <string name="achievements">Achievements</string>
+    <string name="achievement_claim">Claim</string>
+    <string name="achievement_claimed">Claimed</string>
+    <string name="achievement_locked">Locked</string>
+    <string name="achievement_reward_debris">Reward: %1$s debris</string>
+    <string name="achievement_reward_points">Reward: %1$d prestige points</string>
+    <string name="achievement_click_100">Make 100 taps</string>
+    <string name="achievement_click_10000">Make 10,000 taps</string>
+    <string name="achievement_fleet_5">Build a fleet of 5 drones</string>
+    <string name="achievement_fleet_12">Build a full fleet of 12 drones</string>
+    <string name="achievement_planets_5">Unlock 5 planets</string>
+    <string name="achievement_planets_10">Unlock 10 planets</string>
+    <string name="achievement_planets_20">Unlock all 20 planets</string>
+    <string name="achievement_events_10">Complete 10 events</string>
+    <string name="achievement_prestige_1">Complete the first prestige</string>
+    <string name="event_log">Event log</string>
+    <string name="event_log_clear">Clear</string>
+    <string name="event_log_empty">No events recorded yet</string>
+    <string name="event_log_started">Started</string>
+    <string name="event_log_completed">Completed</string>
+    <string name="event_log_expired">Time expired</string>
+    <string name="event_log_choice">Rescue expedition launched</string>
+    <string name="event_log_success">Successful outcome</string>
+    <string name="event_log_failure">Failed outcome</string>
+    <string name="event_log_reward">+%1$s debris</string>
     <string name="sell">Sell</string>
     <string name="locked">Locked</string>
     <string name="active">Active</string>
@@ -53,6 +81,17 @@
     <string name="event_solar_flare">Solar Flare!</string>
     <string name="event_cyber_virus">Cyber Virus!</string>
     <string name="event_distress_signal">Distress Signal!</string>
+    <string name="event_abandoned_station">Abandoned Station!</string>
+    <string name="event_pirate_raid">Pirate Raid!</string>
+    <string name="event_desc_pirate_raid">Pirates steal debris every second. Hit their ship 15 times before it escapes to recover a reward.</string>
+    <string name="event_desc_abandoned_station">An ancient station still has power. Choose a safe cargo route or risk entering its unstable reactor.</string>
+    <string name="event_choose_route">Choose an exploration route</string>
+    <string name="event_station_choice">Safe route: 90%% chance for %1$s. Reactor: 50%% chance for %2$s, failure costs 2%% of your debris.</string>
+    <string name="event_station_safe">Safe route</string>
+    <string name="event_station_reactor">Enter reactor</string>
+    <string name="event_station_in_progress">Station exploration · %1$d sec</string>
+    <string name="event_expedition_reward">Expedition reward: %1$s debris.</string>
+    <string name="event_station_loss">The reactor collapsed. Lost %1$s debris.</string>
     <string name="event_desc_distress_signal">An abandoned ship is transmitting a weak distress signal. Choose how to respond before it disappears.</string>
     <string name="event_choose_response">Choose a response</string>
     <string name="event_distress_choice">Salvage: guaranteed %1$s debris. Rescue: 70%% chance to receive %2$s after 10 seconds.</string>
@@ -144,6 +183,10 @@
 
     <string name="unknown_item">Unknown</string>
     <string name="quests">Quests</string>
+    <string name="daily_quests">Daily quests</string>
+    <string name="weekly_quests">Weekly quests</string>
+    <string name="quest_complete_event">Complete %1$d events</string>
+    <string name="reward_prestige_points">+%1$d prestige points</string>
     <string name="claim">Claim</string>
     <string name="reward">Reward</string>
     <string name="reward_debris">+%1$s Debris</string>
@@ -154,6 +197,13 @@
     <string name="quest_click_planet">Click planet %1$d times</string>
     <string name="quest_buy_upgrade">Buy %1$d click upgrades</string>
     <string name="quest_open_case">Open %1$d cases</string>
+    <string name="quest_obtain_drone">Obtain %1$s from a case</string>
+    <string name="quest_obtain_any_drone">Obtain the specified drone</string>
+    <string name="quest_obtain_drone_number">Obtain drone №%1$d from a case</string>
+    <string name="missions_subtitle">Daily and weekly contracts</string>
+    <string name="command_center">Command center</string>
+    <string name="command_center_subtitle">Planets, hangar, upgrades and progress</string>
+    <string name="achievements_subtitle">Milestones and permanent rewards</string>
     <string name="offline_reward_title">Welcome back!</string>
     <string name="offline_reward_message">Your drones collected %1$s debris while you were away.</string>
     <string name="tab_meta">Meta</string>
@@ -166,4 +216,34 @@
     <string name="technology_cost">Cost: %1$d points</string>
     <string name="collection_bonus">Collection bonus: +%1$d%%</string>
     <string name="session_stats">Session: %1$d clicks · %2$s debris · %3$d cases</string>
+    <string name="event_trading_ship">Trading ship</string>
+    <string name="event_desc_trading_ship">A merchant offers one temporary module. The deal closes when the event expires.</string>
+    <string name="event_choose_trade">Choose a temporary module</string>
+    <string name="trade_power_offer">Power core: x2 click and passive income for 60 sec. Cost: %1$s</string>
+    <string name="trade_luck_offer">Luck scanner: x2 rare, epic and legendary spawn weights for 90 sec. Cost: %1$s</string>
+    <string name="trade_buy_power">Buy power core</string>
+    <string name="trade_buy_luck">Buy scanner</string>
+    <string name="next_goal">NEXT GOAL</string>
+    <string name="goal_tap_100">Tap the planet 100 times</string>
+    <string name="goal_buy_upgrade">Buy your first click upgrade</string>
+    <string name="goal_get_drone">Open a case and get your first drone</string>
+    <string name="goal_unlock_planet">Unlock your second planet</string>
+    <string name="goal_complete_event">Complete your first space event</string>
+    <string name="goal_all_done">All current missions completed</string>
+    <string name="drone_collection">Drone collection</string>
+    <string name="collection_discovered">Discovered: %1$d/%2$d</string>
+    <string name="collection_drone_unknown">Unknown drone • find it in a case</string>
+    <string name="drone_mastery_meta">%1$s • mastery %2$d • parts %3$d</string>
+    <string name="collection_milestone">Discover %1$d drones</string>
+    <string name="collection_reward_amount">Reward: %1$s debris</string>
+    <string name="collection_claim">Claim</string>
+    <string name="hangar_status">In flight: %1$d/3 • Warehouse: %2$d/10</string>
+    <string name="drone_storage_meta">Warehouse %1$d • active %2$d • mastery %3$d • parts %4$d</string>
+    <string name="send_to_flight">Deploy</string>
+    <string name="send_to_storage">Recall</string>
+    <string name="drone_trait_collector" formatted="false">Bonus: +20% passive income</string>
+    <string name="drone_trait_amplifier" formatted="false">Bonus: +15% tap power</string>
+    <string name="drone_trait_reactor" formatted="false">+35% passive income • −10% tap power</string>
+    <string name="drone_trait_lucky" formatted="false">Bonus: +25% tap power</string>
+    <string name="drone_trait_overclock" formatted="false">+25% speed • −10% passive income</string>
 </resources>
