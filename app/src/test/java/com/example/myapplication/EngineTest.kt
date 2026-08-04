@@ -375,4 +375,35 @@ class EngineTest {
 
         assertEquals(state, result)
     }
+
+    @Test
+    fun commandChallengesUnlockInOrder() {
+        val fresh = GameState()
+        assertTrue(FeatureEngine.isChallengeUnlocked(fresh, ChallengeId.VOID_LEVIATHAN))
+        assertTrue(!FeatureEngine.isChallengeUnlocked(fresh, ChallengeId.SOLAR_DEVOURER))
+
+        val afterLeviathan = fresh.copy(completedChallengeIds = setOf(ChallengeId.VOID_LEVIATHAN))
+        assertTrue(FeatureEngine.isChallengeUnlocked(afterLeviathan, ChallengeId.SOLAR_DEVOURER))
+        assertTrue(!FeatureEngine.isChallengeUnlocked(afterLeviathan, ChallengeId.DREADNOUGHT_EMPRESS))
+    }
+
+    @Test
+    fun harderCommandChallengesHaveMoreHealthAndReward() {
+        val challenges = FeatureEngine.challenges
+        assertTrue(challenges.all { it.durationMillis > 0L })
+        assertTrue(challenges.zipWithNext().all { (first, second) -> second.rewardDebris > first.rewardDebris })
+        assertTrue(challenges.zipWithNext().all { (first, second) -> second.health > first.health })
+    }
+
+    @Test
+    fun nebulaDragonRegeneratesSummonsArmyAndDisablesDrone() {
+        val initial = GameState(drones = listOf(DroneData(id = 1L, x = 0.2f, y = 0.3f)))
+        val battle = FeatureEngine.createBoss(initial, ChallengeId.NEBULA_DRAGON, now = 0L)
+            .copy(health = 2_000_000_000.0)
+        val result = FeatureEngine.processBossAbility(initial.copy(titanBattle = battle), 10_000L)
+
+        assertEquals(2_050_000_000.0, result.titanBattle?.health ?: 0.0, 0.0)
+        assertEquals(6, result.titanBattle?.minions)
+        assertEquals(16_000L, result.drones.single().disabledUntil)
+    }
 }

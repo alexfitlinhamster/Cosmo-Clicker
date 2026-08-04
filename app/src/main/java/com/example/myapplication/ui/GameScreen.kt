@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,6 +35,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.myapplication.FloatingTextData
+import com.example.myapplication.ChallengeId
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
@@ -58,8 +61,9 @@ fun GameScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val soundManager = remember { SoundManager() }
+    val soundManager = remember(context) { SoundManager(context) }
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
@@ -69,6 +73,9 @@ fun GameScreen(
     var isFeatureHubOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
+    var activeBattleId by remember { mutableStateOf<ChallengeId?>(null) }
+    var winsAtBattleStart by remember { mutableIntStateOf(0) }
+    var battleResultWon by remember { mutableStateOf<Boolean?>(null) }
 
     // Состояние стартового экрана
     var showStartScreen by remember { mutableStateOf(true) }
@@ -113,21 +120,59 @@ fun GameScreen(
         }
     }
 
+    LaunchedEffect(state.titanBattle?.expiresAt) {
+        val battle = state.titanBattle
+        if (battle != null) {
+            if (activeBattleId == null) {
+                activeBattleId = battle.challengeId
+                winsAtBattleStart = state.titanWins
+            }
+            isFeatureHubOpen = false
+        } else if (activeBattleId != null) {
+            battleResultWon = state.titanWins > winsAtBattleStart
+            activeBattleId = null
+        }
+    }
+
+    var previousOwnedPlanets by remember { mutableStateOf(state.ownedPlanets) }
+    LaunchedEffect(state.ownedPlanets) {
+        if (state.ownedPlanets.size > previousOwnedPlanets.size) {
+            soundManager.playPlanetUnlock()
+        }
+        previousOwnedPlanets = state.ownedPlanets
+    }
+
+    var previousClaimedAchievements by remember { mutableStateOf(state.claimedAchievementIds) }
+    LaunchedEffect(state.claimedAchievementIds) {
+        if (state.claimedAchievementIds.size > previousClaimedAchievements.size) {
+            soundManager.playAchievementClaimed()
+        }
+        previousClaimedAchievements = state.claimedAchievementIds
+    }
+
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> viewModel.resumeSimulation()
-                Lifecycle.Event.ON_STOP -> viewModel.pauseSimulation()
+                Lifecycle.Event.ON_START -> {
+                    viewModel.resumeSimulation()
+                    soundManager.resumeBackgroundMusic()
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    viewModel.pauseSimulation()
+                    soundManager.pauseBackgroundMusic()
+                }
                 else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             viewModel.resumeSimulation()
+            soundManager.resumeBackgroundMusic()
         }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             viewModel.pauseSimulation()
+            soundManager.pauseBackgroundMusic()
         }
     }
 
@@ -189,15 +234,19 @@ fun GameScreen(
             )
             
             BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                state.scavengeTargets.forEach { target ->
-                    key(target.id) {
-                        DebrisTarget(target, maxWidth, maxHeight)
+                if (state.titanBattle == null) {
+                    state.scavengeTargets.forEach { target ->
+                        key(target.id) {
+                            DebrisTarget(target, maxWidth, maxHeight)
+                        }
                     }
                 }
 
-                state.activeEvent?.let { event ->
-                    EventBanner(event, state.eventTapsLeft) {
-                        showEventInfo = event
+                if (state.titanBattle == null) {
+                    state.activeEvent?.let { event ->
+                        EventBanner(event, state.eventTapsLeft) {
+                            showEventInfo = event
+                        }
                     }
                 }
                 state.pendingEventChain?.let { pending ->
@@ -207,15 +256,24 @@ fun GameScreen(
                     )
                 }
 
-                PlanetButton(
-                    planetId = state.currentPlanetId,
-                    planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
-                    modifier = Modifier.align(Alignment.Center)
-                ) { x, y ->
-                    soundManager.playClick()
-                    val value = viewModel.onPlanetClick()
-                    addFloatingText("+${formatNum(value)}", x, y)
-                }
+                state.titanBattle?.let { battle ->
+                    CommandChallengeBattle(
+                        battle = battle,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        soundManager.playClick()
+                        val damage = viewModel.onPlanetClick()
+                        addFloatingText("−${formatNum(damage)}", 0.5f, 0.43f)
+                    }
+                } ?: PlanetButton(
+                        planetId = state.currentPlanetId,
+                        planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
+                        modifier = Modifier.align(Alignment.Center)
+                    ) { x, y ->
+                        soundManager.playClick()
+                        val value = viewModel.onPlanetClick()
+                        addFloatingText("+${formatNum(value)}", x, y)
+                    }
 
                 val now = System.currentTimeMillis()
                 state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
@@ -229,7 +287,7 @@ fun GameScreen(
                     }
                 }
 
-                state.activeEvent?.let { event ->
+                state.activeEvent?.takeIf { state.titanBattle == null }?.let { event ->
                     when (event.type) {
                         GameEventType.ASTEROID -> {
                             Asteroid(event, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
@@ -298,14 +356,31 @@ fun GameScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                QuestLauncherButton(
-                    onClick = { isQuestOpen = true }
+                GameNavigationButton(
+                    icon = R.drawable.ui_button_quest_v2,
+                    label = R.string.quests,
+                    description = R.string.quests,
+                    onClick = { isQuestOpen = true },
+                    modifier = Modifier.weight(1f)
                 )
-                ShopLauncherButton(
-                    onClick = { isShopOpen = true }
+                GameNavigationButton(
+                    icon = R.drawable.ui_button_shop_v2,
+                    label = R.string.navigation_shop,
+                    description = R.string.open_shop,
+                    onClick = { isShopOpen = true },
+                    modifier = Modifier.weight(1f)
                 )
-                HangarLauncherButton(onClick = { isHangarOpen = true })
-                CommandCenterButton(
+                GameNavigationButton(
+                    icon = R.drawable.ui_button_hangar,
+                    label = R.string.navigation_hangar,
+                    description = R.string.open_hangar,
+                    onClick = { isHangarOpen = true },
+                    modifier = Modifier.weight(1f)
+                )
+                GameNavigationButton(
+                    icon = R.drawable.ui_button_command_center,
+                    label = R.string.command_center_short,
+                    description = R.string.command_center,
                     onClick = { isFeatureHubOpen = true },
                     modifier = Modifier.weight(1f)
                 )
@@ -314,6 +389,19 @@ fun GameScreen(
 
         if (isFeatureHubOpen) {
             FeatureHub(viewModel, state, onClose = { isFeatureHubOpen = false })
+        }
+
+        battleResultWon?.let { won ->
+            AlertDialog(
+                onDismissRequest = { battleResultWon = null },
+                title = { Text(stringResource(if (won) R.string.challenge_victory_title else R.string.challenge_defeat_title)) },
+                text = { Text(stringResource(if (won) R.string.challenge_victory_message else R.string.challenge_defeat_message)) },
+                confirmButton = {
+                    Button(onClick = { battleResultWon = null }) {
+                        Text(stringResource(R.string.continue_button))
+                    }
+                }
+            )
         }
 
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
@@ -554,6 +642,155 @@ fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .clickable(onClick = onClick),
         contentScale = ContentScale.Fit
     )
+}
+
+@Composable
+private fun GameNavigationButton(
+    icon: Int,
+    label: Int,
+    description: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.height(80.dp).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = stringResource(description),
+            modifier = Modifier.size(60.dp),
+            contentScale = ContentScale.Fit
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = stringResource(label),
+            color = Color.White.copy(alpha = 0.88f),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun CommandChallengeBattle(
+    battle: com.example.myapplication.TitanBattle,
+    modifier: Modifier = Modifier,
+    onAttack: () -> Unit
+) {
+    val entrance = remember(battle.expiresAt) { Animatable(0.35f) }
+    var pressed by remember(battle.expiresAt) { mutableStateOf(false) }
+    val hitScale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (pressed) 0.93f else 1f,
+        animationSpec = tween(90),
+        label = "boss_hit"
+    )
+    val idleAnimation = rememberInfiniteTransition(label = "boss_idle")
+    val idleOffset by idleAnimation.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2_200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "boss_float"
+    )
+    val idleScale by idleAnimation.animateFloat(
+        initialValue = 0.985f,
+        targetValue = 1.015f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1_800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "boss_breathe"
+    )
+    val secondsLeft = ((battle.expiresAt - System.currentTimeMillis()).coerceAtLeast(0L) + 999L) / 1_000L
+
+    LaunchedEffect(battle.expiresAt) {
+        entrance.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.55f, stiffness = 140f))
+    }
+    LaunchedEffect(pressed) {
+        if (pressed) {
+            delay(85)
+            pressed = false
+        }
+    }
+
+    Box(modifier) {
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(stringResource(challengeBattleName(battle.challengeId)), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.challenge_time_left, secondsLeft), color = if (secondsLeft <= 10) AppColors.Danger else AppColors.Secondary, fontWeight = FontWeight.Bold)
+            LinearProgressIndicator(
+                progress = { (battle.health / battle.maxHealth).toFloat().coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(10.dp).padding(top = 4.dp),
+                color = AppColors.Danger,
+                trackColor = Color.White.copy(alpha = 0.14f)
+            )
+            Text("${formatNum(battle.health)} / ${formatNum(battle.maxHealth)}", color = Color.White.copy(alpha = .75f), fontSize = 11.sp)
+            when {
+                battle.shieldCharges > 0 -> Text(stringResource(R.string.challenge_shield_status, battle.shieldCharges), color = AppColors.Warning, fontWeight = FontWeight.Bold)
+                battle.minions > 0 -> Text(stringResource(R.string.challenge_minion_status, battle.minions), color = AppColors.Warning, fontWeight = FontWeight.Bold)
+                battle.challengeId == ChallengeId.NEBULA_DRAGON -> Text(stringResource(R.string.challenge_dragon_regenerating), color = AppColors.Danger, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Image(
+            painter = painterResource(challengeBattleArt(battle.challengeId)),
+            contentDescription = stringResource(challengeBattleName(battle.challengeId)),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(0.94f)
+                .height(310.dp)
+                .graphicsLayer {
+                    scaleX = entrance.value * hitScale * idleScale
+                    scaleY = entrance.value * hitScale * idleScale
+                    alpha = entrance.value
+                    translationY = idleOffset
+                    rotationZ = idleOffset * 0.04f
+                }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    pressed = true
+                    onAttack()
+                },
+            contentScale = ContentScale.Fit
+        )
+
+        Text(
+            stringResource(R.string.tap_boss_to_attack),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 92.dp)
+                .background(Color.Black.copy(alpha = .7f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 7.dp),
+            color = Color.White,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+private fun challengeBattleArt(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.drawable.challenge_void_leviathan
+    ChallengeId.SOLAR_DEVOURER -> R.drawable.challenge_solar_devourer
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.challenge_dreadnought_empress
+    ChallengeId.NEBULA_DRAGON -> R.drawable.challenge_nebula_dragon
+}
+
+private fun challengeBattleName(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_leviathan
+    ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_devourer
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_empress
+    ChallengeId.NEBULA_DRAGON -> R.string.challenge_nebula_dragon
 }
 
 private const val MAX_FLOATING_TEXTS = 40

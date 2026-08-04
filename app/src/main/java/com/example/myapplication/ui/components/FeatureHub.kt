@@ -1,5 +1,14 @@
 package com.example.myapplication.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -22,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.myapplication.BossType
+import com.example.myapplication.ChallengeId
 import com.example.myapplication.FeatureEngine
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
@@ -30,6 +41,8 @@ import com.example.myapplication.StationModule
 import com.example.myapplication.WeeklyRule
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun FeatureHub(viewModel: GameViewModel, state: GameState, onClose: () -> Unit) {
@@ -44,19 +57,206 @@ fun FeatureHub(viewModel: GameViewModel, state: GameState, onClose: () -> Unit) 
             Column(Modifier.padding(16.dp)) {
                 SpaceSheetHeader(stringResource(R.string.feature_hub_title), stringResource(R.string.feature_hub_subtitle), onClose)
                 Row(Modifier.padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(R.string.weekly_galaxy, R.string.titans, R.string.station).forEachIndexed { index, title ->
+                    listOf(R.string.challenges, R.string.station).forEachIndexed { index, title ->
                         SpaceTab(stringResource(title), tab == index, { tab = index }, Modifier.weight(1f))
                     }
                 }
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     when (tab) {
-                        0 -> WeeklyGalaxyPanel(state, viewModel)
-                        1 -> TitanPanel(state, viewModel)
+                        0 -> ChallengePanel(state, viewModel)
                         else -> StationPanel(state, viewModel)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ChallengePanel(state: GameState, viewModel: GameViewModel) {
+    val battle = state.titanBattle
+    if (battle != null) {
+        val config = FeatureEngine.challenge(battle.challengeId)
+        val secondsLeft = ((battle.expiresAt - System.currentTimeMillis()).coerceAtLeast(0L) + 999L) / 1_000L
+        val scope = rememberCoroutineScope()
+        val entrance = remember(battle.expiresAt) { Animatable(0.55f) }
+        val hitScale = remember(battle.expiresAt) { Animatable(1f) }
+        var lastDamage by remember(battle.expiresAt) { mutableDoubleStateOf(0.0) }
+        var damageEvent by remember(battle.expiresAt) { mutableIntStateOf(0) }
+        var showDamage by remember(battle.expiresAt) { mutableStateOf(false) }
+
+        LaunchedEffect(battle.expiresAt) {
+            entrance.animateTo(1f, spring(dampingRatio = 0.58f, stiffness = 180f))
+        }
+        LaunchedEffect(damageEvent) {
+            if (damageEvent > 0) {
+                showDamage = true
+                delay(420)
+                showDamage = false
+            }
+        }
+
+        val attackBoss: () -> Unit = {
+            lastDamage = viewModel.onPlanetClick()
+            damageEvent++
+            scope.launch {
+                hitScale.snapTo(0.92f)
+                hitScale.animateTo(1f, tween(130, easing = FastOutSlowInEasing))
+            }
+            Unit
+        }
+        FeatureCard {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(0xFF030711)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painterResource(challengeArt(battle.challengeId)),
+                    contentDescription = stringResource(challengeName(battle.challengeId)),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = entrance.value * hitScale.value
+                            scaleY = entrance.value * hitScale.value
+                            alpha = entrance.value.coerceIn(0f, 1f)
+                        }
+                        .clickable(onClick = attackBoss),
+                    contentScale = ContentScale.Fit
+                )
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.12f))
+                )
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showDamage,
+                    enter = fadeIn() + slideInVertically { it / 2 },
+                    exit = fadeOut() + slideOutVertically { -it / 2 }
+                ) {
+                    Text(
+                        text = "−${formatNum(lastDamage)}",
+                        color = Color(0xFFFFE082),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Text(
+                    stringResource(R.string.tap_boss_to_attack),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(10.dp)
+                        .background(Color.Black.copy(alpha = .68f), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Text(stringResource(challengeName(battle.challengeId)), color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.challenge_time_left, secondsLeft), color = if (secondsLeft <= 10) AppColors.Danger else AppColors.Secondary, fontWeight = FontWeight.Bold)
+            LinearProgressIndicator(
+                progress = { (battle.health / battle.maxHealth).toFloat().coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(8.dp)),
+                color = AppColors.Danger,
+                trackColor = Color.White.copy(alpha = .08f)
+            )
+            Text(stringResource(R.string.boss_hp, formatNum(battle.health), formatNum(battle.maxHealth)), color = Color.White.copy(alpha = .72f), fontSize = 12.sp)
+            ChallengeAbilityStatus(battle)
+            Button(onClick = attackBoss, modifier = Modifier.fillMaxWidth().height(58.dp)) {
+                Text(stringResource(R.string.attack_boss), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            }
+            Text(stringResource(R.string.challenge_fleet_attacks), color = Color.White.copy(alpha = .55f), fontSize = 11.sp)
+            Text(stringResource(R.string.challenge_reward, formatNum(config.rewardDebris), config.rewardPrestige), color = AppColors.Secondary, fontSize = 12.sp)
+        }
+        return
+    }
+
+    Text(stringResource(R.string.challenges_intro), color = Color.White.copy(alpha = .7f), fontSize = 12.sp, modifier = Modifier.padding(bottom = 12.dp))
+    FeatureEngine.challenges.forEachIndexed { index, challenge ->
+        val unlocked = FeatureEngine.isChallengeUnlocked(state, challenge.id)
+        val completed = challenge.id in state.completedChallengeIds
+        FeatureCard(Modifier.padding(bottom = 12.dp)) {
+            Image(
+                painterResource(challengeArt(challenge.id)),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Fit
+            )
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(challengeName(challenge.id)), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.challenge_number, index + 1), color = AppColors.Secondary, fontSize = 11.sp)
+                }
+                Text(if (completed) "✓" else "★".repeat(index + 3), color = if (completed) AppColors.Primary else AppColors.Danger, fontWeight = FontWeight.Bold)
+            }
+            Text(stringResource(challengeDescription(challenge.id)), color = Color.White.copy(alpha = .62f), fontSize = 12.sp)
+            Text(stringResource(challengeTrait(challenge.id)), color = AppColors.Warning, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.challenge_stats, formatNum(challenge.health), challenge.durationMillis / 1_000L, formatNum(challenge.rewardDebris), challenge.rewardPrestige), color = AppColors.Secondary, fontSize = 11.sp)
+            Button(
+                onClick = { viewModel.startTitanBattle(challenge.id) },
+                enabled = unlocked,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(when {
+                    !unlocked -> R.string.challenge_locked
+                    completed -> R.string.challenge_again
+                    else -> R.string.start_challenge
+                }))
+            }
+        }
+    }
+}
+
+private fun challengeArt(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.drawable.challenge_void_leviathan
+    ChallengeId.SOLAR_DEVOURER -> R.drawable.challenge_solar_devourer
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.challenge_dreadnought_empress
+    ChallengeId.NEBULA_DRAGON -> R.drawable.challenge_nebula_dragon
+}
+
+private fun challengeName(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_leviathan
+    ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_devourer
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_empress
+    ChallengeId.NEBULA_DRAGON -> R.string.challenge_nebula_dragon
+}
+
+private fun challengeDescription(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_description
+    ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_description
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_description
+    ChallengeId.NEBULA_DRAGON -> R.string.challenge_dragon_description
+}
+
+private fun challengeTrait(id: ChallengeId): Int = when (id) {
+    ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_trait
+    ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_trait
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_trait
+    ChallengeId.NEBULA_DRAGON -> R.string.challenge_dragon_trait
+}
+
+@Composable
+private fun ChallengeAbilityStatus(battle: com.example.myapplication.TitanBattle) {
+    when {
+        battle.shieldCharges > 0 -> Text(
+            stringResource(R.string.challenge_shield_status, battle.shieldCharges),
+            color = AppColors.Warning,
+            fontWeight = FontWeight.Bold
+        )
+        battle.minions > 0 -> Text(
+            stringResource(R.string.challenge_minion_status, battle.minions),
+            color = AppColors.Warning,
+            fontWeight = FontWeight.Bold
+        )
+        battle.challengeId == ChallengeId.NEBULA_DRAGON -> Text(
+            stringResource(R.string.challenge_dragon_regenerating),
+            color = AppColors.Danger,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -168,11 +368,12 @@ private fun FeatureCard(modifier: Modifier = Modifier, content: @Composable Colu
 
 @Composable
 fun CommandCenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.height(60.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp), color = Color(0xDD10243D),
-        border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = .45f))
-    ) { Box(Modifier.padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
-        Text(stringResource(R.string.command_center_short), color = Color.White, fontWeight = FontWeight.SemiBold)
-    } }
+    Image(
+        painter = painterResource(R.drawable.ui_button_command_center),
+        contentDescription = stringResource(R.string.command_center),
+        modifier = modifier
+            .size(60.dp)
+            .clickable(onClick = onClick),
+        contentScale = ContentScale.Fit
+    )
 }

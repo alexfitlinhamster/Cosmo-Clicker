@@ -258,6 +258,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 rewardClaimed = prefs.getBoolean("galaxyRewardClaimed", false)
             ),
             titanWins = prefs.getInt("titanWins", 0).coerceAtLeast(0),
+            completedChallengeIds = prefs.getStringSet("completedChallengeIds", emptySet()).orEmpty()
+                .mapNotNullTo(mutableSetOf()) { name -> ChallengeId.entries.firstOrNull { it.name == name } },
             stationLevels = StationModule.entries.associateWith { module ->
                 prefs.getInt("station_${module.name}", 0).coerceIn(0, 5)
             }
@@ -314,6 +316,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putLong("galaxyTargetBits", GameRules.encodeDouble(state.weeklyGalaxy.target))
             putBoolean("galaxyRewardClaimed", state.weeklyGalaxy.rewardClaimed)
             putInt("titanWins", state.titanWins)
+            putStringSet("completedChallengeIds", state.completedChallengeIds.map { it.name }.toSet())
             state.stationLevels.forEach { (module, level) -> putInt("station_${module.name}", level) }
             
             // Save Quests
@@ -930,7 +933,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val battle = next.titanBattle
             if (battle != null) {
                 next = if (now >= battle.expiresAt) next.copy(titanBattle = null)
-                else applyTitanDamage(next, passiveIncome * FeatureEngine.stationBossMultiplier(next))
+                else {
+                    val afterAbility = FeatureEngine.processBossAbility(next, now)
+                    applyTitanDamage(afterAbility, passiveIncome * FeatureEngine.stationBossMultiplier(afterAbility))
+                }
             }
             if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.FRAGILE_DRONES) {
                 next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
@@ -1006,22 +1012,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     progress = (next.weeklyGalaxy.progress + 1.0).coerceAtMost(next.weeklyGalaxy.target)
                 ))
             }
-            if (next.titanBattle != null) next = applyTitanDamage(next, clickPower * FeatureEngine.stationBossMultiplier(next))
+            if (next.titanBattle != null) next = applyTitanDamage(next, clickPower * FeatureEngine.stationBossMultiplier(next), manual = true)
             next
         }
         return clickPower
     }
 
-    private fun applyTitanDamage(state: GameState, damage: Double): GameState {
+    private fun applyTitanDamage(state: GameState, damage: Double, manual: Boolean = false): GameState {
         val battle = state.titanBattle ?: return state
-        val health = battle.health - damage.coerceAtLeast(0.0)
+        if (manual && battle.shieldCharges > 0) {
+            return state.copy(titanBattle = battle.copy(shieldCharges = battle.shieldCharges - 1))
+        }
+        if (manual && battle.minions > 0) {
+            return state.copy(titanBattle = battle.copy(minions = battle.minions - 1))
+        }
+        val challenge = FeatureEngine.challenge(battle.challengeId)
+        val sourceMultiplier = if (manual) challenge.manualDamageMultiplier else challenge.fleetDamageMultiplier
+        val minionBlock = if (!manual) (1.0 - battle.minions * 0.07).coerceAtLeast(0.15) else 1.0
+        val health = battle.health - damage.coerceAtLeast(0.0) * sourceMultiplier * minionBlock
         return if (health > 0.0) state.copy(titanBattle = battle.copy(health = health))
-        else state.copy(
-            titanBattle = null,
-            titanWins = state.titanWins + 1,
-            prestigePoints = state.prestigePoints + 1,
-            totalDebris = state.totalDebris + battle.maxHealth * 2.0
-        )
+        else challenge.let {
+            state.copy(
+                titanBattle = null,
+                titanWins = state.titanWins + 1,
+                completedChallengeIds = state.completedChallengeIds + battle.challengeId,
+                prestigePoints = state.prestigePoints + it.rewardPrestige,
+                totalDebris = state.totalDebris + it.rewardDebris * FeatureEngine.stationRewardMultiplier(state)
+            )
+        }
     }
 
     fun toggleWeeklyGalaxy() {
@@ -1044,9 +1062,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         saveGameState()
     }
 
-    fun startTitanBattle() {
+    fun startTitanBattle(challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN) {
         _gameState.update { state ->
-            if (state.titanBattle != null) state else state.copy(titanBattle = FeatureEngine.createBoss(state))
+            if (state.titanBattle != null || !FeatureEngine.isChallengeUnlocked(state, challengeId)) state
+            else state.copy(titanBattle = FeatureEngine.createBoss(state, challengeId))
         }
     }
 

@@ -2,6 +2,25 @@
 
 ## Unreleased - 2026-08-04
 
+- Rebuilt the Command Center around four sequential extreme boss challenges with
+  persistent unlock progress, visible HP, timers, debris rewards, and prestige rewards.
+- Added the Void Leviathan (100M HP), Solar Devourer (500M HP), Dreadnought
+  Empress (1B HP), and Nebula War Dragon (5B HP), each with unique mechanics.
+- Added regenerating shields, exposed-core damage rules, interceptor armies,
+  fleet-damage reduction, dragon regeneration, minion waves, and temporary drone
+  shutdowns during boss battles.
+- Moved challenge battles from the Command Center dialog into the main game field,
+  where bosses replace the planet and fight alongside the visible player drone fleet.
+- Replaced rectangular boss illustrations with four transparent full-body boss
+  renders and added entrance, hovering, breathing, tilt, and hit-reaction animations.
+- Added clear victory and timeout results, floating damage values, boss ability
+  indicators, and direct tap-to-attack interaction on the boss model.
+- Added a custom Command Center navigation icon and localized labels below the
+  Quests, Shop, Hangar, and Command Center buttons.
+- Added looping background music plus dedicated planet-unlock and achievement
+  reward sounds, with automatic pause and resume when the app changes state.
+- Added English, Russian, and Spanish text for navigation, challenges, boss traits,
+  combat instructions, and battle results.
 - Added Common, Rare, and Legendary cases with increasing prices and improved
   Epic and Legendary drone odds.
 - Added 24 custom case sprites: eight aligned opening frames for each case tier.

@@ -4,6 +4,59 @@ import java.util.Calendar
 import kotlin.math.pow
 
 object FeatureEngine {
+    data class ChallengeConfig(
+        val id: ChallengeId,
+        val bossType: BossType,
+        val health: Double,
+        val durationMillis: Long,
+        val rewardDebris: Double,
+        val rewardPrestige: Int,
+        val manualDamageMultiplier: Double,
+        val fleetDamageMultiplier: Double,
+        val abilityIntervalMillis: Long,
+        val prerequisite: ChallengeId? = null
+    )
+
+    val challenges = listOf(
+        ChallengeConfig(ChallengeId.VOID_LEVIATHAN, BossType.ASTEROID_TITAN, 100_000_000.0, 90_000L, 2_000_000.0, 2, 1.0, 1.0, 12_000L),
+        ChallengeConfig(ChallengeId.SOLAR_DEVOURER, BossType.MECHANICAL_COLOSSUS, 500_000_000.0, 75_000L, 15_000_000.0, 5, 1.5, 0.35, Long.MAX_VALUE, ChallengeId.VOID_LEVIATHAN),
+        ChallengeConfig(ChallengeId.DREADNOUGHT_EMPRESS, BossType.PIRATE_DREADNOUGHT, 1_000_000_000.0, 60_000L, 100_000_000.0, 10, 0.75, 1.5, 8_000L, ChallengeId.SOLAR_DEVOURER),
+        ChallengeConfig(ChallengeId.NEBULA_DRAGON, BossType.MECHANICAL_COLOSSUS, 5_000_000_000.0, 120_000L, 500_000_000.0, 25, 1.0, 1.0, 10_000L, ChallengeId.DREADNOUGHT_EMPRESS)
+    )
+
+    fun challenge(id: ChallengeId): ChallengeConfig = challenges.first { it.id == id }
+
+    fun isChallengeUnlocked(state: GameState, id: ChallengeId): Boolean =
+        challenge(id).prerequisite?.let(state.completedChallengeIds::contains) ?: true
+
+    fun processBossAbility(state: GameState, now: Long): GameState {
+        val battle = state.titanBattle ?: return state
+        if (now < battle.nextAbilityAt) return state
+        val config = challenge(battle.challengeId)
+        return when (battle.challengeId) {
+            ChallengeId.VOID_LEVIATHAN -> state.copy(
+                titanBattle = battle.copy(shieldCharges = 3, nextAbilityAt = now + config.abilityIntervalMillis)
+            )
+            ChallengeId.SOLAR_DEVOURER -> state
+            ChallengeId.DREADNOUGHT_EMPRESS -> state.copy(
+                titanBattle = battle.copy(minions = (battle.minions + 2).coerceAtMost(10), nextAbilityAt = now + config.abilityIntervalMillis)
+            )
+            ChallengeId.NEBULA_DRAGON -> {
+                val disabledDrone = state.drones.firstOrNull { it.disabledUntil <= now }
+                state.copy(
+                    titanBattle = battle.copy(
+                        health = (battle.health + battle.maxHealth * 0.01).coerceAtMost(battle.maxHealth),
+                        minions = (battle.minions + 3).coerceAtMost(15),
+                        nextAbilityAt = now + config.abilityIntervalMillis
+                    ),
+                    drones = if (disabledDrone == null) state.drones else state.drones.map {
+                        if (it.id == disabledDrone.id) it.copy(disabledUntil = now + 6_000L) else it
+                    }
+                )
+            }
+        }
+    }
+
     enum class WeeklyAction { CLICK, PASSIVE_INCOME, PURCHASE }
     fun weekKey(now: Long = System.currentTimeMillis()): Long = Calendar.getInstance().run {
         timeInMillis = now
@@ -87,7 +140,22 @@ object FeatureEngine {
         )
     }
 
-    fun createBoss(state: GameState, now: Long = System.currentTimeMillis()): TitanBattle {
+    fun createBoss(state: GameState, challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN, now: Long = System.currentTimeMillis()): TitanBattle {
+        val config = challenge(challengeId)
+        val hp = config.health
+        return TitanBattle(
+            type = config.bossType,
+            health = hp,
+            maxHealth = hp,
+            expiresAt = now + config.durationMillis,
+            challengeId = challengeId,
+            shieldCharges = if (challengeId == ChallengeId.VOID_LEVIATHAN) 3 else 0,
+            minions = if (challengeId == ChallengeId.NEBULA_DRAGON) 3 else 0,
+            nextAbilityAt = if (config.abilityIntervalMillis == Long.MAX_VALUE) Long.MAX_VALUE else now + config.abilityIntervalMillis
+        )
+    }
+
+    fun createBoss(state: GameState, now: Long): TitanBattle {
         val type = BossType.entries[(weekKey(now) % BossType.entries.size).toInt()]
         val power = (state.lifetimeStats.clicks / 100L).coerceAtLeast(1L).toDouble()
         val hp = 4_000.0 + power * 1_500.0

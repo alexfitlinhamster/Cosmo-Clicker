@@ -44,6 +44,7 @@ enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
 
 enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }
 enum class BossType { ASTEROID_TITAN, PIRATE_DREADNOUGHT, MECHANICAL_COLOSSUS }
+enum class ChallengeId { VOID_LEVIATHAN, SOLAR_DEVOURER, DREADNOUGHT_EMPRESS, NEBULA_DRAGON }
 enum class StationModule { HANGAR, LABORATORY, REACTOR, TRADE_HUB }
 
 data class WeeklyGalaxy(
@@ -59,7 +60,11 @@ data class TitanBattle(
     val type: BossType,
     val health: Double,
     val maxHealth: Double,
-    val expiresAt: Long
+    val expiresAt: Long,
+    val challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN,
+    val shieldCharges: Int = 0,
+    val minions: Int = 0,
+    val nextAbilityAt: Long = Long.MAX_VALUE
 )
 
 data class Quest(
@@ -121,6 +126,7 @@ data class GameState(
     val weeklyGalaxy: WeeklyGalaxy = WeeklyGalaxy(),
     val titanBattle: TitanBattle? = null,
     val titanWins: Int = 0,
+    val completedChallengeIds: Set<ChallengeId> = emptySet(),
     val stationLevels: Map<StationModule, Int> = emptyMap()
 )
 
