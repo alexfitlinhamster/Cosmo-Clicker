@@ -1,4 +1,18 @@
-1# News
+# News
+
+## Unreleased - 2026-08-04
+
+- Added Common, Rare, and Legendary cases with increasing prices and improved
+  Epic and Legendary drone odds.
+- Added 24 custom case sprites: eight aligned opening frames for each case tier.
+- Kept the selected case tier visible through the complete closing transition.
+- Replaced the Cyber Virus instant action with a five-step 3x3 terminal puzzle,
+  including success rewards and failure penalties.
+- Doubled drone travel and patrol speed.
+- Rebalanced Meteor Shower debris to spawn half as often, fall at half speed, and
+  grant half the previous reward.
+- Enforced the ten-drone fleet capacity when loading saves and awarding case drones.
+- Added localized case and Cyber Virus text in English, Russian, and Spanish.
 
 ## 1.11.3 (version code 30) - 2026-07-24
 

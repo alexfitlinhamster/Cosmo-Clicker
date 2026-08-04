@@ -31,7 +31,17 @@
     <string name="take_hotel_debt" formatted="false">Взять заём 1M (30% клика идёт на погашение)</string>
     <string name="shop_tap_to_open">МАГАЗИН (НАЖМИТЕ, ЧТОБЫ ОТКРЫТЬ)</string>
     <string name="open_shop">Открыть магазин</string>
+    <string name="open_hangar">Открыть ангар дронов</string>
+    <string name="open_achievements">Открыть достижения</string>
+    <string name="case_shop_title">Магазин кейсов</string>
+    <string name="case_shop_subtitle">Кейсы, планеты и улучшения клика</string>
+    <string name="drone_hangar_title">Ангар дронов</string>
+    <string name="drone_hangar_subtitle">Хранение, запуск и управление флотом</string>
     <string name="mystery_case">Таинственный кейс</string>
+    <string name="common_case">Обычный кейс</string>
+    <string name="rare_case">Редкий кейс</string>
+    <string name="legendary_case">Легендарный кейс</string>
+    <string name="premium_drop_chance">Шанс донатной награды: %1$d%%</string>
     <string name="random_drone_count">Вместимость флота • %1$d/%2$d</string>
     <string name="case_price_growth" formatted="false">Цена растёт на 12% после каждой покупки</string>
     <string name="planet_income_multiplier">Весь доход: ×%1$s</string>
@@ -80,6 +90,12 @@
     <string name="event_black_hole">Чёрная дыра!</string>
     <string name="event_solar_flare">Солнечная вспышка!</string>
     <string name="event_cyber_virus">Кибер-вирус!</string>
+    <string name="cyber_minigame_title">АВАРИЯ: заражён терминал</string>
+    <string name="cyber_minigame_hint">Повторите код узлов по порядку. Шаг %1$d/%2$d · ошибок %3$d/%4$d</string>
+    <string name="cyber_minigame_sequence">Код: %1$s</string>
+    <string name="cyber_banner_objective">Нажмите и восстановите заражённый терминал</string>
+    <string name="cyber_success">Вирус удалён. Награда: %1$s обломков.</string>
+    <string name="cyber_failure">Защита взломана: потеряно %1$s обломков, заражённый дрон отключён на 60 секунд.</string>
     <string name="event_distress_signal">Сигнал бедствия!</string>
     <string name="event_abandoned_station">Заброшенная станция!</string>
     <string name="event_pirate_raid">Пиратский рейд!</string>

@@ -26,7 +26,12 @@ import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 
 @Composable
-fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
+fun Header(
+    state: GameState,
+    dps: Double,
+    onAchievementsClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
@@ -37,6 +42,13 @@ fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Image(
+                painter = painterResource(R.drawable.ui_button_achievements),
+                contentDescription = stringResource(R.string.open_achievements),
+                modifier = Modifier.size(48.dp).clickable(onClick = onAchievementsClick),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(Modifier.width(10.dp))
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
@@ -58,7 +70,7 @@ fun Header(state: GameState, dps: Double, onSettingsClick: () -> Unit) {
                 )
             }
             Image(
-                painter = painterResource(R.drawable.ui_button_seting),
+                painter = painterResource(R.drawable.ui_button_settings_v2),
                 contentDescription = stringResource(R.string.settings),
                 modifier = Modifier
                     .size(48.dp)

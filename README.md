@@ -5,16 +5,21 @@ Orbit Salvagers: Drone Clicker is an incremental Android game about collecting s
 ## Features
 
 - Tap planets to collect debris and improve your click power.
-- Build passive income with a fleet of animated scavenging drones.
+- Build passive income with a fleet of animated scavenging drones, with separate
+  owned and active-fleet limits protected when loading older saves.
 - Unlock twenty planets with different prices and gameplay bonuses.
-- React to weighted space events including storms, golden asteroids, meteor showers,
-  black holes, solar flares, cyber viruses, and a branching distress-signal expedition.
-- Open cases to receive a random drone.
+- React to weighted space events including storms, golden asteroids, slower meteor
+  showers, black holes, solar flares, pirate raids, trading ships, and branching
+  distress-signal and abandoned-station expeditions.
+- Repair a cyber-virus infection through an interactive 3x3 terminal puzzle. Success
+  grants debris; failure costs resources and temporarily disables the infected drone.
+- Open Common, Rare, and Legendary cases with different prices and rarity odds.
+  Every case has a stable eight-frame opening animation and tier-specific artwork.
 - Purchase upgrades and manage debt while growing the space operation.
 - Keep progress between sessions with local Android storage.
 
 ## Tech stack
-1
+
 - Kotlin
 - Jetpack Compose and Material 3
 - MVVM with `ViewModel`, coroutines, and `StateFlow`

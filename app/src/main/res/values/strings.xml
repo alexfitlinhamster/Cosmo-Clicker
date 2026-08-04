@@ -31,7 +31,17 @@
     <string name="take_hotel_debt" formatted="false">Take 1M hotel loan (30% of taps repay it)</string>
     <string name="shop_tap_to_open">SHOP (TAP TO OPEN)</string>
     <string name="open_shop">Open shop</string>
+    <string name="open_hangar">Open drone hangar</string>
+    <string name="open_achievements">Open achievements</string>
+    <string name="case_shop_title">Case Shop</string>
+    <string name="case_shop_subtitle">Cases, planets and click upgrades</string>
+    <string name="drone_hangar_title">Drone Hangar</string>
+    <string name="drone_hangar_subtitle">Store, deploy and inspect your fleet</string>
     <string name="mystery_case">Mystery Case</string>
+    <string name="common_case">Common Case</string>
+    <string name="rare_case">Rare Case</string>
+    <string name="legendary_case">Legendary Case</string>
+    <string name="premium_drop_chance">Premium reward chance: %1$d%%</string>
     <string name="random_drone_count">Fleet capacity • %1$d/%2$d</string>
     <string name="case_price_growth" formatted="false">Price increases by 12% after each purchase</string>
     <string name="planet_income_multiplier">All income: ×%1$s</string>
@@ -80,6 +90,12 @@
     <string name="event_black_hole">Black Hole!</string>
     <string name="event_solar_flare">Solar Flare!</string>
     <string name="event_cyber_virus">Cyber Virus!</string>
+    <string name="cyber_minigame_title">EMERGENCY: terminal infected</string>
+    <string name="cyber_minigame_hint">Enter the node code in order. Step %1$d/%2$d · errors %3$d/%4$d</string>
+    <string name="cyber_minigame_sequence">Code: %1$s</string>
+    <string name="cyber_banner_objective">Tap to repair the infected terminal</string>
+    <string name="cyber_success">Virus removed. Reward: %1$s debris.</string>
+    <string name="cyber_failure">Security breached: %1$s debris lost and the infected drone disabled for 60 seconds.</string>
     <string name="event_distress_signal">Distress Signal!</string>
     <string name="event_abandoned_station">Abandoned Station!</string>
     <string name="event_pirate_raid">Pirate Raid!</string>

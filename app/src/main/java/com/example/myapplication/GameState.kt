@@ -36,6 +36,12 @@ enum class QuestType {
 
 enum class QuestCadence { DAILY, WEEKLY }
 
+enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
+    COMMON(1.0, 5),
+    RARE(5.0, 17),
+    LEGENDARY(20.0, 45)
+}
+
 enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }
 enum class BossType { ASTEROID_TITAN, PIRATE_DREADNOUGHT, MECHANICAL_COLOSSUS }
 enum class StationModule { HANGAR, LABORATORY, REACTOR, TRADE_HUB }
@@ -90,6 +96,7 @@ data class GameState(
     val drones: List<DroneData> = emptyList(),
     val scavengeTargets: List<ScavengeTarget> = emptyList(),
     val isOpeningCase: Boolean = false,
+    val openingCaseType: CaseType? = null,
     val casesPurchased: Int = 0,
     val lastDroppedDroneId: String? = null,
     val infectedDroneId: Long? = null,

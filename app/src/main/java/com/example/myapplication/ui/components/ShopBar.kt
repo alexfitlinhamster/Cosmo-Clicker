@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
+import com.example.myapplication.CaseType
+import com.example.myapplication.GameResourceRegistry
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.EconomyBalance
 import com.example.myapplication.AchievementEngine
@@ -42,7 +44,7 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
-fun ShopBar(
+private fun LegacyOperationsPanel(
     viewModel: GameViewModel,
     state: GameState,
     onClose: () -> Unit,
@@ -412,10 +414,10 @@ private fun achievementNameResource(id: String): Int = when (id) {
 @Composable
 fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.ui_button_shop),
+        painter = painterResource(R.drawable.ui_button_shop_v2),
         contentDescription = stringResource(R.string.open_shop),
         modifier = modifier
-            .size(76.dp)
+            .size(60.dp)
             .clickable(onClick = onClick),
         contentScale = ContentScale.Fit
     )
@@ -424,14 +426,30 @@ fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
     val totalDrones = state.fleetCounts.values.sum()
-    val caseCost = viewModel.calculateCaseCost(state.casesPurchased)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        CaseType.entries.forEach { type -> CaseTypeRow(viewModel, state, type, totalDrones) }
+    }
+}
 
+@Composable
+private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseType, totalDrones: Int) {
+    val caseCost = viewModel.calculateCaseCost(state.casesPurchased, type)
+    val accent = when (type) {
+        CaseType.COMMON -> AppColors.Primary
+        CaseType.RARE -> Color(0xFF42A5F5)
+        CaseType.LEGENDARY -> Color(0xFFFFB300)
+    }
+    val title = when (type) {
+        CaseType.COMMON -> R.string.common_case
+        CaseType.RARE -> R.string.rare_case
+        CaseType.LEGENDARY -> R.string.legendary_case
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
-            .border(1.dp, AppColors.Primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .border(1.dp, accent.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -447,24 +465,24 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.case_08),
+                    painter = painterResource(id = GameResourceRegistry.caseFrame(type, 1)),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().padding(4.dp)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.mystery_case), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(title), color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.random_drone_count, totalDrones, EconomyBalance.MAX_DRONES), color = Color.Gray, fontSize = 11.sp)
-                Text(stringResource(R.string.case_price_growth), color = AppColors.Primary, fontSize = 9.sp)
+                Text(stringResource(R.string.premium_drop_chance, type.premiumChance), color = accent, fontSize = 9.sp)
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
 
         Button(
-            onClick = { viewModel.startOpeningCase() },
+            onClick = { viewModel.startOpeningCase(type) },
             enabled = state.totalDebris >= caseCost,
-            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.height(36.dp)
         ) {
@@ -690,7 +708,7 @@ fun PlanetRow(
 }
 
 @Composable
-private fun localizedPlanetName(id: String): String = stringResource(planetNameResource(id))
+internal fun localizedPlanetName(id: String): String = stringResource(planetNameResource(id))
 
 internal fun planetNameResource(id: String): Int =
     when (id) {
@@ -718,7 +736,7 @@ internal fun planetNameResource(id: String): Int =
     }
 
 @Composable
-private fun localizedUpgradeName(id: String): String = stringResource(
+internal fun localizedUpgradeName(id: String): String = stringResource(
     when (id) {
         "magnet" -> R.string.upgrade_plasma_magnet
         "torch" -> R.string.upgrade_weld_torch
@@ -730,7 +748,7 @@ private fun localizedUpgradeName(id: String): String = stringResource(
 )
 
 @Composable
-private fun localizedPlanetDescription(id: String): String =
+internal fun localizedPlanetDescription(id: String): String =
     stringResource(planetDescriptionResource(id))
 
 internal fun planetDescriptionResource(id: String): Int =
@@ -759,7 +777,7 @@ internal fun planetDescriptionResource(id: String): Int =
     }
 
 @Composable
-private fun localizedPlanetBonus(id: String): String = stringResource(planetBonusResource(id))
+internal fun localizedPlanetBonus(id: String): String = stringResource(planetBonusResource(id))
 
 internal fun planetBonusResource(id: String): Int =
     when (id) {

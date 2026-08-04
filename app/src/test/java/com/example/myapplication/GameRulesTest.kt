@@ -18,6 +18,22 @@ class GameRulesTest {
     }
 
     @Test
+    fun higherTierCasesCostMoreAndIncreasePremiumChance() {
+        assertEquals(1_000.0, GameRules.calculateCaseCost(0, CaseType.COMMON), 0.0001)
+        assertEquals(5_000.0, GameRules.calculateCaseCost(0, CaseType.RARE), 0.0001)
+        assertEquals(20_000.0, GameRules.calculateCaseCost(0, CaseType.LEGENDARY), 0.0001)
+        assertTrue(CaseType.COMMON.premiumChance < CaseType.RARE.premiumChance)
+        assertTrue(CaseType.RARE.premiumChance < CaseType.LEGENDARY.premiumChance)
+    }
+
+    @Test
+    fun caseWeightsAlwaysTotalOneHundred() {
+        CaseType.entries.forEach { type ->
+            assertEquals(100, GameRules.caseRarityWeights(type).values.sum())
+        }
+    }
+
+    @Test
     fun planetPurchaseDeductsPriceAndUnlocksPlanet() {
         val state = GameState(totalDebris = 25_000.0)
 

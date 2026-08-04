@@ -63,6 +63,8 @@ fun GameScreen(
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
+    var isHangarOpen by remember { mutableStateOf(false) }
+    var isAchievementsOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
     var isFeatureHubOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -79,6 +81,8 @@ fun GameScreen(
             state.eventChainResult != null ||
             state.lastOfflineReward > 0.0 ||
             isShopOpen ||
+            isHangarOpen ||
+            isAchievementsOpen ||
             isQuestOpen
             || isFeatureHubOpen
     ) {
@@ -88,6 +92,8 @@ fun GameScreen(
             state.eventChainResult != null -> viewModel.clearEventChainResult()
             state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
             isShopOpen -> isShopOpen = false
+            isHangarOpen -> isHangarOpen = false
+            isAchievementsOpen -> isAchievementsOpen = false
             isQuestOpen -> isQuestOpen = false
             isFeatureHubOpen -> isFeatureHubOpen = false
         }
@@ -178,6 +184,7 @@ fun GameScreen(
             Header(
                 state = state,
                 dps = viewModel.calculateDPS(),
+                onAchievementsClick = { isAchievementsOpen = true },
                 onSettingsClick = { showSettings = true }
             )
             
@@ -214,7 +221,10 @@ fun GameScreen(
                 state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
                     key(drone.id) {
                         ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
-                            viewModel.onDroneClick(it)
+                            val cyberEvent = state.activeEvent?.takeIf { active ->
+                                active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
+                            }
+                            if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
                         }
                     }
                 }
@@ -258,6 +268,20 @@ fun GameScreen(
                 onClose = { isShopOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
+        } else if (isHangarOpen) {
+            DroneHangarPanel(
+                viewModel = viewModel,
+                state = state,
+                onClose = { isHangarOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        } else if (isAchievementsOpen) {
+            AchievementsPanel(
+                viewModel = viewModel,
+                state = state,
+                onClose = { isAchievementsOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         } else if (isQuestOpen) {
             QuestPanel(
                 state = state,
@@ -266,11 +290,13 @@ fun GameScreen(
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         } else {
-            Column(
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 QuestLauncherButton(
                     onClick = { isQuestOpen = true }
@@ -278,7 +304,11 @@ fun GameScreen(
                 ShopLauncherButton(
                     onClick = { isShopOpen = true }
                 )
-                CommandCenterButton(onClick = { isFeatureHubOpen = true })
+                HangarLauncherButton(onClick = { isHangarOpen = true })
+                CommandCenterButton(
+                    onClick = { isFeatureHubOpen = true },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
@@ -289,6 +319,7 @@ fun GameScreen(
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
         CaseOpeningOverlay(
             isOpening = state.isOpeningCase,
+            caseType = state.openingCaseType ?: com.example.myapplication.CaseType.COMMON,
             lastDroppedDrone = state.lastDroppedDroneId?.let { fleetMap[it] },
             onFinishOpening = { viewModel.finishOpeningCase() },
             onClearReward = { viewModel.clearReward() },
@@ -315,6 +346,15 @@ fun GameScreen(
                     },
                     onRescue = {
                         viewModel.respondToDistressSignal(DistressChoice.RESCUE)
+                        showEventInfo = null
+                    },
+                    onDismiss = { showEventInfo = null }
+                )
+            } else if (event.type == GameEventType.CYBER_VIRUS) {
+                CyberVirusDialog(
+                    event = event,
+                    onResolved = {
+                        viewModel.resolveCyberVirus(it)
                         showEventInfo = null
                     },
                     onDismiss = { showEventInfo = null }
@@ -507,10 +547,10 @@ fun GameScreen(
 @Composable
 fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.ui_button_quest),
+        painter = painterResource(R.drawable.ui_button_quest_v2),
         contentDescription = stringResource(R.string.quests),
         modifier = modifier
-            .size(76.dp)
+            .size(60.dp)
             .clickable(onClick = onClick),
         contentScale = ContentScale.Fit
     )

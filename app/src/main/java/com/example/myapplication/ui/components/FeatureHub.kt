@@ -169,7 +169,7 @@ private fun FeatureCard(modifier: Modifier = Modifier, content: @Composable Colu
 @Composable
 fun CommandCenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(48.dp).clickable(onClick = onClick),
+        modifier = modifier.height(60.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp), color = Color(0xDD10243D),
         border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = .45f))
     ) { Box(Modifier.padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {

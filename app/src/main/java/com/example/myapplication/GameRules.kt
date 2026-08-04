@@ -15,8 +15,24 @@ object GameRules {
         val isDebtActive: Boolean
     )
 
-    fun calculateCaseCost(casesPurchased: Int): Double {
-        return CASE_BASE_COST * CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
+    fun calculateCaseCost(casesPurchased: Int, type: CaseType = CaseType.COMMON): Double =
+        CASE_BASE_COST * type.priceMultiplier *
+            CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
+
+    fun caseRarityWeights(type: CaseType): Map<Rarity, Int> = when (type) {
+        CaseType.COMMON -> mapOf(Rarity.COMMON to 60, Rarity.UNCOMMON to 25, Rarity.RARE to 10, Rarity.EPIC to 4, Rarity.LEGENDARY to 1)
+        CaseType.RARE -> mapOf(Rarity.COMMON to 20, Rarity.UNCOMMON to 35, Rarity.RARE to 28, Rarity.EPIC to 14, Rarity.LEGENDARY to 3)
+        CaseType.LEGENDARY -> mapOf(Rarity.COMMON to 5, Rarity.UNCOMMON to 15, Rarity.RARE to 35, Rarity.EPIC to 32, Rarity.LEGENDARY to 13)
+    }
+
+    fun rollCaseRarity(type: CaseType, roll: Int): Rarity {
+        val safeRoll = roll.coerceIn(0, 99)
+        var accumulated = 0
+        caseRarityWeights(type).forEach { (rarity, weight) ->
+            accumulated += weight
+            if (safeRoll < accumulated) return rarity
+        }
+        return Rarity.COMMON
     }
 
     fun purchaseOrSelectPlanet(state: GameState, planetId: String, price: Double): GameState? =

@@ -31,7 +31,17 @@
     <string name="take_hotel_debt" formatted="false">Pedir préstamo de 1M (30% de cada toque lo paga)</string>
     <string name="shop_tap_to_open">TIENDA (TOCA PARA ABRIR)</string>
     <string name="open_shop">Abrir tienda</string>
+    <string name="open_hangar">Abrir hangar de drones</string>
+    <string name="open_achievements">Abrir logros</string>
+    <string name="case_shop_title">Tienda de cajas</string>
+    <string name="case_shop_subtitle">Cajas, planetas y mejoras de toque</string>
+    <string name="drone_hangar_title">Hangar de drones</string>
+    <string name="drone_hangar_subtitle">Almacena, despliega y gestiona tu flota</string>
     <string name="mystery_case">Caja misteriosa</string>
+    <string name="common_case">Caja común</string>
+    <string name="rare_case">Caja rara</string>
+    <string name="legendary_case">Caja legendaria</string>
+    <string name="premium_drop_chance">Probabilidad de premio premium: %1$d%%</string>
     <string name="random_drone_count">Capacidad de flota • %1$d/%2$d</string>
     <string name="case_price_growth" formatted="false">El precio aumenta un 12% tras cada compra</string>
     <string name="planet_income_multiplier">Todos los ingresos: ×%1$s</string>
@@ -80,6 +90,12 @@
     <string name="event_black_hole">¡Agujero negro!</string>
     <string name="event_solar_flare">¡Llamarada solar!</string>
     <string name="event_cyber_virus">¡Virus cibernético!</string>
+    <string name="cyber_minigame_title">EMERGENCIA: terminal infectado</string>
+    <string name="cyber_minigame_hint">Introduce el código de nodos. Paso %1$d/%2$d · errores %3$d/%4$d</string>
+    <string name="cyber_minigame_sequence">Código: %1$s</string>
+    <string name="cyber_banner_objective">Toca para reparar el terminal infectado</string>
+    <string name="cyber_success">Virus eliminado. Recompensa: %1$s residuos.</string>
+    <string name="cyber_failure">Seguridad vulnerada: pierdes %1$s residuos y el dron infectado queda desactivado 60 segundos.</string>
     <string name="event_distress_signal">¡Señal de socorro!</string>
     <string name="event_abandoned_station">¡Estación abandonada!</string>
     <string name="event_pirate_raid">¡Incursión pirata!</string>

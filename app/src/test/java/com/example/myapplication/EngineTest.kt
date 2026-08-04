@@ -269,6 +269,33 @@ class EngineTest {
     }
 
     @Test
+    fun cyberVirusMinigameRewardsSuccess() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.CYBER_VIRUS, 10_000L, reward = 5_000.0),
+            infectedDroneId = 1L
+        )
+        val result = EventEngine.resolveCyberVirus(state, success = true, nowMillis = 2_000L)
+        assertEquals(15_000.0, result.totalDebris, 0.0)
+        assertEquals(null, result.activeEvent)
+        assertTrue(result.eventChainResult?.success == true)
+    }
+
+    @Test
+    fun cyberVirusMinigameFailureTakesThreePercentAndDisablesDrone() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            drones = listOf(DroneData(1L, 0f, 0f)),
+            activeEvent = GameEvent(GameEventType.CYBER_VIRUS, 10_000L),
+            infectedDroneId = 1L
+        )
+        val result = EventEngine.resolveCyberVirus(state, success = false, nowMillis = 2_000L)
+        assertEquals(9_700.0, result.totalDebris, 0.0)
+        assertEquals(62_000L, result.drones.single().disabledUntil)
+        assertTrue(result.eventChainResult?.success == false)
+    }
+
+    @Test
     fun abandonedStationSafeRouteHasShortDelayAndScaledReward() {
         val state = GameState(
             activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)

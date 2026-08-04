@@ -18,6 +18,24 @@ object GameResourceRegistry {
         R.drawable.case_01, R.drawable.case_02, R.drawable.case_03, R.drawable.case_04,
         R.drawable.case_05, R.drawable.case_06, R.drawable.case_08, R.drawable.case_08
     )
+    private val commonCaseDrawables = intArrayOf(
+        R.drawable.case_common_1, R.drawable.case_common_2,
+        R.drawable.case_common_3, R.drawable.case_common_4,
+        R.drawable.case_common_5, R.drawable.case_common_6,
+        R.drawable.case_common_7, R.drawable.case_common_8
+    )
+    private val rareCaseDrawables = intArrayOf(
+        R.drawable.case_rare_1, R.drawable.case_rare_2,
+        R.drawable.case_rare_3, R.drawable.case_rare_4,
+        R.drawable.case_rare_5, R.drawable.case_rare_6,
+        R.drawable.case_rare_7, R.drawable.case_rare_8
+    )
+    private val legendaryCaseDrawables = intArrayOf(
+        R.drawable.case_legendary_1, R.drawable.case_legendary_2,
+        R.drawable.case_legendary_3, R.drawable.case_legendary_4,
+        R.drawable.case_legendary_5, R.drawable.case_legendary_6,
+        R.drawable.case_legendary_7, R.drawable.case_legendary_8
+    )
 
     fun drone(number: Int): Int = droneDrawables.getOrElse(number - 1) {
         R.drawable.upgrade_magnet
@@ -25,5 +43,14 @@ object GameResourceRegistry {
 
     fun caseFrame(frame: Int): Int = caseDrawables.getOrElse(frame - 1) {
         R.drawable.case_08
+    }
+
+    fun caseFrame(type: CaseType, frame: Int): Int {
+        val frames = when (type) {
+            CaseType.COMMON -> commonCaseDrawables
+            CaseType.RARE -> rareCaseDrawables
+            CaseType.LEGENDARY -> legendaryCaseDrawables
+        }
+        return frames.getOrElse(frame.coerceIn(1, frames.size) - 1) { frames.last() }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,6 +74,11 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(eventIconResource(event.type)),
+                    contentDescription = null,
+                    modifier = Modifier.size(42.dp).padding(end = 8.dp)
+                )
                 Text(
                     text = stringResource(eventTitleResource(event.type)),
                     modifier = Modifier.weight(1f),
@@ -96,6 +102,7 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
                 GameEventType.DISTRESS_SIGNAL -> stringResource(R.string.event_choose_response)
                 GameEventType.ABANDONED_STATION -> stringResource(R.string.event_choose_route)
                 GameEventType.PIRATE_RAID -> stringResource(R.string.event_taps_left, tapsLeft)
+                GameEventType.CYBER_VIRUS -> stringResource(R.string.cyber_banner_objective)
                 GameEventType.TRADING_SHIP -> stringResource(R.string.event_choose_trade)
                 else -> null
             }
@@ -124,6 +131,15 @@ private fun eventTitleResource(type: GameEventType): Int = when (type) {
     GameEventType.ABANDONED_STATION -> R.string.event_abandoned_station
     GameEventType.PIRATE_RAID -> R.string.event_pirate_raid
     GameEventType.TRADING_SHIP -> R.string.event_trading_ship
+}
+
+private fun eventIconResource(type: GameEventType): Int = when (type) {
+    GameEventType.ASTEROID, GameEventType.METEOR_SHOWER -> R.drawable.event_gold_asteroid
+    GameEventType.DISTRESS_SIGNAL -> R.drawable.event_rescue_capsule
+    GameEventType.ABANDONED_STATION, GameEventType.SOLAR_FLARE -> R.drawable.event_reactor_core
+    GameEventType.TRADING_SHIP, GameEventType.PIRATE_RAID -> R.drawable.event_trade_crate
+    GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS -> R.drawable.event_reactor_core
+    GameEventType.STORM -> R.drawable.event_gold_asteroid
 }
 
 @Composable
@@ -161,7 +177,7 @@ fun EventChainPendingBanner(pending: PendingEventChain, modifier: Modifier = Mod
 
 @Composable
 fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: () -> Unit) {
-    val asteroidSize = 50.dp
+    val asteroidSize = 58.dp
     Box(
         modifier = Modifier
             .offset(
@@ -169,12 +185,15 @@ fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: (
                 y = gameAreaHeight * event.y - asteroidSize / 2
             )
             .size(asteroidSize)
-            .shadow(10.dp, RoundedCornerShape(4.dp), spotColor = Color.Red)
-            .background(Color.Red, RoundedCornerShape(4.dp))
+            .shadow(12.dp, CircleShape, spotColor = Color(0xFFFFC107))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Text("!", color = Color.White, fontWeight = FontWeight.Bold)
+        Image(
+            painter = painterResource(R.drawable.event_gold_asteroid),
+            contentDescription = stringResource(R.string.event_gold_asteroid),
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -291,6 +310,57 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
 }
 
 @Composable
+fun CyberVirusDialog(event: GameEvent, onResolved: (Boolean) -> Unit, onDismiss: () -> Unit) {
+    val sequence = remember(event.startedAt) {
+        var seed = event.startedAt
+        List(5) {
+            seed = seed * 1_103_515_245L + 12_345L
+            ((seed ushr 16) % 9).toInt()
+        }
+    }
+    var progress by remember(event.startedAt) { mutableIntStateOf(0) }
+    var mistakes by remember(event.startedAt) { mutableIntStateOf(0) }
+    val targetNode = sequence.getOrElse(progress) { -1 }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.cyber_minigame_title), color = AppColors.Danger, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.cyber_minigame_hint, progress + 1, sequence.size, mistakes, 3), textAlign = TextAlign.Center)
+                Spacer(Modifier.height(12.dp))
+                repeat(3) { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        repeat(3) { column ->
+                            val node = row * 3 + column
+                            androidx.compose.material3.Button(
+                                onClick = {
+                                    if (node == targetNode) {
+                                        progress++
+                                        if (progress == sequence.size) onResolved(true)
+                                    } else {
+                                        mistakes++
+                                        progress = 0
+                                        if (mistakes >= 3) onResolved(false)
+                                    }
+                                },
+                                modifier = Modifier.size(62.dp),
+                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                    containerColor = if (node == targetNode) Color(0xFF1B5E20) else Color(0xFF263238)
+                                ),
+                                contentPadding = PaddingValues(0.dp)
+                            ) { Text((node + 1).toString(), fontWeight = FontWeight.Black) }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+                Text(stringResource(R.string.cyber_minigame_sequence, sequence.joinToString(" → ") { (it + 1).toString() }), color = AppColors.Primary, fontSize = 12.sp)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+    )
+}
+
+@Composable
 fun DistressSignalDialog(
     reward: Double,
     onSalvage: () -> Unit,
@@ -317,12 +387,15 @@ fun DistressSignalDialog(
 @Composable
 fun EventChainResultDialog(result: EventChainResult, onDismiss: () -> Unit) {
     val isStation = result.eventType == GameEventType.ABANDONED_STATION
+    val isCyberVirus = result.eventType == GameEventType.CYBER_VIRUS
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(if (result.success) R.string.event_action_success else R.string.event_rescue_failed)) },
         text = {
             Text(
                 when {
+                    isCyberVirus && result.success -> stringResource(R.string.cyber_success, formatNum(result.reward))
+                    isCyberVirus -> stringResource(R.string.cyber_failure, formatNum(result.loss))
                     result.success -> stringResource(R.string.event_expedition_reward, formatNum(result.reward))
                     isStation && result.loss > 0.0 -> stringResource(
                         R.string.event_station_loss,

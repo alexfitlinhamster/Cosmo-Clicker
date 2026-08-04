@@ -121,6 +121,8 @@ object EventEngine {
                     maxOf(5_000.0, clickValue.coerceAtLeast(0.0) * 300.0)
                 } else if (actualType == GameEventType.TRADING_SHIP) {
                     maxOf(1_000.0, clickValue.coerceAtLeast(0.0) * 120.0)
+                } else if (actualType == GameEventType.CYBER_VIRUS) {
+                    maxOf(5_000.0, clickValue.coerceAtLeast(0.0) * 250.0)
                 } else {
                     0.0
                 }
@@ -190,6 +192,29 @@ object EventEngine {
             return state
         }
         return finishEvent(state, EventLogOutcome.COMPLETED, nowMillis)
+    }
+
+    fun resolveCyberVirus(state: GameState, success: Boolean, nowMillis: Long): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.CYBER_VIRUS) return state
+        if (success) {
+            return finishEvent(
+                state.copy(totalDebris = state.totalDebris + event.reward),
+                EventLogOutcome.SUCCESS,
+                nowMillis,
+                event.reward
+            ).copy(eventChainResult = EventChainResult(true, event.reward, GameEventType.CYBER_VIRUS))
+        }
+        val loss = (state.totalDebris * 0.03).coerceAtMost(5_000_000.0)
+        val infectedId = state.infectedDroneId
+        val disabled = state.drones.map { drone ->
+            if (drone.id == infectedId) drone.copy(disabledUntil = nowMillis + 60_000L) else drone
+        }
+        return finishEvent(
+            state.copy(totalDebris = (state.totalDebris - loss).coerceAtLeast(0.0), drones = disabled),
+            EventLogOutcome.FAILURE,
+            nowMillis
+        ).copy(eventChainResult = EventChainResult(false, 0.0, GameEventType.CYBER_VIRUS, loss))
     }
 
     fun respondToDistressSignal(

@@ -19,12 +19,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.FleetConfig
+import com.example.myapplication.CaseType
 import com.example.myapplication.GameResourceRegistry
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
@@ -33,6 +35,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun CaseOpeningOverlay(
     isOpening: Boolean,
+    caseType: CaseType,
     lastDroppedDrone: FleetConfig?,
     onFinishOpening: () -> Unit,
     onClearReward: () -> Unit,
@@ -40,10 +43,13 @@ fun CaseOpeningOverlay(
 ) {
     var hasClickedToOpen by remember { mutableStateOf(false) }
     var currentFrame by remember { mutableIntStateOf(1) }
+    var displayedCaseType by remember { mutableStateOf(caseType) }
 
     // Сброс состояния при закрытии
     LaunchedEffect(isOpening) {
-        if (!isOpening) {
+        if (isOpening) {
+            displayedCaseType = caseType
+        } else {
             hasClickedToOpen = false
             currentFrame = 1
         }
@@ -61,8 +67,9 @@ fun CaseOpeningOverlay(
             // Проигрываем анимацию 1..8 один раз
             for (frame in 1..8) {
                 currentFrame = frame
-                delay(200) // Задержка 200мс для торжественности
+                delay(155)
             }
+            delay(180)
             onFinishOpening()
         }
     }
@@ -78,7 +85,6 @@ fun CaseOpeningOverlay(
         animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
         label = ""
     )
-
     Box(modifier = Modifier.fillMaxSize()) {
         // ЭКРАН КЕЙСА (ОЖИДАНИЕ ИЛИ АНИМАЦИЯ)
         AnimatedVisibility(visible = isOpening, enter = fadeIn(), exit = fadeOut()) {
@@ -111,9 +117,10 @@ fun CaseOpeningOverlay(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = GameResourceRegistry.caseFrame(currentFrame)),
+                            painter = painterResource(id = GameResourceRegistry.caseFrame(displayedCaseType, currentFrame)),
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize()
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize().padding(18.dp)
                         )
                     }
                 }
