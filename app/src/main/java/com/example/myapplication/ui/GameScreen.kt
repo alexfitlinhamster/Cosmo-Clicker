@@ -50,6 +50,8 @@ import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun GameScreen(
@@ -179,19 +181,13 @@ fun GameScreen(
     val fleetMap = viewModel.fleetById
 
     // Логика выбора фона в зависимости от активного ивента
-    val backgroundRes = remember<Int>(state.activeEvent?.type) {
-        when (state.activeEvent?.type) {
-            GameEventType.STORM -> R.drawable.background_storm_v2
-            GameEventType.ASTEROID -> R.drawable.background_asteroid_v2
-            GameEventType.BLACK_HOLE -> R.drawable.background_storm_v2
-            GameEventType.SOLAR_FLARE -> R.drawable.background_storm_v2
-            GameEventType.CYBER_VIRUS -> R.drawable.background_pirates_v2
-            GameEventType.DISTRESS_SIGNAL -> R.drawable.background_space_v2
-            GameEventType.ABANDONED_STATION -> R.drawable.background_space_v2
-            GameEventType.PIRATE_RAID -> R.drawable.background_pirates_v2
-            GameEventType.TRADING_SHIP -> R.drawable.background_space_v2
-            else -> R.drawable.background_minimal_space
-        }
+    val backgroundRes = R.drawable.background_cosmic_game
+    val eventTint = when (state.activeEvent?.type) {
+        GameEventType.STORM, GameEventType.BLACK_HOLE -> Color(0xFF5A3D8F)
+        GameEventType.ASTEROID -> Color(0xFF6D5848)
+        GameEventType.SOLAR_FLARE -> Color(0xFF9A512F)
+        GameEventType.CYBER_VIRUS, GameEventType.PIRATE_RAID -> Color(0xFF71384C)
+        else -> Color.Transparent
     }
 
     fun addFloatingText(text: String, x: Float, y: Float) {
@@ -217,7 +213,8 @@ fun GameScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.2f))
+                .background(Color.Black.copy(alpha = 0.3f))
+                .background(eventTint.copy(alpha = if (eventTint == Color.Transparent) 0f else 0.10f))
         )
 
         // Звезды
@@ -260,9 +257,9 @@ fun GameScreen(
                     CommandChallengeBattle(
                         battle = battle,
                         modifier = Modifier.fillMaxSize()
-                    ) {
+                    ) { minionId ->
                         soundManager.playClick()
-                        val damage = viewModel.onPlanetClick()
+                        val damage = if (minionId == null) viewModel.onPlanetClick() else viewModel.attackBossMinion(minionId)
                         addFloatingText("−${formatNum(damage)}", 0.5f, 0.43f)
                     }
                 } ?: PlanetButton(
@@ -276,13 +273,26 @@ fun GameScreen(
                     }
 
                 val now = System.currentTimeMillis()
-                state.drones.filter { it.disabledUntil <= now }.forEach { drone ->
+                val combatDrones = state.drones.filter { it.disabledUntil <= now }
+                combatDrones.forEachIndexed { index, drone ->
                     key(drone.id) {
-                        ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
-                            val cyberEvent = state.activeEvent?.takeIf { active ->
-                                active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
+                        if (state.titanBattle != null) {
+                            CombatDrone(
+                                drone = drone,
+                                index = index,
+                                droneCount = combatDrones.size,
+                                battle = state.titanBattle!!,
+                                fleetItems = fleetMap,
+                                gameAreaWidth = maxWidth,
+                                gameAreaHeight = maxHeight
+                            )
+                        } else {
+                            ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
+                                val cyberEvent = state.activeEvent?.takeIf { active ->
+                                    active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
+                                }
+                                if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
                             }
-                            if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
                         }
                     }
                 }
@@ -305,7 +315,9 @@ fun GameScreen(
                         GameEventType.METEOR_SHOWER -> Unit
                         GameEventType.DISTRESS_SIGNAL -> Unit
                         GameEventType.ABANDONED_STATION -> Unit
-                        GameEventType.TRADING_SHIP -> Unit
+                        GameEventType.TRADING_SHIP -> TradingShipComponent(event, maxWidth, maxHeight) {
+                            showEventInfo = event
+                        }
                         else -> {}
                     }
                 }
@@ -461,34 +473,14 @@ fun GameScreen(
                     onDismiss = { showEventInfo = null }
                 )
             } else if (event.type == GameEventType.TRADING_SHIP) {
-                AlertDialog(
-                    onDismissRequest = { showEventInfo = null },
-                    title = { Text(stringResource(R.string.event_trading_ship)) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.event_desc_trading_ship))
-                            Text(stringResource(R.string.trade_power_offer, formatNum(event.reward)))
-                            Text(stringResource(R.string.trade_luck_offer, formatNum(event.reward * 0.75)))
-                        }
+                TradingShipMarket(
+                    event = event,
+                    totalDebris = state.totalDebris,
+                    onBuy = {
+                        viewModel.buyTradeOffer(it)
+                        showEventInfo = null
                     },
-                    confirmButton = {
-                        TextButton(
-                            enabled = state.totalDebris >= event.reward,
-                            onClick = {
-                                viewModel.buyTradeOffer(TradeOffer.POWER_CORE)
-                                showEventInfo = null
-                            }
-                        ) { Text(stringResource(R.string.trade_buy_power)) }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            enabled = state.totalDebris >= event.reward * 0.75,
-                            onClick = {
-                                viewModel.buyTradeOffer(TradeOffer.LUCK_SCANNER)
-                                showEventInfo = null
-                            }
-                        ) { Text(stringResource(R.string.trade_buy_luck)) }
-                    }
+                    onDismiss = { showEventInfo = null }
                 )
             } else {
                 EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
@@ -680,7 +672,7 @@ private fun GameNavigationButton(
 private fun CommandChallengeBattle(
     battle: com.example.myapplication.TitanBattle,
     modifier: Modifier = Modifier,
-    onAttack: () -> Unit
+    onAttack: (Int?) -> Unit
 ) {
     val entrance = remember(battle.expiresAt) { Animatable(0.35f) }
     var pressed by remember(battle.expiresAt) { mutableStateOf(false) }
@@ -691,8 +683,8 @@ private fun CommandChallengeBattle(
     )
     val idleAnimation = rememberInfiniteTransition(label = "boss_idle")
     val idleOffset by idleAnimation.animateFloat(
-        initialValue = -8f,
-        targetValue = 8f,
+        initialValue = -3f,
+        targetValue = 3f,
         animationSpec = infiniteRepeatable(
             animation = tween(2_200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -700,8 +692,8 @@ private fun CommandChallengeBattle(
         label = "boss_float"
     )
     val idleScale by idleAnimation.animateFloat(
-        initialValue = 0.985f,
-        targetValue = 1.015f,
+        initialValue = 0.995f,
+        targetValue = 1.005f,
         animationSpec = infiniteRepeatable(
             animation = tween(1_800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -746,24 +738,62 @@ private fun CommandChallengeBattle(
             contentDescription = stringResource(challengeBattleName(battle.challengeId)),
             modifier = Modifier
                 .align(Alignment.Center)
-                .fillMaxWidth(0.94f)
-                .height(310.dp)
+                .fillMaxWidth(0.86f)
+                .height(285.dp)
                 .graphicsLayer {
                     scaleX = entrance.value * hitScale * idleScale
                     scaleY = entrance.value * hitScale * idleScale
                     alpha = entrance.value
                     translationY = idleOffset
-                    rotationZ = idleOffset * 0.04f
+                    rotationZ = 0f
                 }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {
                     pressed = true
-                    onAttack()
+                    onAttack(null)
                 },
             contentScale = ContentScale.Fit
         )
+
+        if (battle.bossMinions.isNotEmpty()) {
+            val orbit by idleAnimation.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(tween(8_000, easing = androidx.compose.animation.core.LinearEasing)),
+                label = "minion_orbit"
+            )
+            battle.bossMinions.forEachIndexed { index, minion ->
+                key(minion.id) {
+                    val angle = Math.toRadians((orbit + index * 360f / battle.bossMinions.size).toDouble())
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = (cos(angle) * 132).toFloat().dp, y = (sin(angle) * 105).toFloat().dp)
+                            .width(64.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onAttack(minion.id) },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.boss_dragon_minion),
+                            contentDescription = stringResource(R.string.challenge_minion_robot),
+                            modifier = Modifier.size(58.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                        LinearProgressIndicator(
+                            progress = { (minion.health / minion.maxHealth).toFloat().coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth().height(5.dp),
+                            color = AppColors.Danger,
+                            trackColor = Color.Black.copy(alpha = .65f)
+                        )
+                    }
+                }
+            }
+        }
 
         Text(
             stringResource(R.string.tap_boss_to_attack),
@@ -780,10 +810,10 @@ private fun CommandChallengeBattle(
 }
 
 private fun challengeBattleArt(id: ChallengeId): Int = when (id) {
-    ChallengeId.VOID_LEVIATHAN -> R.drawable.challenge_void_leviathan
-    ChallengeId.SOLAR_DEVOURER -> R.drawable.challenge_solar_devourer
-    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.challenge_dreadnought_empress
-    ChallengeId.NEBULA_DRAGON -> R.drawable.challenge_nebula_dragon
+    ChallengeId.VOID_LEVIATHAN -> R.drawable.boss_void_game
+    ChallengeId.SOLAR_DEVOURER -> R.drawable.boss_solar_game
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.boss_dreadnought_game
+    ChallengeId.NEBULA_DRAGON -> R.drawable.boss_dragon_game
 }
 
 private fun challengeBattleName(id: ChallengeId): Int = when (id) {
@@ -791,6 +821,61 @@ private fun challengeBattleName(id: ChallengeId): Int = when (id) {
     ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_devourer
     ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_empress
     ChallengeId.NEBULA_DRAGON -> R.string.challenge_nebula_dragon
+}
+
+@Composable
+private fun CombatDrone(
+    drone: com.example.myapplication.DroneData,
+    index: Int,
+    droneCount: Int,
+    battle: com.example.myapplication.TitanBattle,
+    fleetItems: Map<String, com.example.myapplication.FleetConfig>,
+    gameAreaWidth: androidx.compose.ui.unit.Dp,
+    gameAreaHeight: androidx.compose.ui.unit.Dp
+) {
+    val animation = rememberInfiniteTransition(label = "combat_drone_${drone.id}")
+    val orbit by animation.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(8_000, easing = androidx.compose.animation.core.LinearEasing)),
+        label = "combat_orbit_${drone.id}"
+    )
+    val shot by animation.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(1_000, easing = androidx.compose.animation.core.LinearEasing)),
+        label = "combat_shot_${drone.id}"
+    )
+    val droneAngle = Math.toRadians((index * 360f / droneCount.coerceAtLeast(1) - 90f).toDouble())
+    val droneX = gameAreaWidth * (0.5f + cos(droneAngle).toFloat() * 0.38f)
+    val droneY = gameAreaHeight * (0.54f + sin(droneAngle).toFloat() * 0.34f)
+    val targetIndex = if (battle.bossMinions.isEmpty()) 0 else index % battle.bossMinions.size
+    val targetAngle = Math.toRadians((orbit + targetIndex * 360f / battle.bossMinions.size.coerceAtLeast(1)).toDouble())
+    val targetX = gameAreaWidth * 0.5f + (cos(targetAngle) * 132).toFloat().dp
+    val targetY = gameAreaHeight * 0.5f + (sin(targetAngle) * 105).toFloat().dp
+
+    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+        if (shot > 0.72f) {
+            drawLine(
+                color = Color(0xFF55E7FF).copy(alpha = ((shot - 0.72f) / 0.28f).coerceIn(0f, 1f)),
+                start = androidx.compose.ui.geometry.Offset(droneX.toPx(), droneY.toPx()),
+                end = androidx.compose.ui.geometry.Offset(targetX.toPx(), targetY.toPx()),
+                strokeWidth = 3.dp.toPx()
+            )
+        }
+    }
+    Box(
+        modifier = Modifier
+            .offset(x = droneX - 22.dp, y = droneY - 22.dp)
+            .size(44.dp)
+            .graphicsLayer {
+                scaleX = 1f + shot * 0.08f
+                scaleY = 1f + shot * 0.08f
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        fleetItems[drone.type]?.let { FleetIcon(it, 44.dp) }
+    }
 }
 
 private const val MAX_FLOATING_TEXTS = 40

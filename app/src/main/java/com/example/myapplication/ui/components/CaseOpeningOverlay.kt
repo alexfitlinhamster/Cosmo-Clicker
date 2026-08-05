@@ -67,9 +67,9 @@ fun CaseOpeningOverlay(
             // Проигрываем анимацию 1..8 один раз
             for (frame in 1..8) {
                 currentFrame = frame
-                delay(155)
+                delay(CASE_FRAME_DURATION_MS)
             }
-            delay(180)
+            delay(CASE_REVEAL_HOLD_MS)
             onFinishOpening()
         }
     }
@@ -173,3 +173,6 @@ fun CaseOpeningOverlay(
         }
     }
 }
+
+private const val CASE_FRAME_DURATION_MS = 280L
+private const val CASE_REVEAL_HOLD_MS = 450L

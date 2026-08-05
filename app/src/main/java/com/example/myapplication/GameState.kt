@@ -22,7 +22,9 @@ enum class SkillType(val id: String) {
     TIME_WARP("time_warp"),
     VOID_ENERGY("void_energy"),
     TRADE_POWER("trade_power"),
-    TRADE_LUCK("trade_luck")
+    TRADE_LUCK("trade_luck"),
+    TRADE_CLICK_BOOST("trade_click_boost"),
+    TRADE_FLEET_BOOST("trade_fleet_boost")
 }
 
 enum class QuestType {
@@ -64,7 +66,16 @@ data class TitanBattle(
     val challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN,
     val shieldCharges: Int = 0,
     val minions: Int = 0,
-    val nextAbilityAt: Long = Long.MAX_VALUE
+    val nextAbilityAt: Long = Long.MAX_VALUE,
+    val lastAbilityAt: Long = 0L,
+    val abilityUses: Int = 0,
+    val bossMinions: List<BossMinion> = emptyList()
+)
+
+data class BossMinion(
+    val id: Int,
+    val health: Double,
+    val maxHealth: Double
 )
 
 data class Quest(
@@ -168,7 +179,17 @@ enum class GameEventType {
 
 enum class DistressChoice { SALVAGE, RESCUE }
 enum class StationChoice { SAFE_ROUTE, REACTOR_CORE }
-enum class TradeOffer { POWER_CORE, LUCK_SCANNER }
+enum class TradeOffer {
+    POWER_CORE,
+    LUCK_SCANNER,
+    CLICK_AMPLIFIER,
+    FLEET_OVERDRIVE,
+    DEBRIS_CARGO,
+    COMMON_CASE,
+    RARE_CASE,
+    LEGENDARY_CASE,
+    RANDOM_DRONE
+}
 
 data class PendingEventChain(
     val resolvesAt: Long,

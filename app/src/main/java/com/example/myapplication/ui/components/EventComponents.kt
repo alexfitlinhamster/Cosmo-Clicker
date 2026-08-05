@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +34,10 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.EventChainResult
+import com.example.myapplication.EventEngine
+import com.example.myapplication.TradeOffer
+import com.example.myapplication.CaseType
+import com.example.myapplication.GameResourceRegistry
 import com.example.myapplication.PendingEventChain
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
@@ -134,12 +140,13 @@ private fun eventTitleResource(type: GameEventType): Int = when (type) {
 }
 
 private fun eventIconResource(type: GameEventType): Int = when (type) {
-    GameEventType.ASTEROID, GameEventType.METEOR_SHOWER -> R.drawable.event_gold_asteroid
+    GameEventType.ASTEROID, GameEventType.METEOR_SHOWER -> R.drawable.asteroid_gold_game
     GameEventType.DISTRESS_SIGNAL -> R.drawable.event_rescue_capsule
     GameEventType.ABANDONED_STATION, GameEventType.SOLAR_FLARE -> R.drawable.event_reactor_core
-    GameEventType.TRADING_SHIP, GameEventType.PIRATE_RAID -> R.drawable.event_trade_crate
+    GameEventType.TRADING_SHIP -> R.drawable.event_trading_ship_game
+    GameEventType.PIRATE_RAID -> R.drawable.event_trade_crate
     GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS -> R.drawable.event_reactor_core
-    GameEventType.STORM -> R.drawable.event_gold_asteroid
+    GameEventType.STORM -> R.drawable.asteroid_crystal_game
 }
 
 @Composable
@@ -190,7 +197,7 @@ fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: (
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(R.drawable.event_gold_asteroid),
+            painter = painterResource(R.drawable.asteroid_gold_game),
             contentDescription = stringResource(R.string.event_gold_asteroid),
             modifier = Modifier.fillMaxSize()
         )
@@ -258,6 +265,140 @@ fun PirateRaidComponent(
             modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape).padding(5.dp)
         )
     }
+}
+
+@Composable
+fun TradingShipComponent(
+    event: GameEvent,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
+    onClick: () -> Unit
+) {
+    val shipSize = 112.dp
+    Box(
+        modifier = Modifier
+            .offset(
+                x = gameAreaWidth * event.x - shipSize / 2,
+                y = gameAreaHeight * event.y - shipSize / 2
+            )
+            .size(shipSize)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(R.drawable.event_trading_ship_game),
+            contentDescription = stringResource(R.string.event_trading_ship),
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+fun TradingShipMarket(
+    event: GameEvent,
+    totalDebris: Double,
+    onBuy: (TradeOffer) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val offers = remember(event.startedAt) { EventEngine.tradeOffers(event) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xF20A1020)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(R.drawable.event_trading_ship_game),
+                contentDescription = null,
+                modifier = Modifier.size(150.dp)
+            )
+            Text(stringResource(R.string.trade_market_title), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.trade_market_subtitle), color = Color.White.copy(alpha = .62f), fontSize = 12.sp, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.trade_balance, formatNum(totalDebris)), color = Color(0xFF66E0FF), fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            offers.forEach { offer ->
+                val cost = EventEngine.tradeOfferCost(event, offer)
+                TradeOfferCard(
+                    offer = offer,
+                    cost = cost,
+                    enabled = totalDebris >= cost,
+                    onBuy = { onBuy(offer) }
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.trade_leave), color = Color.White.copy(alpha = .7f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun TradeOfferCard(offer: TradeOffer, cost: Double, enabled: Boolean, onBuy: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF151E32)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF66E0FF).copy(alpha = .45f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Image(painterResource(tradeOfferIcon(offer)), contentDescription = null, modifier = Modifier.size(52.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(tradeOfferTitle(offer)), color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(tradeOfferDescription(offer)), color = Color.White.copy(alpha = .62f), fontSize = 11.sp)
+            }
+            Button(
+                onClick = onBuy,
+                enabled = enabled,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF36C5E8)),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text(formatNum(cost), fontSize = 11.sp, fontWeight = FontWeight.Black)
+            }
+        }
+    }
+}
+
+private fun tradeOfferTitle(offer: TradeOffer): Int = when (offer) {
+    TradeOffer.POWER_CORE -> R.string.trade_title_power
+    TradeOffer.LUCK_SCANNER -> R.string.trade_title_luck
+    TradeOffer.CLICK_AMPLIFIER -> R.string.trade_title_click
+    TradeOffer.FLEET_OVERDRIVE -> R.string.trade_title_fleet
+    TradeOffer.DEBRIS_CARGO -> R.string.trade_title_debris
+    TradeOffer.COMMON_CASE -> R.string.trade_title_common_case
+    TradeOffer.RARE_CASE -> R.string.trade_title_rare_case
+    TradeOffer.LEGENDARY_CASE -> R.string.trade_title_legendary_case
+    TradeOffer.RANDOM_DRONE -> R.string.trade_title_drone
+}
+
+private fun tradeOfferDescription(offer: TradeOffer): Int = when (offer) {
+    TradeOffer.POWER_CORE -> R.string.trade_desc_power
+    TradeOffer.LUCK_SCANNER -> R.string.trade_desc_luck
+    TradeOffer.CLICK_AMPLIFIER -> R.string.trade_desc_click
+    TradeOffer.FLEET_OVERDRIVE -> R.string.trade_desc_fleet
+    TradeOffer.DEBRIS_CARGO -> R.string.trade_desc_debris
+    TradeOffer.COMMON_CASE -> R.string.trade_desc_common_case
+    TradeOffer.RARE_CASE -> R.string.trade_desc_rare_case
+    TradeOffer.LEGENDARY_CASE -> R.string.trade_desc_legendary_case
+    TradeOffer.RANDOM_DRONE -> R.string.trade_desc_drone
+}
+
+private fun tradeOfferIcon(offer: TradeOffer): Int = when (offer) {
+    TradeOffer.POWER_CORE, TradeOffer.CLICK_AMPLIFIER -> R.drawable.event_reactor_core
+    TradeOffer.LUCK_SCANNER -> R.drawable.upgrade_signal_beacon_v2
+    TradeOffer.FLEET_OVERDRIVE -> R.drawable.drone_20
+    TradeOffer.DEBRIS_CARGO -> R.drawable.debris_01
+    TradeOffer.COMMON_CASE -> GameResourceRegistry.caseFrame(CaseType.COMMON, 1)
+    TradeOffer.RARE_CASE -> GameResourceRegistry.caseFrame(CaseType.RARE, 1)
+    TradeOffer.LEGENDARY_CASE -> GameResourceRegistry.caseFrame(CaseType.LEGENDARY, 1)
+    TradeOffer.RANDOM_DRONE -> R.drawable.drone_29
 }
 
 @Composable

@@ -33,10 +33,11 @@ object EconomyBalance {
             }
         }
         val tradeMultiplier = if ((state.activeEffects[SkillType.TRADE_POWER.id] ?: 0L) > nowMillis) 2.0 else 1.0
+        val fleetBoost = if ((state.activeEffects[SkillType.TRADE_FLEET_BOOST.id] ?: 0L) > nowMillis) 3.0 else 1.0
         return base * planetIncomeMultiplier(state.currentPlanetId) *
             MetaProgressEngine.technologyMultiplier(state.technologies) *
             MetaProgressEngine.masteryMultiplier(state.droneParts) *
-            DroneTraitEngine.modifiers(state.activeFleetCounts).passiveMultiplier * tradeMultiplier
+            DroneTraitEngine.modifiers(state.activeFleetCounts).passiveMultiplier * tradeMultiplier * fleetBoost
     }
 
     fun scaledReward(base: Double, planetId: String): Double =

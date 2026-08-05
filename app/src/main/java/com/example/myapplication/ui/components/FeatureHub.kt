@@ -212,10 +212,10 @@ private fun ChallengePanel(state: GameState, viewModel: GameViewModel) {
 }
 
 private fun challengeArt(id: ChallengeId): Int = when (id) {
-    ChallengeId.VOID_LEVIATHAN -> R.drawable.challenge_void_leviathan
-    ChallengeId.SOLAR_DEVOURER -> R.drawable.challenge_solar_devourer
-    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.challenge_dreadnought_empress
-    ChallengeId.NEBULA_DRAGON -> R.drawable.challenge_nebula_dragon
+    ChallengeId.VOID_LEVIATHAN -> R.drawable.boss_void_game
+    ChallengeId.SOLAR_DEVOURER -> R.drawable.boss_solar_game
+    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.boss_dreadnought_game
+    ChallengeId.NEBULA_DRAGON -> R.drawable.boss_dragon_game
 }
 
 private fun challengeName(id: ChallengeId): Int = when (id) {
@@ -241,6 +241,13 @@ private fun challengeTrait(id: ChallengeId): Int = when (id) {
 
 @Composable
 private fun ChallengeAbilityStatus(battle: com.example.myapplication.TitanBattle) {
+    val abilityLabel = when (battle.challengeId) {
+        ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_ability
+        ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_ability
+        ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_ability
+        ChallengeId.NEBULA_DRAGON -> R.string.challenge_dragon_ability
+    }
+    Text(stringResource(abilityLabel), color = Color.White.copy(alpha = .62f), fontSize = 12.sp)
     when {
         battle.shieldCharges > 0 -> Text(
             stringResource(R.string.challenge_shield_status, battle.shieldCharges),
@@ -299,9 +306,9 @@ private fun TitanPanel(state: GameState, viewModel: GameViewModel) {
     val battle = state.titanBattle
     val type = battle?.type ?: BossType.entries[(FeatureEngine.weekKey() % BossType.entries.size).toInt()]
     val art = when (type) {
-        BossType.ASTEROID_TITAN -> R.drawable.boss_asteroid_titan
-        BossType.PIRATE_DREADNOUGHT -> R.drawable.boss_pirate_dreadnought
-        BossType.MECHANICAL_COLOSSUS -> R.drawable.boss_mechanical_colossus
+        BossType.ASTEROID_TITAN -> R.drawable.asteroid_gray_game
+        BossType.PIRATE_DREADNOUGHT -> R.drawable.boss_dreadnought_game
+        BossType.MECHANICAL_COLOSSUS -> R.drawable.boss_solar_game
     }
     FeatureCard {
         Image(painterResource(art), null, Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(18.dp)), contentScale = ContentScale.Crop)

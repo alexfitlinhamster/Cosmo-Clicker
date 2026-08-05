@@ -3,7 +3,6 @@ package com.example.myapplication.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -49,7 +48,7 @@ fun Star(reduceMotion: Boolean = false) {
 
 @Composable
 fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) {
-    val targetSize = if (target.isMeteor) 40.dp else (26 + target.rarity.ordinal * 3).dp
+    val targetSize = if (target.isMeteor) 38.dp else (30 + target.rarity.ordinal * 2).dp
 
     Box(
         modifier = Modifier
@@ -58,14 +57,12 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) 
                 y = gameAreaHeight * target.y - (targetSize / 2)
             )
             .size(targetSize)
-            .background(target.rarity.color.copy(alpha = 0.18f), CircleShape)
-            .border(1.dp, target.rarity.color, CircleShape)
-            .alpha(0.9f),
+            .alpha(0.88f),
         contentAlignment = Alignment.Center
     ) {
         if (target.isMeteor) {
             Image(
-                painter = painterResource(R.drawable.debris_meteor),
+                painter = painterResource(R.drawable.asteroid_molten_game),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -79,7 +76,7 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) 
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(targetSize - 4.dp)
-                    .rotate(if (target.isFalling) 35f else (target.id % 360).toFloat())
+                    .rotate(if (target.isFalling) 25f else ((target.id % 8) * 45).toFloat())
             )
         }
     }

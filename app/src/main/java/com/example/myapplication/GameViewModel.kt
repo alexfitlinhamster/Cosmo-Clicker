@@ -962,13 +962,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun calculateClickValue(): Double {
         val state = _gameState.value
         val tradeMultiplier = if ((state.activeEffects[SkillType.TRADE_POWER.id] ?: 0L) > System.currentTimeMillis()) 2.0 else 1.0
+        val tradeClickBoost = if ((state.activeEffects[SkillType.TRADE_CLICK_BOOST.id] ?: 0L) > System.currentTimeMillis()) 3.0 else 1.0
         return EconomyEngine.calculateClickValue(state, clickItems, randomProvider) *
             MetaProgressEngine.collectionMultiplier(state.fleetCounts, fleetById) *
             MetaProgressEngine.masteryMultiplier(state.droneParts) *
             DroneTraitEngine.modifiers(state.activeFleetCounts).clickMultiplier *
             MetaProgressEngine.technologyMultiplier(state.technologies) *
             EconomyBalance.planetIncomeMultiplier(state.currentPlanetId) * tradeMultiplier *
-            FeatureEngine.stationClickMultiplier(state)
+            FeatureEngine.stationClickMultiplier(state) * tradeClickBoost
     }
 
     fun onPlanetClick(): Double {
@@ -1023,8 +1024,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (manual && battle.shieldCharges > 0) {
             return state.copy(titanBattle = battle.copy(shieldCharges = battle.shieldCharges - 1))
         }
-        if (manual && battle.minions > 0) {
-            return state.copy(titanBattle = battle.copy(minions = battle.minions - 1))
+        if (battle.bossMinions.isNotEmpty()) {
+            if (manual) return state
+            return applyBossMinionDamage(state, battle.bossMinions.first().id, damage, manual = false)
         }
         val challenge = FeatureEngine.challenge(battle.challengeId)
         val sourceMultiplier = if (manual) challenge.manualDamageMultiplier else challenge.fleetDamageMultiplier
@@ -1040,6 +1042,27 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 totalDebris = state.totalDebris + it.rewardDebris * FeatureEngine.stationRewardMultiplier(state)
             )
         }
+    }
+
+    fun attackBossMinion(minionId: Int): Double {
+        val damage = onPlanetClick()
+        _gameState.update { state ->
+            applyBossMinionDamage(state, minionId, damage * FeatureEngine.stationBossMultiplier(state), manual = true)
+        }
+        return damage
+    }
+
+    private fun applyBossMinionDamage(state: GameState, minionId: Int, rawDamage: Double, manual: Boolean): GameState {
+        val battle = state.titanBattle ?: return state
+        val target = battle.bossMinions.firstOrNull { it.id == minionId } ?: return state
+        val challenge = FeatureEngine.challenge(battle.challengeId)
+        val sourceMultiplier = if (manual) challenge.manualDamageMultiplier else challenge.fleetDamageMultiplier
+        val damage = rawDamage.coerceAtLeast(0.0) * sourceMultiplier
+        val remaining = target.health - damage
+        val updated = if (remaining > 0.0) {
+            battle.bossMinions.map { if (it.id == minionId) it.copy(health = remaining) else it }
+        } else battle.bossMinions.filterNot { it.id == minionId }
+        return state.copy(titanBattle = battle.copy(minions = updated.size, bossMinions = updated))
     }
 
     fun toggleWeeklyGalaxy() {

@@ -19,7 +19,7 @@ object FeatureEngine {
 
     val challenges = listOf(
         ChallengeConfig(ChallengeId.VOID_LEVIATHAN, BossType.ASTEROID_TITAN, 100_000_000.0, 90_000L, 2_000_000.0, 2, 1.0, 1.0, 12_000L),
-        ChallengeConfig(ChallengeId.SOLAR_DEVOURER, BossType.MECHANICAL_COLOSSUS, 500_000_000.0, 75_000L, 15_000_000.0, 5, 1.5, 0.35, Long.MAX_VALUE, ChallengeId.VOID_LEVIATHAN),
+        ChallengeConfig(ChallengeId.SOLAR_DEVOURER, BossType.MECHANICAL_COLOSSUS, 500_000_000.0, 75_000L, 15_000_000.0, 5, 1.5, 0.35, 9_000L, ChallengeId.VOID_LEVIATHAN),
         ChallengeConfig(ChallengeId.DREADNOUGHT_EMPRESS, BossType.PIRATE_DREADNOUGHT, 1_000_000_000.0, 60_000L, 100_000_000.0, 10, 0.75, 1.5, 8_000L, ChallengeId.SOLAR_DEVOURER),
         ChallengeConfig(ChallengeId.NEBULA_DRAGON, BossType.MECHANICAL_COLOSSUS, 5_000_000_000.0, 120_000L, 500_000_000.0, 25, 1.0, 1.0, 10_000L, ChallengeId.DREADNOUGHT_EMPRESS)
     )
@@ -35,19 +35,28 @@ object FeatureEngine {
         val config = challenge(battle.challengeId)
         return when (battle.challengeId) {
             ChallengeId.VOID_LEVIATHAN -> state.copy(
-                titanBattle = battle.copy(shieldCharges = 3, nextAbilityAt = now + config.abilityIntervalMillis)
+                titanBattle = battle.copy(shieldCharges = 3, nextAbilityAt = now + config.abilityIntervalMillis, lastAbilityAt = now, abilityUses = battle.abilityUses + 1)
             )
-            ChallengeId.SOLAR_DEVOURER -> state
+            ChallengeId.SOLAR_DEVOURER -> state.copy(
+                titanBattle = battle.copy(
+                    health = (battle.health + battle.maxHealth * 0.02).coerceAtMost(battle.maxHealth),
+                    shieldCharges = (battle.shieldCharges + 2).coerceAtMost(4),
+                    nextAbilityAt = now + config.abilityIntervalMillis,
+                    lastAbilityAt = now,
+                    abilityUses = battle.abilityUses + 1
+                )
+            )
             ChallengeId.DREADNOUGHT_EMPRESS -> state.copy(
-                titanBattle = battle.copy(minions = (battle.minions + 2).coerceAtMost(10), nextAbilityAt = now + config.abilityIntervalMillis)
+                titanBattle = summonMinions(battle, 2, 10).copy(nextAbilityAt = now + config.abilityIntervalMillis, lastAbilityAt = now, abilityUses = battle.abilityUses + 1)
             )
             ChallengeId.NEBULA_DRAGON -> {
                 val disabledDrone = state.drones.firstOrNull { it.disabledUntil <= now }
                 state.copy(
-                    titanBattle = battle.copy(
+                    titanBattle = summonMinions(battle, 3, 15).copy(
                         health = (battle.health + battle.maxHealth * 0.01).coerceAtMost(battle.maxHealth),
-                        minions = (battle.minions + 3).coerceAtMost(15),
-                        nextAbilityAt = now + config.abilityIntervalMillis
+                        nextAbilityAt = now + config.abilityIntervalMillis,
+                        lastAbilityAt = now,
+                        abilityUses = battle.abilityUses + 1
                     ),
                     drones = if (disabledDrone == null) state.drones else state.drones.map {
                         if (it.id == disabledDrone.id) it.copy(disabledUntil = now + 6_000L) else it
@@ -55,6 +64,19 @@ object FeatureEngine {
                 )
             }
         }
+    }
+
+    private fun summonMinions(battle: TitanBattle, amount: Int, limit: Int): TitanBattle {
+        val current = battle.bossMinions
+        val toCreate = amount.coerceAtMost((limit - current.size).coerceAtLeast(0))
+        val hp = battle.maxHealth * when (battle.challengeId) {
+            ChallengeId.DREADNOUGHT_EMPRESS -> 0.004
+            ChallengeId.NEBULA_DRAGON -> 0.002
+            else -> 0.001
+        }
+        val firstId = (current.maxOfOrNull(BossMinion::id) ?: -1) + 1
+        val summoned = List(toCreate) { index -> BossMinion(firstId + index, hp, hp) }
+        return battle.copy(minions = current.size + summoned.size, bossMinions = current + summoned)
     }
 
     enum class WeeklyAction { CLICK, PASSIVE_INCOME, PURCHASE }
@@ -143,16 +165,16 @@ object FeatureEngine {
     fun createBoss(state: GameState, challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN, now: Long = System.currentTimeMillis()): TitanBattle {
         val config = challenge(challengeId)
         val hp = config.health
-        return TitanBattle(
+        val battle = TitanBattle(
             type = config.bossType,
             health = hp,
             maxHealth = hp,
             expiresAt = now + config.durationMillis,
             challengeId = challengeId,
             shieldCharges = if (challengeId == ChallengeId.VOID_LEVIATHAN) 3 else 0,
-            minions = if (challengeId == ChallengeId.NEBULA_DRAGON) 3 else 0,
             nextAbilityAt = if (config.abilityIntervalMillis == Long.MAX_VALUE) Long.MAX_VALUE else now + config.abilityIntervalMillis
         )
+        return if (challengeId == ChallengeId.NEBULA_DRAGON) summonMinions(battle, 3, 15) else battle
     }
 
     fun createBoss(state: GameState, now: Long): TitanBattle {

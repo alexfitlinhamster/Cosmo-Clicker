@@ -377,6 +377,46 @@ class EngineTest {
     }
 
     @Test
+    fun tradingShipCargoChangesBetweenVisitsAndContainsThreeUniqueOffers() {
+        val first = EventEngine.tradeOffers(GameEvent(GameEventType.TRADING_SHIP, 20_000L, startedAt = 1_000L))
+        val second = EventEngine.tradeOffers(GameEvent(GameEventType.TRADING_SHIP, 30_000L, startedAt = 2_000L))
+
+        assertEquals(3, first.size)
+        assertEquals(3, first.toSet().size)
+        assertTrue(first != second)
+    }
+
+    @Test
+    fun tradingShipCanSellCasesDebrisAndDrones() {
+        fun stateAt(startedAt: Long = 7_000L) = GameState(
+            totalDebris = 20_000.0,
+            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, startedAt = startedAt, reward = 1_000.0)
+        )
+
+        val caseResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.RARE_CASE, 2_000L)
+        assertTrue(caseResult.isOpeningCase)
+        assertEquals(CaseType.RARE, caseResult.openingCaseType)
+
+        val debrisResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.DEBRIS_CARGO, 2_000L)
+        assertEquals(21_500.0, debrisResult.totalDebris, 0.0)
+
+        val droneResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.RANDOM_DRONE, 2_000L)
+        assertEquals(1, droneResult.fleetCounts.values.sum())
+        assertEquals(1, droneResult.discoveredDroneIds.size)
+    }
+
+    @Test
+    fun tradingShipHasSeparateTapAndFleetBoosts() {
+        val event = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0)
+        val state = GameState(totalDebris = 5_000.0, activeEvent = event)
+
+        val tap = EventEngine.buyTradeOffer(state, TradeOffer.CLICK_AMPLIFIER, 2_000L)
+        val fleet = EventEngine.buyTradeOffer(state, TradeOffer.FLEET_OVERDRIVE, 2_000L)
+        assertEquals(47_000L, tap.activeEffects[SkillType.TRADE_CLICK_BOOST.id])
+        assertEquals(62_000L, fleet.activeEffects[SkillType.TRADE_FLEET_BOOST.id])
+    }
+
+    @Test
     fun commandChallengesUnlockInOrder() {
         val fresh = GameState()
         assertTrue(FeatureEngine.isChallengeUnlocked(fresh, ChallengeId.VOID_LEVIATHAN))
@@ -404,6 +444,24 @@ class EngineTest {
 
         assertEquals(2_050_000_000.0, result.titanBattle?.health ?: 0.0, 0.0)
         assertEquals(6, result.titanBattle?.minions)
+        assertEquals(6, result.titanBattle?.bossMinions?.size)
+        assertTrue(result.titanBattle.orEmptyMinions().all { it.health == it.maxHealth })
         assertEquals(16_000L, result.drones.single().disabledUntil)
+        assertEquals(1, result.titanBattle?.abilityUses)
+        assertEquals(10_000L, result.titanBattle?.lastAbilityAt)
+    }
+
+    @Test
+    fun solarDevourerHealsAndRaisesShields() {
+        val initial = GameState()
+        val battle = FeatureEngine.createBoss(initial, ChallengeId.SOLAR_DEVOURER, now = 0L)
+            .copy(health = 400_000_000.0)
+        val result = FeatureEngine.processBossAbility(initial.copy(titanBattle = battle), 9_000L)
+
+        assertEquals(410_000_000.0, result.titanBattle?.health ?: 0.0, 0.0)
+        assertEquals(2, result.titanBattle?.shieldCharges)
+        assertEquals(18_000L, result.titanBattle?.nextAbilityAt)
     }
 }
+
+private fun TitanBattle?.orEmptyMinions(): List<BossMinion> = this?.bossMinions.orEmpty()
