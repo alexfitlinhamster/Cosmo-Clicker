@@ -7,6 +7,10 @@ import android.media.AudioFormat
 import android.media.MediaPlayer
 import android.media.AudioTrack
 import android.media.ToneGenerator
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
@@ -20,7 +24,16 @@ class SoundManager(context: Context) : AutoCloseable {
     private val clickTracks = Array(CLICK_TRACK_COUNT) { index -> createClickTrack(index) }
     private var nextClickTrack = 0
 
+    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = appContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+        vibratorManager?.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        appContext.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
+
     fun playClick() {
+        vibrate(15)
         synchronized(lock) {
             val track = clickTracks[nextClickTrack]
             nextClickTrack = (nextClickTrack + 1) % clickTracks.size
@@ -38,11 +51,29 @@ class SoundManager(context: Context) : AutoCloseable {
         }
     }
 
-    fun playEventStart() = playTone(ToneGenerator.TONE_PROP_PROMPT, 120)
+    private fun vibrate(duration: Long) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(duration)
+        }
+    }
 
-    fun playEventSuccess() = playTone(ToneGenerator.TONE_PROP_ACK, 160)
+    fun playEventStart() {
+        vibrate(40)
+        playTone(ToneGenerator.TONE_PROP_PROMPT, 120)
+    }
 
-    fun playEventFailure() = playTone(ToneGenerator.TONE_PROP_NACK, 220)
+    fun playEventSuccess() {
+        vibrate(60)
+        playTone(ToneGenerator.TONE_PROP_ACK, 160)
+    }
+
+    fun playEventFailure() {
+        vibrate(100)
+        playTone(ToneGenerator.TONE_PROP_NACK, 220)
+    }
 
     fun resumeBackgroundMusic() {
         synchronized(lock) {

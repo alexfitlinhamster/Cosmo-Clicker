@@ -62,6 +62,7 @@ fun GameScreen(
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
+    val combo by viewModel.combo.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -250,6 +251,15 @@ fun GameScreen(
                     EventChainPendingBanner(
                         pending = pending,
                         modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                }
+
+                if (combo > 1) {
+                    ComboIndicator(
+                        combo = combo,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(y = (-150).dp)
                     )
                 }
 

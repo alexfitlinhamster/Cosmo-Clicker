@@ -23,6 +23,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val simulationJobs = mutableListOf<Job>()
     internal var randomProvider: RandomProvider = KotlinRandomProvider
 
+    private var lastClickMillis = 0L
+    private val _combo = MutableStateFlow(0)
+    val combo: StateFlow<Int> = _combo.asStateFlow()
+
     private val droneNames = listOf(
         "Scrap-Bot", "Copper Cloud", "Rusty Rover", "Azure Ace", "Cobalt Collector",
         "Blue Beam", "Forest Phantom", "Jade Jumper", "Emerald Eye", "Crimson Crusher",
@@ -973,7 +977,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPlanetClick(): Double {
-        val clickPower = calculateClickValue()
+        val now = System.currentTimeMillis()
+        val isCombo = now - lastClickMillis < 160
+        lastClickMillis = now
+        _combo.update { if (isCombo) (it + 1).coerceAtMost(100) else 1 }
+        
+        val comboBonus = 1.0 + (_combo.value / 100.0) // до +100% (x2) при комбо 100
+        val clickPower = calculateClickValue() * comboBonus
+
         _gameState.update { currentState ->
             var newTotalDebris = currentState.totalDebris
             var newHotelDebt = currentState.currentHotelDebt

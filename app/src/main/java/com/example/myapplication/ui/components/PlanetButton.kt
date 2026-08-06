@@ -1,6 +1,6 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -29,6 +30,17 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
     val animatedScale by animateFloatAsState(targetValue = scaleVal, label = "")
     val isLocked = planetConfig.price < 0
     val containerSize = GameConstants.PlanetSize
+
+    val infiniteTransition = rememberInfiniteTransition(label = "planet_rotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(60_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
 
     Box(
         modifier = modifier
@@ -48,6 +60,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .rotate(rotation)
         ) {
             if (planetConfig.spriteIndex >= 0) {
                 val columns = 4
