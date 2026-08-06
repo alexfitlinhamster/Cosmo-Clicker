@@ -171,7 +171,7 @@ class SoundManager(context: Context) : AutoCloseable {
         const val CLICK_TRACK_COUNT = 4
         const val CLICK_VOLUME = 0.25f
         const val CLICK_VOLUME_PERCENT = 35
-        const val MUSIC_VOLUME = 0.22f
+        const val MUSIC_VOLUME = 0.45f
         const val EFFECT_VOLUME = 0.7f
     }
 }
