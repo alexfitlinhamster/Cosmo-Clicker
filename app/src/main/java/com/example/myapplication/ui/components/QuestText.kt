@@ -17,4 +17,5 @@ fun localizedQuestDescription(quest: Quest): String = when (quest.type) {
         val number = quest.targetDroneId?.removePrefix("drone_")?.toIntOrNull() ?: 0
         stringResource(R.string.quest_obtain_drone_number, number)
     }
+    QuestType.OBTAIN_RARE_DRONE -> stringResource(R.string.quest_obtain_rare_drone)
 }

@@ -57,10 +57,12 @@ fun SettingsScreen(
     onLanguageSelected: (String?) -> Unit,
     reduceMotion: Boolean,
     onReduceMotionChanged: (Boolean) -> Unit,
+    onResetGame: () -> Unit,
     onBack: () -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showGameGuideDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val languages = listOf(
         LanguageOption(null, R.string.language_system),
@@ -75,6 +77,7 @@ fun SettingsScreen(
         when {
             showLanguageDialog -> showLanguageDialog = false
             showGameGuideDialog -> showGameGuideDialog = false
+            showResetDialog -> showResetDialog = false
             else -> onBack()
         }
     }
@@ -179,6 +182,15 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            SettingsCard(modifier = Modifier.clickable { showResetDialog = true }) {
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    Text(stringResource(R.string.reset_game), color = AppColors.Danger, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.reset_game_description), color = Color.LightGray, fontSize = 11.sp)
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
             SettingsCard {
                 SettingsRow(stringResource(R.string.developer), "Alexei Fitlin")
                 Row(
@@ -247,6 +259,23 @@ fun SettingsScreen(
                 Button(onClick = { showGameGuideDialog = false }) {
                     Text(stringResource(R.string.close))
                 }
+            }
+        )
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.reset_game_confirm_title)) },
+            text = { Text(stringResource(R.string.reset_game_confirm_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showResetDialog = false
+                    onResetGame()
+                }) { Text(stringResource(R.string.reset_game_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

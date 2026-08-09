@@ -2,16 +2,16 @@ package com.example.myapplication
 
 object GameResourceRegistry {
     private val droneDrawables = intArrayOf(
-        R.drawable.drone_01, R.drawable.drone_02, R.drawable.drone_03,
-        R.drawable.drone_04, R.drawable.drone_05, R.drawable.drone_06,
-        R.drawable.drone_07, R.drawable.drone_08, R.drawable.drone_09,
-        R.drawable.drone_10, R.drawable.drone_11, R.drawable.drone_12,
-        R.drawable.drone_13, R.drawable.drone_14, R.drawable.drone_15,
-        R.drawable.drone_16, R.drawable.drone_17, R.drawable.drone_18,
-        R.drawable.drone_19, R.drawable.drone_20, R.drawable.drone_21,
-        R.drawable.drone_22, R.drawable.drone_23, R.drawable.drone_24,
-        R.drawable.drone_25, R.drawable.drone_26, R.drawable.drone_27,
-        R.drawable.drone_28, R.drawable.drone_29
+        R.drawable.drone_01_v2, R.drawable.drone_02_v2, R.drawable.drone_03_v2,
+        R.drawable.drone_04_v2, R.drawable.drone_05_v2, R.drawable.drone_06_v2,
+        R.drawable.drone_07_v2, R.drawable.drone_08_v2, R.drawable.drone_09_v2,
+        R.drawable.drone_10_v2, R.drawable.drone_11_v2, R.drawable.drone_12_v2,
+        R.drawable.drone_13_v2, R.drawable.drone_14_v2, R.drawable.drone_15_v2,
+        R.drawable.drone_16_v2, R.drawable.drone_17_v2, R.drawable.drone_18_v2,
+        R.drawable.drone_19_v2, R.drawable.drone_20_v2, R.drawable.drone_21_v2,
+        R.drawable.drone_22_v2, R.drawable.drone_23_v2, R.drawable.drone_24_v2,
+        R.drawable.drone_25_v2, R.drawable.drone_26_v2, R.drawable.drone_27_v2,
+        R.drawable.drone_28_v2, R.drawable.drone_29_v2
     )
 
     private val caseDrawables = intArrayOf(

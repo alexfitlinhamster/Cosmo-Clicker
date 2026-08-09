@@ -35,7 +35,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.myapplication.FloatingTextData
-import com.example.myapplication.ChallengeId
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
@@ -50,8 +49,6 @@ import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.cos
-import kotlin.math.sin
 
 @Composable
 fun GameScreen(
@@ -63,6 +60,7 @@ fun GameScreen(
 ) {
     val state by viewModel.gameState.collectAsState()
     val combo by viewModel.combo.collectAsState()
+    val autoClickBlockSeconds by viewModel.autoClickBlockSeconds.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -73,12 +71,8 @@ fun GameScreen(
     var isHangarOpen by remember { mutableStateOf(false) }
     var isAchievementsOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
-    var isFeatureHubOpen by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
-    var activeBattleId by remember { mutableStateOf<ChallengeId?>(null) }
-    var winsAtBattleStart by remember { mutableIntStateOf(0) }
-    var battleResultWon by remember { mutableStateOf<Boolean?>(null) }
 
     // Состояние стартового экрана
     var showStartScreen by remember { mutableStateOf(true) }
@@ -89,23 +83,21 @@ fun GameScreen(
         enabled = showSettings ||
             showEventInfo != null ||
             state.eventChainResult != null ||
-            state.lastOfflineReward > 0.0 ||
+            (!showStartScreen && state.lastOfflineReward > 0.0) ||
             isShopOpen ||
             isHangarOpen ||
             isAchievementsOpen ||
             isQuestOpen
-            || isFeatureHubOpen
     ) {
         when {
             showSettings -> showSettings = false
             showEventInfo != null -> showEventInfo = null
             state.eventChainResult != null -> viewModel.clearEventChainResult()
-            state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
+            !showStartScreen && state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
             isShopOpen -> isShopOpen = false
             isHangarOpen -> isHangarOpen = false
             isAchievementsOpen -> isAchievementsOpen = false
             isQuestOpen -> isQuestOpen = false
-            isFeatureHubOpen -> isFeatureHubOpen = false
         }
     }
 
@@ -120,20 +112,6 @@ fun GameScreen(
     LaunchedEffect(state.eventChainResult) {
         state.eventChainResult?.let {
             if (it.success) soundManager.playEventSuccess() else soundManager.playEventFailure()
-        }
-    }
-
-    LaunchedEffect(state.titanBattle?.expiresAt) {
-        val battle = state.titanBattle
-        if (battle != null) {
-            if (activeBattleId == null) {
-                activeBattleId = battle.challengeId
-                winsAtBattleStart = state.titanWins
-            }
-            isFeatureHubOpen = false
-        } else if (activeBattleId != null) {
-            battleResultWon = state.titanWins > winsAtBattleStart
-            activeBattleId = null
         }
     }
 
@@ -232,19 +210,15 @@ fun GameScreen(
             )
             
             BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (state.titanBattle == null) {
-                    state.scavengeTargets.forEach { target ->
-                        key(target.id) {
-                            DebrisTarget(target, maxWidth, maxHeight)
-                        }
+                state.scavengeTargets.forEach { target ->
+                    key(target.id) {
+                        DebrisTarget(target, maxWidth, maxHeight)
                     }
                 }
 
-                if (state.titanBattle == null) {
-                    state.activeEvent?.let { event ->
-                        EventBanner(event, state.eventTapsLeft) {
-                            showEventInfo = event
-                        }
+                state.activeEvent?.let { event ->
+                    EventBanner(event, state.eventTapsLeft) {
+                        showEventInfo = event
                     }
                 }
                 state.pendingEventChain?.let { pending ->
@@ -263,16 +237,7 @@ fun GameScreen(
                     )
                 }
 
-                state.titanBattle?.let { battle ->
-                    CommandChallengeBattle(
-                        battle = battle,
-                        modifier = Modifier.fillMaxSize()
-                    ) { minionId ->
-                        soundManager.playClick()
-                        val damage = if (minionId == null) viewModel.onPlanetClick() else viewModel.attackBossMinion(minionId)
-                        addFloatingText("−${formatNum(damage)}", 0.5f, 0.43f)
-                    }
-                } ?: PlanetButton(
+                PlanetButton(
                         planetId = state.currentPlanetId,
                         planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
                         modifier = Modifier.align(Alignment.Center)
@@ -286,28 +251,16 @@ fun GameScreen(
                 val combatDrones = state.drones.filter { it.disabledUntil <= now }
                 combatDrones.forEachIndexed { index, drone ->
                     key(drone.id) {
-                        if (state.titanBattle != null) {
-                            CombatDrone(
-                                drone = drone,
-                                index = index,
-                                droneCount = combatDrones.size,
-                                battle = state.titanBattle!!,
-                                fleetItems = fleetMap,
-                                gameAreaWidth = maxWidth,
-                                gameAreaHeight = maxHeight
-                            )
-                        } else {
-                            ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
-                                val cyberEvent = state.activeEvent?.takeIf { active ->
-                                    active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
-                                }
-                                if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
+                        ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
+                            val cyberEvent = state.activeEvent?.takeIf { active ->
+                                active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
                             }
+                            if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
                         }
                     }
                 }
 
-                state.activeEvent?.takeIf { state.titanBattle == null }?.let { event ->
+                state.activeEvent?.let { event ->
                     when (event.type) {
                         GameEventType.ASTEROID -> {
                             Asteroid(event, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
@@ -399,31 +352,25 @@ fun GameScreen(
                     onClick = { isHangarOpen = true },
                     modifier = Modifier.weight(1f)
                 )
-                GameNavigationButton(
-                    icon = R.drawable.ui_button_command_center,
-                    label = R.string.command_center_short,
-                    description = R.string.command_center,
-                    onClick = { isFeatureHubOpen = true },
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
 
-        if (isFeatureHubOpen) {
-            FeatureHub(viewModel, state, onClose = { isFeatureHubOpen = false })
-        }
-
-        battleResultWon?.let { won ->
-            AlertDialog(
-                onDismissRequest = { battleResultWon = null },
-                title = { Text(stringResource(if (won) R.string.challenge_victory_title else R.string.challenge_defeat_title)) },
-                text = { Text(stringResource(if (won) R.string.challenge_victory_message else R.string.challenge_defeat_message)) },
-                confirmButton = {
-                    Button(onClick = { battleResultWon = null }) {
-                        Text(stringResource(R.string.continue_button))
-                    }
-                }
-            )
+        if (autoClickBlockSeconds > 0) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 112.dp, start = 20.dp, end = 20.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = AppColors.Danger.copy(alpha = 0.94f),
+                shadowElevation = 8.dp
+            ) {
+                Text(
+                    stringResource(R.string.autoclicker_detected, autoClickBlockSeconds),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp),
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
@@ -442,6 +389,10 @@ fun GameScreen(
                 onLanguageSelected = onLanguageSelected,
                 reduceMotion = reduceMotion,
                 onReduceMotionChanged = onReduceMotionChanged,
+                onResetGame = {
+                    viewModel.resetGame()
+                    showSettings = false
+                },
                 onBack = { showSettings = false }
             )
         }
@@ -458,6 +409,12 @@ fun GameScreen(
                         viewModel.respondToDistressSignal(DistressChoice.RESCUE)
                         showEventInfo = null
                     },
+                    onDismiss = { showEventInfo = null }
+                )
+            } else if (event.type == GameEventType.BLACK_HOLE) {
+                BlackHoleEventDialog(
+                    event = event,
+                    tapsLeft = state.eventTapsLeft,
                     onDismiss = { showEventInfo = null }
                 )
             } else if (event.type == GameEventType.CYBER_VIRUS) {
@@ -502,21 +459,37 @@ fun GameScreen(
         }
 
         // СТАРТОВЫЙ ЭКРАН
-        if (state.lastOfflineReward > 0.0) {
-            AlertDialog(
-                onDismissRequest = viewModel::clearOfflineReward,
-                title = { Text(stringResource(R.string.offline_reward_title)) },
-                text = {
-                    Text(
-                        stringResource(
-                            R.string.offline_reward_message,
-                            formatNum(state.lastOfflineReward)
+        if (!showStartScreen && state.lastOfflineReward > 0.0) {
+            SpaceDialog(
+                title = stringResource(R.string.offline_reward_title),
+                onDismiss = viewModel::clearOfflineReward,
+                content = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Image(
+                            painter = painterResource(R.drawable.drone_collection_art),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxWidth().height(130.dp),
+                            contentScale = ContentScale.Crop
                         )
-                    )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "+${formatNum(state.lastOfflineReward)}",
+                            color = AppColors.Primary,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(stringResource(R.string.debris), color = AppColors.Secondary, fontSize = 13.sp)
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            stringResource(R.string.offline_time_away, formatOfflineDuration(state.lastOfflineSeconds)),
+                            color = Color.LightGray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 },
-                confirmButton = {
-                    TextButton(onClick = viewModel::clearOfflineReward) {
-                        Text(stringResource(android.R.string.ok))
+                actions = {
+                    Button(onClick = viewModel::clearOfflineReward, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.collect_reward))
                     }
                 }
             )
@@ -598,36 +571,26 @@ fun GameScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier.size(76.dp),
-                        shape = CircleShape,
-                        color = AppColors.Primary,
-                        border = androidx.compose.foundation.BorderStroke(
-                            3.dp,
-                            Color.White.copy(alpha = 0.85f)
-                        ),
-                        shadowElevation = 12.dp
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(104.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "▶",
-                                color = Color(0xFF071426),
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.offset(x = 2.dp)
-                            )
-                        }
+                        Image(
+                            painter = painterResource(R.drawable.ui_start_button_v2),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.FillBounds
+                        )
+                        Text(
+                            text = stringResource(R.string.tap_to_continue),
+                            color = Color.White,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 48.dp),
+                            maxLines = 2
+                        )
                     }
-                    Text(
-                        text = stringResource(R.string.tap_to_continue),
-                        color = Color.White,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.68f), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 20.dp, vertical = 9.dp)
-                    )
                 }
             }
         }
@@ -678,214 +641,11 @@ private fun GameNavigationButton(
     }
 }
 
-@Composable
-private fun CommandChallengeBattle(
-    battle: com.example.myapplication.TitanBattle,
-    modifier: Modifier = Modifier,
-    onAttack: (Int?) -> Unit
-) {
-    val entrance = remember(battle.expiresAt) { Animatable(0.35f) }
-    var pressed by remember(battle.expiresAt) { mutableStateOf(false) }
-    val hitScale by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (pressed) 0.93f else 1f,
-        animationSpec = tween(90),
-        label = "boss_hit"
-    )
-    val idleAnimation = rememberInfiniteTransition(label = "boss_idle")
-    val idleOffset by idleAnimation.animateFloat(
-        initialValue = -3f,
-        targetValue = 3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2_200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "boss_float"
-    )
-    val idleScale by idleAnimation.animateFloat(
-        initialValue = 0.995f,
-        targetValue = 1.005f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1_800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "boss_breathe"
-    )
-    val secondsLeft = ((battle.expiresAt - System.currentTimeMillis()).coerceAtLeast(0L) + 999L) / 1_000L
-
-    LaunchedEffect(battle.expiresAt) {
-        entrance.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.55f, stiffness = 140f))
-    }
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            delay(85)
-            pressed = false
-        }
-    }
-
-    Box(modifier) {
-        Column(
-            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(stringResource(challengeBattleName(battle.challengeId)), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Black)
-            Text(stringResource(R.string.challenge_time_left, secondsLeft), color = if (secondsLeft <= 10) AppColors.Danger else AppColors.Secondary, fontWeight = FontWeight.Bold)
-            LinearProgressIndicator(
-                progress = { (battle.health / battle.maxHealth).toFloat().coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(10.dp).padding(top = 4.dp),
-                color = AppColors.Danger,
-                trackColor = Color.White.copy(alpha = 0.14f)
-            )
-            Text("${formatNum(battle.health)} / ${formatNum(battle.maxHealth)}", color = Color.White.copy(alpha = .75f), fontSize = 11.sp)
-            when {
-                battle.shieldCharges > 0 -> Text(stringResource(R.string.challenge_shield_status, battle.shieldCharges), color = AppColors.Warning, fontWeight = FontWeight.Bold)
-                battle.minions > 0 -> Text(stringResource(R.string.challenge_minion_status, battle.minions), color = AppColors.Warning, fontWeight = FontWeight.Bold)
-                battle.challengeId == ChallengeId.NEBULA_DRAGON -> Text(stringResource(R.string.challenge_dragon_regenerating), color = AppColors.Danger, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Image(
-            painter = painterResource(challengeBattleArt(battle.challengeId)),
-            contentDescription = stringResource(challengeBattleName(battle.challengeId)),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxWidth(0.86f)
-                .height(285.dp)
-                .graphicsLayer {
-                    scaleX = entrance.value * hitScale * idleScale
-                    scaleY = entrance.value * hitScale * idleScale
-                    alpha = entrance.value
-                    translationY = idleOffset
-                    rotationZ = 0f
-                }
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    pressed = true
-                    onAttack(null)
-                },
-            contentScale = ContentScale.Fit
-        )
-
-        if (battle.bossMinions.isNotEmpty()) {
-            val orbit by idleAnimation.animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(tween(8_000, easing = androidx.compose.animation.core.LinearEasing)),
-                label = "minion_orbit"
-            )
-            battle.bossMinions.forEachIndexed { index, minion ->
-                key(minion.id) {
-                    val angle = Math.toRadians((orbit + index * 360f / battle.bossMinions.size).toDouble())
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = (cos(angle) * 132).toFloat().dp, y = (sin(angle) * 105).toFloat().dp)
-                            .width(64.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { onAttack(minion.id) },
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.boss_dragon_minion),
-                            contentDescription = stringResource(R.string.challenge_minion_robot),
-                            modifier = Modifier.size(58.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        LinearProgressIndicator(
-                            progress = { (minion.health / minion.maxHealth).toFloat().coerceIn(0f, 1f) },
-                            modifier = Modifier.fillMaxWidth().height(5.dp),
-                            color = AppColors.Danger,
-                            trackColor = Color.Black.copy(alpha = .65f)
-                        )
-                    }
-                }
-            }
-        }
-
-        Text(
-            stringResource(R.string.tap_boss_to_attack),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 92.dp)
-                .background(Color.Black.copy(alpha = .7f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 7.dp),
-            color = Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-private fun challengeBattleArt(id: ChallengeId): Int = when (id) {
-    ChallengeId.VOID_LEVIATHAN -> R.drawable.boss_void_game
-    ChallengeId.SOLAR_DEVOURER -> R.drawable.boss_solar_game
-    ChallengeId.DREADNOUGHT_EMPRESS -> R.drawable.boss_dreadnought_game
-    ChallengeId.NEBULA_DRAGON -> R.drawable.boss_dragon_game
-}
-
-private fun challengeBattleName(id: ChallengeId): Int = when (id) {
-    ChallengeId.VOID_LEVIATHAN -> R.string.challenge_void_leviathan
-    ChallengeId.SOLAR_DEVOURER -> R.string.challenge_solar_devourer
-    ChallengeId.DREADNOUGHT_EMPRESS -> R.string.challenge_dreadnought_empress
-    ChallengeId.NEBULA_DRAGON -> R.string.challenge_nebula_dragon
-}
-
-@Composable
-private fun CombatDrone(
-    drone: com.example.myapplication.DroneData,
-    index: Int,
-    droneCount: Int,
-    battle: com.example.myapplication.TitanBattle,
-    fleetItems: Map<String, com.example.myapplication.FleetConfig>,
-    gameAreaWidth: androidx.compose.ui.unit.Dp,
-    gameAreaHeight: androidx.compose.ui.unit.Dp
-) {
-    val animation = rememberInfiniteTransition(label = "combat_drone_${drone.id}")
-    val orbit by animation.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(8_000, easing = androidx.compose.animation.core.LinearEasing)),
-        label = "combat_orbit_${drone.id}"
-    )
-    val shot by animation.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(1_000, easing = androidx.compose.animation.core.LinearEasing)),
-        label = "combat_shot_${drone.id}"
-    )
-    val droneAngle = Math.toRadians((index * 360f / droneCount.coerceAtLeast(1) - 90f).toDouble())
-    val droneX = gameAreaWidth * (0.5f + cos(droneAngle).toFloat() * 0.38f)
-    val droneY = gameAreaHeight * (0.54f + sin(droneAngle).toFloat() * 0.34f)
-    val targetIndex = if (battle.bossMinions.isEmpty()) 0 else index % battle.bossMinions.size
-    val targetAngle = Math.toRadians((orbit + targetIndex * 360f / battle.bossMinions.size.coerceAtLeast(1)).toDouble())
-    val targetX = gameAreaWidth * 0.5f + (cos(targetAngle) * 132).toFloat().dp
-    val targetY = gameAreaHeight * 0.5f + (sin(targetAngle) * 105).toFloat().dp
-
-    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-        if (shot > 0.72f) {
-            drawLine(
-                color = Color(0xFF55E7FF).copy(alpha = ((shot - 0.72f) / 0.28f).coerceIn(0f, 1f)),
-                start = androidx.compose.ui.geometry.Offset(droneX.toPx(), droneY.toPx()),
-                end = androidx.compose.ui.geometry.Offset(targetX.toPx(), targetY.toPx()),
-                strokeWidth = 3.dp.toPx()
-            )
-        }
-    }
-    Box(
-        modifier = Modifier
-            .offset(x = droneX - 22.dp, y = droneY - 22.dp)
-            .size(44.dp)
-            .graphicsLayer {
-                scaleX = 1f + shot * 0.08f
-                scaleY = 1f + shot * 0.08f
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        fleetItems[drone.type]?.let { FleetIcon(it, 44.dp) }
-    }
-}
-
 private const val MAX_FLOATING_TEXTS = 40
+
+private fun formatOfflineDuration(seconds: Long): String {
+    val safe = seconds.coerceAtLeast(0L)
+    val hours = safe / 3_600L
+    val minutes = (safe % 3_600L) / 60L
+    return if (hours > 0L) "${hours}h ${minutes}m" else "${minutes.coerceAtLeast(1L)}m"
+}

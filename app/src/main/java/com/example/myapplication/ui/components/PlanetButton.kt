@@ -63,8 +63,8 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                 .rotate(rotation)
         ) {
             if (planetConfig.spriteIndex >= 0) {
-                val columns = 4
-                val rows = 3
+                val columns = 5
+                val rows = 4
                 val row = planetConfig.spriteIndex / columns
                 val col = planetConfig.spriteIndex % columns
                 

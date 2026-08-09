@@ -41,6 +41,6 @@ class EventLogCodecTest {
 
         assertEquals(EventLogOutcome.STARTED, completed.eventLog[0].outcome)
         assertEquals(EventLogOutcome.COMPLETED, completed.eventLog[1].outcome)
-        assertTrue(completed.eventLog[1].reward >= 500.0)
+        assertTrue(completed.eventLog[1].reward >= 250.0)
     }
 }

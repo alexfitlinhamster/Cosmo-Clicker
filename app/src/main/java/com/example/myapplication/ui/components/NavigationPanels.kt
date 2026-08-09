@@ -13,10 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.AchievementEngine
@@ -27,7 +28,6 @@ import com.example.myapplication.GameViewModel
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
-import kotlin.math.pow
 
 @Composable
 fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
@@ -72,20 +72,88 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                     }
                     else -> items(viewModel.clickItems, key = { it.id }) { upgrade ->
                         val level = state.clickLevels[upgrade.id] ?: 0
-                        val cost = (upgrade.base * 1.15.pow(level.toDouble())).toLong()
-                        ShopRow(
+                        val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == com.example.myapplication.WeeklyRule.VOLATILE_MARKET) {
+                            com.example.myapplication.FeatureEngine.volatilePriceMultiplier()
+                        } else 1.0
+                        val cost = EconomyBalance.clickUpgradeCost(upgrade.base, level, marketMultiplier).toLong()
+                        ClickUpgradeRow(
                             name = localizedUpgradeName(upgrade.id),
                             meta = stringResource(R.string.click_meta, formatNum(upgrade.value), level),
                             cost = cost,
-                            canBuy = state.totalDebris >= cost,
-                            canSell = false,
+                            enabled = level < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
                             iconRes = upgrade.iconRes,
-                            showLock = level == 0,
                             onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
                         )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ClickUpgradeRow(
+    name: String,
+    meta: String,
+    cost: Long,
+    enabled: Boolean,
+    iconRes: Int,
+    onBuy: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.035f), RoundedCornerShape(12.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(42.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = AppColors.Primary.copy(alpha = 0.09f)
+        ) {
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.padding(5.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                name,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                meta,
+                color = Color.LightGray,
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = onBuy,
+            enabled = enabled,
+            modifier = Modifier.widthIn(min = 82.dp, max = 104.dp).heightIn(min = 38.dp),
+            shape = RoundedCornerShape(9.dp),
+            contentPadding = PaddingValues(horizontal = 9.dp, vertical = 4.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black)
+        ) {
+            Text(
+                formatNum(cost.toDouble()),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -133,8 +201,36 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
 
 @Composable
 fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    SpacePanel(stringResource(R.string.achievements), stringResource(R.string.achievements_subtitle), onClose, modifier) {
-        items(AchievementEngine.definitions, key = { it.id }) { achievement ->
+    var selectedTab by remember { mutableIntStateOf(0) }
+    Card(
+        modifier = modifier.fillMaxWidth().fillMaxHeight(0.80f),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            SpaceSheetHeader(stringResource(R.string.statistics_and_achievements), stringResource(R.string.statistics_subtitle), onClose)
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                listOf(R.string.statistics, R.string.achievements).forEachIndexed { index, title ->
+                    SpaceTab(stringResource(title), selectedTab == index, { selectedTab = index }, Modifier.weight(1f))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                if (selectedTab == 0) {
+                    val stats = listOf(
+                        R.string.stat_planets to "${state.ownedPlanets.size} / ${viewModel.planets.size}",
+                        R.string.stat_clicks to formatNum(state.lifetimeStats.clicks.toDouble()),
+                        R.string.stat_debris_collected to formatNum(state.lifetimeStats.debrisCollected.toDouble()),
+                        R.string.stat_drones_discovered to "${state.discoveredDroneIds.size} / ${viewModel.fleetItems.size}",
+                        R.string.stat_cases_opened to formatNum(state.lifetimeStats.casesOpened.toDouble()),
+                        R.string.stat_events_completed to formatNum(state.lifetimeStats.eventsCompleted.toDouble()),
+                        R.string.stat_prestiges to formatNum(state.lifetimeStats.prestiges.toDouble()),
+                        R.string.stat_achievements to "${state.claimedAchievementIds.size} / ${AchievementEngine.definitions.size}"
+                    )
+                    items(stats, key = { it.first }) { (label, value) -> StatisticRow(stringResource(label), value) }
+                } else items(AchievementEngine.definitions, key = { it.id }) { achievement ->
             val unlocked = achievement.id in state.unlockedAchievementIds
             val claimed = achievement.id in state.claimedAchievementIds
             val reward = if (achievement.rewardPrestigePoints > 0) {
@@ -158,6 +254,24 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                 }
             }
         }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatisticRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(14.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, modifier = Modifier.weight(1f), color = Color.White, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.width(12.dp))
+        Text(value, color = AppColors.Primary, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
     }
 }
 

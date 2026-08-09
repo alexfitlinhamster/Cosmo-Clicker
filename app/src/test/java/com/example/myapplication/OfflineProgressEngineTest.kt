@@ -14,7 +14,7 @@ class OfflineProgressEngineTest {
         )
 
         assertEquals(3_600L, result.elapsedSeconds)
-        assertEquals(54_000.0, result.reward, 0.0001)
+        assertEquals(10_800.0, result.reward, 0.0001)
     }
 
     @Test
@@ -27,7 +27,7 @@ class OfflineProgressEngineTest {
         )
 
         assertEquals(OfflineProgressEngine.MAX_OFFLINE_SECONDS, result.elapsedSeconds)
-        assertEquals(36_000.0, result.reward, 0.0001)
+        assertEquals(7_200.0, result.reward, 0.0001)
     }
 
     @Test

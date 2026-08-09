@@ -23,6 +23,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.FleetConfig
@@ -138,7 +140,10 @@ fun CaseOpeningOverlay(
                 contentAlignment = Alignment.Center
             ) {
                 lastDroppedDrone?.let { drone ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             rarityLabel(drone.rarity),
                             color = drone.rarity.color,
@@ -159,11 +164,22 @@ fun CaseOpeningOverlay(
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
-                        Text(drone.name, color = drone.rarity.color, fontSize = 36.sp, fontWeight = FontWeight.ExtraBold)
-                        Spacer(modifier = Modifier.height(64.dp))
+                        Text(
+                            drone.name,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = drone.rarity.color,
+                            fontSize = 30.sp,
+                            lineHeight = 32.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(36.dp))
                         Button(
                             onClick = { onClearReward() },
-                            colors = ButtonDefaults.buttonColors(containerColor = drone.rarity.color)
+                            colors = ButtonDefaults.buttonColors(containerColor = drone.rarity.color),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                         ) {
                             Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
                         }

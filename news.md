@@ -1,6 +1,25 @@
 # News
 
-## Unreleased - 2026-08-04
+## 1.13.0 (version code 32) - 2026-08-09
+
+- Replaced the complete visual set with a cohesive atlas of 20 unique planets and
+  29 progressively rarer salvage drones, including dedicated late-game worlds.
+- Removed rectangular touch flashes from transparent event sprites, including the
+  black hole, golden asteroid, pirate raid, and trading ship.
+- Reworked the trading-ship market composition so its title leads the screen and
+  the ship is centered directly below the introductory text.
+- Added validated transparent edges to the new game atlases and kept existing save
+  identifiers compatible with the updated resources.
+- Verified debug compilation, all 86 unit tests, Android lint, release lint, R8
+  minification, resource shrinking, signing, and release APK packaging.
+
+## 1.12.0 (version code 31) - 2026-08-08
+1
+- Prepared the first store-ready release: added release signing, code and resource
+  shrinking, and the permanent `com.orbitsalvagers.droneclicker` application ID.
+- Rebalanced all four Command Center bosses with a smoother difficulty curve,
+  clearer shield cycles, capped fighter waves, and a fairer final dragon battle.
+- Fixed minion taps also damaging the boss before hitting their selected target.
 
 - Rebuilt the Command Center around four sequential extreme boss challenges with
   persistent unlock progress, visible HP, timers, debris rewards, and prestige rewards.

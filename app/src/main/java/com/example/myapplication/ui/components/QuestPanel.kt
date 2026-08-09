@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
 import com.example.myapplication.Quest
 import com.example.myapplication.QuestCadence
+import com.example.myapplication.QuestDifficulty
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
@@ -80,10 +81,9 @@ fun QuestPanel(
 
 @Composable
 private fun QuestSectionHeader(titleRes: Int, completedAt: Long, cooldown: Long) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(stringResource(titleRes), color = AppColors.Secondary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         if (completedAt > 0L) {
@@ -105,15 +105,31 @@ private fun formatDuration(milliseconds: Long): String {
 fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
     val progress = (quest.progress / quest.target).toFloat().coerceIn(0f, 1f)
     
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
             .border(1.dp, if (quest.isCompleted) AppColors.Primary.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
             .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            val difficultyColor = when (quest.difficulty) {
+                QuestDifficulty.EASY -> Color(0xFF66BB6A)
+                QuestDifficulty.MEDIUM -> AppColors.Warning
+                QuestDifficulty.HARD -> Color(0xFFEF5350)
+            }
+            val difficultyLabel = when (quest.difficulty) {
+                QuestDifficulty.EASY -> R.string.quest_difficulty_easy
+                QuestDifficulty.MEDIUM -> R.string.quest_difficulty_medium
+                QuestDifficulty.HARD -> R.string.quest_difficulty_hard
+            }
+            Text(
+                stringResource(difficultyLabel),
+                color = difficultyColor,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
             Text(localizedQuestDescription(quest), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -122,7 +138,7 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(CircleShape),
-                color = if (quest.isCompleted) AppColors.Primary else Color.Cyan,
+                color = if (quest.isCompleted) AppColors.Primary else difficultyColor,
                 trackColor = Color.White.copy(alpha = 0.1f)
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -154,12 +170,11 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
         }
         
         if (quest.isCompleted) {
-            Spacer(modifier = Modifier.width(12.dp))
             Button(
                 onClick = { onClaim(quest.id) },
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.height(36.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp)
             ) {
                 Text(stringResource(R.string.claim), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }

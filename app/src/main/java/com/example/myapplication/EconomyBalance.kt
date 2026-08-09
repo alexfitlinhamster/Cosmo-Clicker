@@ -4,17 +4,26 @@ import kotlin.math.pow
 
 object EconomyBalance {
     const val MAX_DRONES = 10
+    const val MAX_CLICK_UPGRADE_LEVEL = 20
+    const val MAX_CLICK_UPGRADE_COST = 5_000.0
     const val PRESTIGE_PLANET_INDEX = 10
     private const val FIRST_PLANET_PRICE = 10_000.0
+    private const val MAX_PLANET_PRICE = 1_000_000_000.0
 
     fun planetIndex(planetId: String): Int =
         planetId.removePrefix("p").toIntOrNull()?.coerceIn(1, 20) ?: 1
 
     fun planetPrice(index: Int): Double =
-        if (index <= 1) 0.0 else FIRST_PLANET_PRICE * 3.0.pow((index - 2).toDouble())
+        if (index <= 1) 0.0 else (FIRST_PLANET_PRICE * 1.9.pow((index - 2).toDouble()))
+            .coerceAtMost(MAX_PLANET_PRICE)
 
     fun planetIncomeMultiplier(planetId: String): Double =
-        1.5.pow((planetIndex(planetId) - 1).toDouble())
+        1.10.pow((planetIndex(planetId) - 1).toDouble())
+
+    fun clickUpgradeCost(base: Double, level: Int, marketMultiplier: Double = 1.0): Double =
+        (base.coerceAtLeast(0.0) * 1.15.pow(level.coerceAtLeast(0).toDouble()) * marketMultiplier.coerceAtLeast(0.0))
+            .coerceAtMost(MAX_CLICK_UPGRADE_COST)
+            .toLong().toDouble()
 
     fun passiveIncome(
         state: GameState,
@@ -24,12 +33,12 @@ object EconomyBalance {
         val incomeFleet = state.activeFleetCounts.ifEmpty { state.fleetCounts }
         val base = incomeFleet.entries.sumOf { (id, count) ->
             count.coerceAtLeast(0) * when (fleetById[id]?.rarity ?: Rarity.COMMON) {
-                Rarity.COMMON -> 5.0
-                Rarity.UNCOMMON -> 15.0
-                Rarity.RARE -> 50.0
-                Rarity.EPIC -> 200.0
-                Rarity.LEGENDARY -> 1_000.0
-                Rarity.VOID -> 2_500.0
+                Rarity.COMMON -> 1.0
+                Rarity.UNCOMMON -> 3.0
+                Rarity.RARE -> 10.0
+                Rarity.EPIC -> 40.0
+                Rarity.LEGENDARY -> 150.0
+                Rarity.VOID -> 400.0
             }
         }
         val tradeMultiplier = if ((state.activeEffects[SkillType.TRADE_POWER.id] ?: 0L) > nowMillis) 2.0 else 1.0

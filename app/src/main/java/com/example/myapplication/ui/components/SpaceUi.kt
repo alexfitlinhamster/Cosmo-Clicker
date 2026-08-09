@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -32,8 +34,23 @@ fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Uni
         ) { Text("✦", color = AppColors.Primary, fontSize = 20.sp) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-            if (subtitle != null) Text(subtitle, color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp)
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 22.sp
+            )
+            if (subtitle != null) Text(
+                subtitle,
+                color = Color.White.copy(alpha = 0.62f),
+                fontSize = 11.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 14.sp
+            )
         }
         Surface(
             modifier = Modifier.size(38.dp).clickable(onClick = onClose),
@@ -53,7 +70,17 @@ fun SpaceTab(text: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
         border = BorderStroke(1.dp, if (selected) AppColors.Primary.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.08f))
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(text, color = if (selected) AppColors.Primary else Color.White.copy(alpha = 0.55f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text,
+                modifier = Modifier.padding(horizontal = 5.dp),
+                color = if (selected) AppColors.Primary else Color.White.copy(alpha = 0.65f),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 11.sp
+            )
         }
     }
 }

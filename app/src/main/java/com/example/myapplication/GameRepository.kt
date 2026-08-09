@@ -20,6 +20,10 @@ class GameRepository(context: Context) {
         preferences.edit().apply(block).apply()
     }
 
+    fun clear() {
+        preferences.edit().clear().commit()
+    }
+
     private companion object {
         const val FILE_NAME = "game_prefs"
     }

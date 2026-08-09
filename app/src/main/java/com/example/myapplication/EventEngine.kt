@@ -3,14 +3,14 @@ package com.example.myapplication
 object EventEngine {
     enum class Category { POSITIVE, NEGATIVE, MIXED }
 
-    private const val MIN_INTERVAL_MS = 15_000L
-    private const val INTERVAL_RANGE_MS = 30_000L
+    private const val MIN_INTERVAL_MS = 45_000L
+    private const val INTERVAL_RANGE_MS = 45_000L
     private const val MIN_DURATION_MS = 20_000L
     private const val MAX_DURATION_MS = 60_000L
-    private const val EVENT_CLICK_MULTIPLIER = 3.0
+    private const val EVENT_CLICK_MULTIPLIER = 2.0
     private const val BLACK_HOLE_TAPS = 10
     private const val PIRATE_RAID_TAPS = 15
-    private const val ASTEROID_REWARD = 500.0
+    private const val ASTEROID_REWARD = 250.0
     private const val VOID_ENERGY_DURATION_MS = 30_000L
     private const val RARE_TARGET_DURATION_MS = 30_000L
     private const val DISTRESS_RESCUE_DURATION_MS = 10_000L
@@ -116,15 +116,15 @@ object EventEngine {
                 reward = if (actualType == GameEventType.ASTEROID) {
                     calculateAsteroidReward(clickValue, random)
                 } else if (actualType == GameEventType.DISTRESS_SIGNAL) {
-                    maxOf(1_000.0, clickValue.coerceAtLeast(0.0) * 200.0)
+                    eventReward(clickValue, 500.0, 40.0, 50_000.0)
                 } else if (actualType == GameEventType.ABANDONED_STATION) {
-                    maxOf(5_000.0, clickValue.coerceAtLeast(0.0) * 400.0)
+                    eventReward(clickValue, 1_500.0, 60.0, 100_000.0)
                 } else if (actualType == GameEventType.PIRATE_RAID) {
-                    maxOf(5_000.0, clickValue.coerceAtLeast(0.0) * 300.0)
+                    eventReward(clickValue, 1_500.0, 50.0, 75_000.0)
                 } else if (actualType == GameEventType.TRADING_SHIP) {
-                    maxOf(1_000.0, clickValue.coerceAtLeast(0.0) * 120.0)
+                    eventReward(clickValue, 500.0, 25.0, 25_000.0)
                 } else if (actualType == GameEventType.CYBER_VIRUS) {
-                    maxOf(5_000.0, clickValue.coerceAtLeast(0.0) * 250.0)
+                    eventReward(clickValue, 1_000.0, 50.0, 75_000.0)
                 } else {
                     0.0
                 }
@@ -167,8 +167,11 @@ object EventEngine {
 
     fun calculateAsteroidReward(clickValue: Double, random: RandomProvider): Double {
         val multiplier = 50 + random.nextInt(101)
-        return maxOf(ASTEROID_REWARD, clickValue.coerceAtLeast(0.0) * multiplier)
+        return (clickValue.coerceAtLeast(0.0) * multiplier).coerceIn(ASTEROID_REWARD, 25_000.0)
     }
+
+    private fun eventReward(clickValue: Double, minimum: Double, multiplier: Double, maximum: Double): Double =
+        (clickValue.coerceAtLeast(0.0) * multiplier).coerceIn(minimum, maximum)
 
     fun cyberVirusTheft(totalDebris: Double): Double =
         (totalDebris.coerceAtLeast(0.0) * 0.00005).coerceIn(1.0, 100_000.0)
@@ -324,16 +327,16 @@ object EventEngine {
             .sortedBy { offer -> mixTradeSeed(event.startedAt + offer.ordinal * 9_973L) }
             .take(count.coerceIn(1, TradeOffer.entries.size))
 
-    fun tradeOfferCost(event: GameEvent, offer: TradeOffer): Double = event.reward * when (offer) {
-        TradeOffer.POWER_CORE -> 1.0
-        TradeOffer.LUCK_SCANNER -> 0.75
-        TradeOffer.CLICK_AMPLIFIER -> 0.85
-        TradeOffer.FLEET_OVERDRIVE -> 0.9
-        TradeOffer.DEBRIS_CARGO -> 0.5
-        TradeOffer.COMMON_CASE -> 0.65
-        TradeOffer.RARE_CASE -> 1.4
-        TradeOffer.LEGENDARY_CASE -> 3.5
-        TradeOffer.RANDOM_DRONE -> 2.2
+    fun tradeOfferCost(event: GameEvent, offer: TradeOffer): Double = when (offer) {
+        TradeOffer.POWER_CORE -> event.reward
+        TradeOffer.LUCK_SCANNER -> event.reward * 0.75
+        TradeOffer.CLICK_AMPLIFIER -> event.reward * 0.85
+        TradeOffer.FLEET_OVERDRIVE -> event.reward * 0.9
+        TradeOffer.DEBRIS_CARGO -> event.reward * 0.75
+        TradeOffer.COMMON_CASE -> maxOf(900.0, event.reward * 0.65)
+        TradeOffer.RARE_CASE -> maxOf(4_500.0, event.reward * 1.4)
+        TradeOffer.LEGENDARY_CASE -> maxOf(18_000.0, event.reward * 3.5)
+        TradeOffer.RANDOM_DRONE -> maxOf(25_000.0, event.reward * 6.0)
     }
 
     private fun GameState.withTradeEffect(type: SkillType, expiresAt: Long): GameState =
@@ -408,14 +411,16 @@ object EventEngine {
         reward: Double = 0.0
     ): GameState {
         val eventType = state.activeEvent?.type ?: return state
-        val quests = QuestEngine.advance(state.activeQuests, QuestType.COMPLETE_EVENT)
+        val completed = outcome != EventLogOutcome.EXPIRED
+        val quests = if (completed) QuestEngine.advance(state.activeQuests, QuestType.COMPLETE_EVENT)
+            else state.activeQuests
         return appendLog(state, eventType, outcome, timestamp, reward).copy(
         activeEvent = null,
         eventMultiplier = 1.0,
         eventTapsLeft = 0,
         infectedDroneId = null,
         lifetimeStats = state.lifetimeStats.copy(
-            eventsCompleted = state.lifetimeStats.eventsCompleted + 1
+            eventsCompleted = state.lifetimeStats.eventsCompleted + if (completed) 1 else 0
         ),
         activeQuests = quests
         )

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,9 +21,16 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,7 +82,7 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
         modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
-            .clickable { onClick() },
+            .eventClickable(onClick),
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.15f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, color)
     ) {
@@ -145,7 +153,8 @@ private fun eventIconResource(type: GameEventType): Int = when (type) {
     GameEventType.ABANDONED_STATION, GameEventType.SOLAR_FLARE -> R.drawable.event_reactor_core
     GameEventType.TRADING_SHIP -> R.drawable.event_trading_ship_game
     GameEventType.PIRATE_RAID -> R.drawable.event_trade_crate
-    GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS -> R.drawable.event_reactor_core
+    GameEventType.BLACK_HOLE -> R.drawable.event_black_hole_v2
+    GameEventType.CYBER_VIRUS -> R.drawable.event_reactor_core
     GameEventType.STORM -> R.drawable.asteroid_crystal_game
 }
 
@@ -193,7 +202,7 @@ fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: (
             )
             .size(asteroidSize)
             .shadow(12.dp, CircleShape, spotColor = Color(0xFFFFC107))
-            .clickable { onClick() },
+            .eventClickable(onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -213,6 +222,19 @@ fun BlackHoleComponent(
     onClick: () -> Unit
 ) {
     val blackHoleSize = 150.dp
+    val motion = rememberInfiniteTransition(label = "black_hole_motion")
+    val rotation by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(12_000, easing = LinearEasing)),
+        label = "black_hole_rotation"
+    )
+    val pulse by motion.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label = "black_hole_pulse"
+    )
     Box(
         modifier = Modifier
             .offset(
@@ -220,16 +242,93 @@ fun BlackHoleComponent(
                 y = gameAreaHeight * event.y - blackHoleSize / 2
             )
             .size(blackHoleSize)
-            .clickable { onClick() },
+            .eventClickable(onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.dira),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize()
+            painter = painterResource(id = R.drawable.event_black_hole_v2),
+            contentDescription = stringResource(R.string.event_black_hole),
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                rotationZ = rotation
+                scaleX = pulse
+                scaleY = pulse
+            }
         )
-        Text("$tapsLeft", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
+        Text(
+            tapsLeft.toString(),
+            color = Color.White,
+            fontWeight = FontWeight.Black,
+            fontSize = 18.sp,
+            modifier = Modifier
+                .background(Color.Black.copy(alpha = 0.72f), CircleShape)
+                .border(1.dp, Color(0xFFCE5CFF), CircleShape)
+                .padding(horizontal = 9.dp, vertical = 5.dp)
+        )
     }
+}
+
+@Composable
+fun BlackHoleEventDialog(event: GameEvent, tapsLeft: Int, onDismiss: () -> Unit) {
+    var nowMillis by remember(event) { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(event) {
+        while (nowMillis < event.expiresAt) {
+            delay(250)
+            nowMillis = System.currentTimeMillis()
+        }
+    }
+    val secondsLeft = ceil((event.expiresAt - nowMillis).coerceAtLeast(0L) / 1000.0).toInt()
+    val stabilized = ((10 - tapsLeft).coerceIn(0, 10)) / 10f
+
+    SpaceDialog(
+        title = stringResource(R.string.event_black_hole),
+        onDismiss = onDismiss,
+        content = {
+            Image(
+                painter = painterResource(R.drawable.event_black_hole_v2),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(150.dp)
+            )
+            Text(
+                stringResource(R.string.event_desc_black_hole),
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(12.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = AppColors.Danger.copy(alpha = 0.13f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Danger.copy(alpha = 0.45f))
+            ) {
+                Text(
+                    stringResource(R.string.event_black_hole_danger),
+                    modifier = Modifier.fillMaxWidth().padding(11.dp),
+                    color = Color(0xFFFF8A80),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.event_taps_left, tapsLeft), color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.event_seconds_left, secondsLeft), color = AppColors.Warning, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(7.dp))
+            LinearProgressIndicator(
+                progress = { stabilized },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = Color(0xFFCE5CFF),
+                trackColor = Color.White.copy(alpha = 0.1f)
+            )
+        },
+        actions = {
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.event_black_hole_engage), fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }
 
 @Composable
@@ -249,7 +348,7 @@ fun PirateRaidComponent(
             )
             .size(shipSize)
             .shadow(14.dp, CircleShape, spotColor = AppColors.Danger)
-            .clickable(onClick = onClick),
+            .eventClickable(onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -282,7 +381,7 @@ fun TradingShipComponent(
                 y = gameAreaHeight * event.y - shipSize / 2
             )
             .size(shipSize)
-            .clickable(onClick = onClick),
+            .eventClickable(onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -311,13 +410,14 @@ fun TradingShipMarket(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(stringResource(R.string.trade_market_title), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.trade_market_subtitle), color = Color.White.copy(alpha = .62f), fontSize = 12.sp, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
             Image(
                 painter = painterResource(R.drawable.event_trading_ship_game),
                 contentDescription = null,
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.size(132.dp)
             )
-            Text(stringResource(R.string.trade_market_title), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
-            Text(stringResource(R.string.trade_market_subtitle), color = Color.White.copy(alpha = .62f), fontSize = 12.sp, textAlign = TextAlign.Center)
             Text(stringResource(R.string.trade_balance, formatNum(totalDebris)), color = Color(0xFF66E0FF), fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
             offers.forEach { offer ->
@@ -592,3 +692,12 @@ private fun TextButton(onClick: () -> Unit, content: @Composable () -> Unit) {
         content()
     }
 }
+
+/** Event sprites are already strongly animated; a platform ripple briefly draws a
+ * rectangular layer over transparent PNGs and looks like a black flash. */
+@Composable
+private fun Modifier.eventClickable(onClick: () -> Unit): Modifier = clickable(
+    interactionSource = remember { MutableInteractionSource() },
+    indication = null,
+    onClick = onClick
+)

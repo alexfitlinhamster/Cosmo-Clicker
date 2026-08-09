@@ -23,11 +23,11 @@ object OfflineProgressEngine {
     }
 
     private fun incomePerSecond(rarity: Rarity): Double = when (rarity) {
-        Rarity.COMMON -> 5.0
-        Rarity.UNCOMMON -> 15.0
-        Rarity.RARE -> 50.0
-        Rarity.EPIC -> 200.0
-        Rarity.LEGENDARY -> 1_000.0
-        Rarity.VOID -> 2_500.0
+        Rarity.COMMON -> 1.0
+        Rarity.UNCOMMON -> 3.0
+        Rarity.RARE -> 10.0
+        Rarity.EPIC -> 40.0
+        Rarity.LEGENDARY -> 150.0
+        Rarity.VOID -> 400.0
     }
 }

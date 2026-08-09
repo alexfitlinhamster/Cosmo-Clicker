@@ -7,12 +7,13 @@ import org.junit.Test
 
 class EconomyBalanceTest {
     @Test
-    fun planetPricesGrowByThreeAndIncomeByOnePointFive() {
+    fun planetPricesAndIncomeUseSlowerLongTermCurve() {
         assertEquals(10_000.0, EconomyBalance.planetPrice(2), 0.0)
-        assertEquals(30_000.0, EconomyBalance.planetPrice(3), 0.0)
-        assertEquals(90_000.0, EconomyBalance.planetPrice(4), 0.0)
+        assertEquals(19_000.0, EconomyBalance.planetPrice(3), 0.0)
+        assertEquals(36_100.0, EconomyBalance.planetPrice(4), 0.0001)
+        assertEquals(1_000_000_000.0, EconomyBalance.planetPrice(20), 0.0)
         assertEquals(1.0, EconomyBalance.planetIncomeMultiplier("p1"), 0.0)
-        assertEquals(2.25, EconomyBalance.planetIncomeMultiplier("p3"), 0.0)
+        assertEquals(1.21, EconomyBalance.planetIncomeMultiplier("p3"), 0.0001)
     }
 
     @Test
@@ -23,7 +24,14 @@ class EconomyBalanceTest {
             fleetCounts = mapOf("rare" to 2),
             technologies = setOf(Technology.POWER_CORE)
         )
-        assertEquals(281.25, EconomyBalance.passiveIncome(state, fleet), 0.0)
+        assertEquals(30.25, EconomyBalance.passiveIncome(state, fleet), 0.0001)
+    }
+
+    @Test
+    fun clickUpgradeCostNeverExceedsFiveThousand() {
+        assertEquals(15.0, EconomyBalance.clickUpgradeCost(15.0, 0), 0.0)
+        assertEquals(5_000.0, EconomyBalance.clickUpgradeCost(5_000.0, 20), 0.0)
+        assertEquals(5_000.0, EconomyBalance.clickUpgradeCost(4_000.0, 20, 1.5), 0.0)
     }
 
     @Test

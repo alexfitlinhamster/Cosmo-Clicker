@@ -33,10 +33,12 @@ enum class QuestType {
     BUY_UPGRADE,   // Buy X click upgrades
     OPEN_CASE,     // Open X cases
     COMPLETE_EVENT,
-    OBTAIN_DRONE
+    OBTAIN_DRONE,
+    OBTAIN_RARE_DRONE
 }
 
 enum class QuestCadence { DAILY, WEEKLY }
+enum class QuestDifficulty { EASY, MEDIUM, HARD }
 
 enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
     COMMON(1.0, 5),
@@ -45,8 +47,6 @@ enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
 }
 
 enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }
-enum class BossType { ASTEROID_TITAN, PIRATE_DREADNOUGHT, MECHANICAL_COLOSSUS }
-enum class ChallengeId { VOID_LEVIATHAN, SOLAR_DEVOURER, DREADNOUGHT_EMPRESS, NEBULA_DRAGON }
 enum class StationModule { HANGAR, LABORATORY, REACTOR, TRADE_HUB }
 
 data class WeeklyGalaxy(
@@ -56,26 +56,6 @@ data class WeeklyGalaxy(
     val progress: Double = 0.0,
     val target: Double = 500.0,
     val rewardClaimed: Boolean = false
-)
-
-data class TitanBattle(
-    val type: BossType,
-    val health: Double,
-    val maxHealth: Double,
-    val expiresAt: Long,
-    val challengeId: ChallengeId = ChallengeId.VOID_LEVIATHAN,
-    val shieldCharges: Int = 0,
-    val minions: Int = 0,
-    val nextAbilityAt: Long = Long.MAX_VALUE,
-    val lastAbilityAt: Long = 0L,
-    val abilityUses: Int = 0,
-    val bossMinions: List<BossMinion> = emptyList()
-)
-
-data class BossMinion(
-    val id: Int,
-    val health: Double,
-    val maxHealth: Double
 )
 
 data class Quest(
@@ -91,6 +71,7 @@ data class Quest(
     val isCompleted: Boolean = false,
     val isClaimed: Boolean = false,
     val cadence: QuestCadence = QuestCadence.DAILY,
+    val difficulty: QuestDifficulty = QuestDifficulty.EASY,
     val rewardPrestigePoints: Int = 0
 )
 
@@ -121,6 +102,7 @@ data class GameState(
     val questBonuses: Map<String, Double> = emptyMap(),
     val activeEffects: Map<String, Long> = emptyMap(), // Type ID to expiresAt
     val lastOfflineReward: Double = 0.0,
+    val lastOfflineSeconds: Long = 0L,
     val prestigePoints: Int = 0,
     val technologies: Set<Technology> = emptySet(),
     val dailyQuestDay: Long = -1L,
@@ -135,9 +117,6 @@ data class GameState(
     val claimedAchievementIds: Set<String> = emptySet(),
     val eventLog: List<EventLogEntry> = emptyList(),
     val weeklyGalaxy: WeeklyGalaxy = WeeklyGalaxy(),
-    val titanBattle: TitanBattle? = null,
-    val titanWins: Int = 0,
-    val completedChallengeIds: Set<ChallengeId> = emptySet(),
     val stationLevels: Map<StationModule, Int> = emptyMap()
 )
 

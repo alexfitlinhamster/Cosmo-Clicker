@@ -66,6 +66,21 @@ class EngineTest {
     }
 
     @Test
+    fun rareDroneQuestRejectsCommonDropAndAcceptsRareDrop() {
+        val quest = Quest("rare", QuestType.OBTAIN_RARE_DRONE, "", 1.0, 0.0)
+
+        val common = QuestEngine.advance(
+            listOf(quest), QuestType.OBTAIN_RARE_DRONE, droneRarity = Rarity.COMMON
+        ).single()
+        val rare = QuestEngine.advance(
+            listOf(quest), QuestType.OBTAIN_RARE_DRONE, droneRarity = Rarity.RARE
+        ).single()
+
+        assertEquals(0.0, common.progress, 0.0)
+        assertTrue(rare.isCompleted)
+    }
+
+    @Test
     fun economyTickExpiresEffectsAndAppliesBlackHoleDrain() {
         val state = GameState(
             totalDebris = 1_000.0,
@@ -141,7 +156,7 @@ class EngineTest {
 
         val result = EventEngine.onAsteroidClick(state, 500L)
 
-        assertEquals(1_100.0, result.totalDebris, 0.0)
+        assertEquals(600.0, result.totalDebris, 0.0)
         assertEquals(null, result.activeEvent)
         assertEquals(1.0, result.eventMultiplier, 0.0)
     }
@@ -170,8 +185,9 @@ class EngineTest {
 
     @Test
     fun asteroidRewardScalesWithClickValueAndHasMinimum() {
-        assertEquals(500.0, EventEngine.calculateAsteroidReward(1.0, FixedRandom(0)), 0.0)
+        assertEquals(250.0, EventEngine.calculateAsteroidReward(1.0, FixedRandom(0)), 0.0)
         assertEquals(3_000.0, EventEngine.calculateAsteroidReward(20.0, FixedRandom(100)), 0.0)
+        assertEquals(25_000.0, EventEngine.calculateAsteroidReward(1_000_000.0, FixedRandom(100)), 0.0)
     }
 
     @Test
@@ -203,7 +219,7 @@ class EngineTest {
 
     @Test
     fun planetEventModifiersDriveTimingAndProtectionRules() {
-        assertEquals(11_538L, EventEngine.nextIntervalMillis("p3", FixedRandom(0)))
+        assertEquals(34_615L, EventEngine.nextIntervalMillis("p3", FixedRandom(0)))
         assertEquals(40_000L, EventEngine.nextDurationMillis("p8", FixedRandom(0)))
         assertEquals(GameEventType.ASTEROID, EventEngine.selectType("p12", FixedRandom(0)))
         assertEquals(null, EventEngine.selectType("p16", FixedRandom(0)))
@@ -258,7 +274,7 @@ class EngineTest {
 
         assertEquals(GameEventType.ASTEROID, result.activeEvent?.type)
         assertEquals(null, result.infectedDroneId)
-        assertTrue((result.activeEvent?.reward ?: 0.0) >= 500.0)
+        assertTrue((result.activeEvent?.reward ?: 0.0) >= 250.0)
     }
 
     @Test
@@ -389,7 +405,7 @@ class EngineTest {
     @Test
     fun tradingShipCanSellCasesDebrisAndDrones() {
         fun stateAt(startedAt: Long = 7_000L) = GameState(
-            totalDebris = 20_000.0,
+            totalDebris = 30_000.0,
             activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, startedAt = startedAt, reward = 1_000.0)
         )
 
@@ -398,11 +414,25 @@ class EngineTest {
         assertEquals(CaseType.RARE, caseResult.openingCaseType)
 
         val debrisResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.DEBRIS_CARGO, 2_000L)
-        assertEquals(21_500.0, debrisResult.totalDebris, 0.0)
+        assertEquals(31_250.0, debrisResult.totalDebris, 0.0)
 
         val droneResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.RANDOM_DRONE, 2_000L)
         assertEquals(1, droneResult.fleetCounts.values.sum())
         assertEquals(1, droneResult.discoveredDroneIds.size)
+    }
+
+    @Test
+    fun expiredEventDoesNotCountAsCompletedQuestOrStatistic() {
+        val quest = Quest("events", QuestType.COMPLETE_EVENT, "", 1.0, 0.0)
+        val state = GameState(
+            activeEvent = GameEvent(GameEventType.ASTEROID, expiresAt = 100L),
+            activeQuests = listOf(quest)
+        )
+
+        val result = EventEngine.expireEventIfNeeded(state, 100L)
+
+        assertEquals(0, result.lifetimeStats.eventsCompleted)
+        assertEquals(0.0, result.activeQuests.single().progress, 0.0)
     }
 
     @Test
@@ -416,52 +446,4 @@ class EngineTest {
         assertEquals(62_000L, fleet.activeEffects[SkillType.TRADE_FLEET_BOOST.id])
     }
 
-    @Test
-    fun commandChallengesUnlockInOrder() {
-        val fresh = GameState()
-        assertTrue(FeatureEngine.isChallengeUnlocked(fresh, ChallengeId.VOID_LEVIATHAN))
-        assertTrue(!FeatureEngine.isChallengeUnlocked(fresh, ChallengeId.SOLAR_DEVOURER))
-
-        val afterLeviathan = fresh.copy(completedChallengeIds = setOf(ChallengeId.VOID_LEVIATHAN))
-        assertTrue(FeatureEngine.isChallengeUnlocked(afterLeviathan, ChallengeId.SOLAR_DEVOURER))
-        assertTrue(!FeatureEngine.isChallengeUnlocked(afterLeviathan, ChallengeId.DREADNOUGHT_EMPRESS))
-    }
-
-    @Test
-    fun harderCommandChallengesHaveMoreHealthAndReward() {
-        val challenges = FeatureEngine.challenges
-        assertTrue(challenges.all { it.durationMillis > 0L })
-        assertTrue(challenges.zipWithNext().all { (first, second) -> second.rewardDebris > first.rewardDebris })
-        assertTrue(challenges.zipWithNext().all { (first, second) -> second.health > first.health })
-    }
-
-    @Test
-    fun nebulaDragonRegeneratesSummonsArmyAndDisablesDrone() {
-        val initial = GameState(drones = listOf(DroneData(id = 1L, x = 0.2f, y = 0.3f)))
-        val battle = FeatureEngine.createBoss(initial, ChallengeId.NEBULA_DRAGON, now = 0L)
-            .copy(health = 2_000_000_000.0)
-        val result = FeatureEngine.processBossAbility(initial.copy(titanBattle = battle), 10_000L)
-
-        assertEquals(2_050_000_000.0, result.titanBattle?.health ?: 0.0, 0.0)
-        assertEquals(6, result.titanBattle?.minions)
-        assertEquals(6, result.titanBattle?.bossMinions?.size)
-        assertTrue(result.titanBattle.orEmptyMinions().all { it.health == it.maxHealth })
-        assertEquals(16_000L, result.drones.single().disabledUntil)
-        assertEquals(1, result.titanBattle?.abilityUses)
-        assertEquals(10_000L, result.titanBattle?.lastAbilityAt)
-    }
-
-    @Test
-    fun solarDevourerHealsAndRaisesShields() {
-        val initial = GameState()
-        val battle = FeatureEngine.createBoss(initial, ChallengeId.SOLAR_DEVOURER, now = 0L)
-            .copy(health = 400_000_000.0)
-        val result = FeatureEngine.processBossAbility(initial.copy(titanBattle = battle), 9_000L)
-
-        assertEquals(410_000_000.0, result.titanBattle?.health ?: 0.0, 0.0)
-        assertEquals(2, result.titanBattle?.shieldCharges)
-        assertEquals(18_000L, result.titanBattle?.nextAbilityAt)
-    }
 }
-
-private fun TitanBattle?.orEmptyMinions(): List<BossMinion> = this?.bossMinions.orEmpty()

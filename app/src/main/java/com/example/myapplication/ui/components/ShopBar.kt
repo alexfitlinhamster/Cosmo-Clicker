@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
@@ -39,7 +40,6 @@ import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
-import kotlin.math.pow
 import java.text.DateFormat
 import java.util.Date
 
@@ -165,12 +165,15 @@ private fun LegacyOperationsPanel(
                         2 -> {
                             items(viewModel.clickItems, key = { it.id }) { item ->
                                 val lvl = state.clickLevels[item.id] ?: 0
-                                val cost = (item.base * 1.15.pow(lvl.toDouble())).toLong()
+                                val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == com.example.myapplication.WeeklyRule.VOLATILE_MARKET) {
+                                    com.example.myapplication.FeatureEngine.volatilePriceMultiplier()
+                                } else 1.0
+                                val cost = EconomyBalance.clickUpgradeCost(item.base, lvl, marketMultiplier).toLong()
                                 ShopRow(
                                     name = localizedUpgradeName(item.id),
                                     meta = stringResource(R.string.click_meta, formatNum(item.value), lvl),
                                     cost = cost,
-                                    canBuy = state.totalDebris >= cost,
+                                    canBuy = lvl < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
                                     canSell = false,
                                     iconRes = item.iconRes,
                                     showLock = lvl == 0,
@@ -444,18 +447,17 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
         CaseType.RARE -> R.string.rare_case
         CaseType.LEGENDARY -> R.string.legendary_case
     }
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
             .border(1.dp, accent.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
             .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -477,14 +479,12 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                 Text(stringResource(R.string.premium_drop_chance, type.premiumChance), color = accent, fontSize = 9.sp)
             }
         }
-        Spacer(modifier = Modifier.width(8.dp))
-
         Button(
             onClick = { viewModel.startOpeningCase(type) },
             enabled = state.totalDebris >= caseCost,
             colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
             shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.height(36.dp)
+            modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp)
         ) {
             Text(formatNum(caseCost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
@@ -507,17 +507,16 @@ fun ShopRow(
     onBuy: () -> Unit,
     onSell: () -> Unit = {}
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
             .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier.size(32.dp).background(AppColors.WhiteAlpha05, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
@@ -537,7 +536,6 @@ fun ShopRow(
                             modifier = Modifier
                                 .requiredSize(iconSize * columns, iconSize * rows)
                                 .offset(x = -iconSize * col, y = -iconSize * row)
-                                .scale(1.2f)
                         )
                     }
                 } else {
@@ -557,24 +555,27 @@ fun ShopRow(
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 if (name.isNotEmpty()) {
-                    Text(name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
-                Text(meta, color = Color.Gray, fontSize = 11.sp)
+                Text(meta, color = Color.LightGray, fontSize = 11.sp, lineHeight = 14.sp)
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (fleetActionLabel != null || canSell || canBuy) Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+        ) {
             if (fleetActionLabel != null) {
                 Button(
                     onClick = onFleetAction,
                     enabled = fleetActionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary.copy(alpha = 0.18f), contentColor = AppColors.Primary),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp)
+                    modifier = Modifier.heightIn(min = 40.dp).weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(fleetActionLabel, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(fleetActionLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (canSell) {
@@ -582,8 +583,8 @@ fun ShopRow(
                     onClick = onSell,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger.copy(alpha = 0.2f), contentColor = AppColors.Danger),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp).width(60.dp),
-                    contentPadding = PaddingValues(0.dp)
+                    modifier = Modifier.heightIn(min = 40.dp).widthIn(min = 72.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
                     Text(stringResource(R.string.sell), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
@@ -594,7 +595,7 @@ fun ShopRow(
                     enabled = canBuy,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(36.dp),
+                    modifier = Modifier.heightIn(min = 40.dp).widthIn(min = 88.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp)
                 ) {
                     Text(formatNum(cost.toDouble()), fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -662,10 +663,9 @@ fun PlanetRow(
                     Image(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop, 
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxSize()
-                            .scale(2.2f) // Увеличили зум до 2.2x, чтобы убрать белые скобки
                             .clip(CircleShape)
                             .let { if(isLocked) it.alpha(0.3f) else it }
                     )
@@ -693,7 +693,9 @@ fun PlanetRow(
                 containerColor = if (active || isLocked) Color.Gray else AppColors.Primary, 
                 contentColor = Color.Black
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.widthIn(min = 74.dp, max = 104.dp).heightIn(min = 40.dp),
+            contentPadding = PaddingValues(horizontal = 10.dp)
         ) {
             val btnText = when {
                 isLocked -> stringResource(R.string.locked)
@@ -702,7 +704,7 @@ fun PlanetRow(
                 price == 0L -> stringResource(R.string.free)
                 else -> formatNum(price.toDouble())
             }
-            Text(btnText, fontSize = 12.sp)
+            Text(btnText, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

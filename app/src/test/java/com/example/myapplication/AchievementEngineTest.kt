@@ -31,7 +31,7 @@ class AchievementEngineTest {
 
         val claimed = requireNotNull(AchievementEngine.claim(state, "click_100"))
 
-        assertEquals(11_350.0, claimed.totalDebris, 0.0)
+        assertEquals(6_150.0, claimed.totalDebris, 0.0001)
         assertTrue("click_100" in claimed.claimedAchievementIds)
         assertNull(AchievementEngine.claim(claimed, "click_100"))
     }
