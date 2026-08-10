@@ -1,6 +1,8 @@
 package com.example.myapplication
 
 import kotlin.math.pow
+import kotlin.math.floor
+import kotlin.math.log10
 
 object EconomyBalance {
     const val MAX_DRONES = 10
@@ -49,8 +51,21 @@ object EconomyBalance {
             DroneTraitEngine.modifiers(state.activeFleetCounts).passiveMultiplier * tradeMultiplier * fleetBoost
     }
 
-    fun scaledReward(base: Double, planetId: String): Double =
-        base.coerceAtLeast(0.0) * planetIncomeMultiplier(planetId)
+    fun scaledReward(base: Double, planetId: String): Double {
+        val progressionMultiplier = 1.32.pow((planetIndex(planetId) - 1).toDouble())
+        return roundReward(base.coerceAtLeast(0.0) * progressionMultiplier)
+    }
+
+    fun roundReward(value: Double): Double {
+        if (!value.isFinite() || value <= 0.0) return 0.0
+        val magnitude = 10.0.pow(floor(log10(value)))
+        val step = when {
+            value / magnitude < 2.0 -> magnitude / 20.0
+            value / magnitude < 5.0 -> magnitude / 10.0
+            else -> magnitude / 5.0
+        }.coerceAtLeast(1.0)
+        return kotlin.math.round(value / step) * step
+    }
 
     fun canPrestige(state: GameState): Boolean =
         state.ownedPlanets.any { planetIndex(it) >= PRESTIGE_PLANET_INDEX }

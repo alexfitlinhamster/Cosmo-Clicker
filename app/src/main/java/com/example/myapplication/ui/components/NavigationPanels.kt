@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +49,24 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                 }
             }
             Spacer(Modifier.height(12.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = AppColors.Primary.copy(alpha = 0.08f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.22f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(painterResource(R.drawable.debris_01), null, Modifier.size(28.dp), contentScale = ContentScale.Fit)
+                    Spacer(Modifier.width(9.dp))
+                    Text(stringResource(R.string.shop_balance), color = Color.LightGray, fontSize = 11.sp)
+                    Spacer(Modifier.weight(1f))
+                    Text(formatNum(state.totalDebris), color = AppColors.Primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 when (selectedTab) {
                     0 -> item { MysteryCaseRow(viewModel, state) }
@@ -164,7 +184,18 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
         item {
             val active = state.activeFleetCounts.values.sum()
             val owned = state.fleetCounts.values.sum()
-            Text(stringResource(R.string.hangar_status, active, owned), color = AppColors.Secondary, modifier = Modifier.padding(bottom = 10.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = AppColors.Primary.copy(alpha = 0.07f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.20f))
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(stringResource(R.string.hangar_overview), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    HangarCapacityLine(stringResource(R.string.drones_in_flight), active, DroneTraitEngine.MAX_ACTIVE_DRONES, AppColors.Primary)
+                    HangarCapacityLine(stringResource(R.string.drones_in_storage), owned, EconomyBalance.MAX_DRONES, AppColors.Secondary)
+                }
+            }
         }
         items(viewModel.fleetItems, key = { it.id }) { drone ->
             val count = state.fleetCounts[drone.id] ?: 0
@@ -196,6 +227,22 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
                 onSell = { viewModel.sellFleet(drone.id) }
             )
         }
+    }
+}
+
+@Composable
+private fun HangarCapacityLine(label: String, value: Int, maximum: Int, color: Color) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, color = Color.LightGray, fontSize = 11.sp)
+            Text("$value / $maximum", color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+        LinearProgressIndicator(
+            progress = { (value.toFloat() / maximum.coerceAtLeast(1)).coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(5.dp).clip(CircleShape),
+            color = color,
+            trackColor = Color.White.copy(alpha = 0.10f)
+        )
     }
 }
 
@@ -291,8 +338,8 @@ private fun SpacePanel(title: String, subtitle: String, onClose: () -> Unit, mod
     }
 }
 
-@Composable fun HangarLauncherButton(onClick: () -> Unit) = LauncherIcon(R.drawable.ui_button_hangar, R.string.open_hangar, onClick)
-@Composable fun AchievementsLauncherButton(onClick: () -> Unit) = LauncherIcon(R.drawable.ui_button_achievements, R.string.open_achievements, onClick)
+@Composable fun HangarLauncherButton(onClick: () -> Unit) = LauncherIcon(R.drawable.ui_button_hangar_v2, R.string.open_hangar, onClick)
+@Composable fun AchievementsLauncherButton(onClick: () -> Unit) = LauncherIcon(R.drawable.ui_button_achievements_v2, R.string.open_achievements, onClick)
 
 @Composable
 private fun LauncherIcon(icon: Int, description: Int, onClick: () -> Unit) {

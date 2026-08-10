@@ -417,7 +417,7 @@ private fun achievementNameResource(id: String): Int = when (id) {
 @Composable
 fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.ui_button_shop_v2),
+        painter = painterResource(R.drawable.ui_button_shop_v3),
         contentDescription = stringResource(R.string.open_shop),
         modifier = modifier
             .size(60.dp)
@@ -437,6 +437,9 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
 @Composable
 private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseType, totalDrones: Int) {
     val caseCost = viewModel.calculateCaseCost(state.casesPurchased, type)
+    val maxAffordable = viewModel.maxAffordableCases(state.totalDebris, state.casesPurchased, type)
+    var showBundleDialog by remember { mutableStateOf(false) }
+    var selectedCaseCount by remember { mutableIntStateOf(1) }
     val accent = when (type) {
         CaseType.COMMON -> AppColors.Primary
         CaseType.RARE -> Color(0xFF42A5F5)
@@ -480,7 +483,13 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
             }
         }
         Button(
-            onClick = { viewModel.startOpeningCase(type) },
+            onClick = {
+                if (maxAffordable >= 2) {
+                    selectedCaseCount = 1
+                    showBundleDialog = true
+                }
+                else viewModel.startOpeningCase(type)
+            },
             enabled = state.totalDebris >= caseCost,
             colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black),
             shape = RoundedCornerShape(8.dp),
@@ -488,6 +497,54 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
         ) {
             Text(formatNum(caseCost), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
+    }
+    if (showBundleDialog) {
+        SpaceDialog(
+            title = stringResource(R.string.choose_case_amount),
+            onDismiss = { showBundleDialog = false },
+            content = {
+                Text(stringResource(title), color = accent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.case_bundle_hint), color = Color.LightGray, fontSize = 11.sp)
+                Spacer(Modifier.height(14.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text("×$selectedCaseCount", color = accent, fontSize = 30.sp, fontWeight = FontWeight.Black)
+                    Text(
+                        formatNum(viewModel.calculateCaseBundleCost(state.casesPurchased, type, selectedCaseCount)),
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Slider(
+                        value = selectedCaseCount.toFloat(),
+                        onValueChange = { selectedCaseCount = it.toInt().coerceIn(1, maxAffordable) },
+                        valueRange = 1f..maxAffordable.toFloat(),
+                        modifier = Modifier.fillMaxWidth(0.82f).height(34.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = accent,
+                            activeTrackColor = accent,
+                            inactiveTrackColor = Color.White.copy(alpha = 0.12f)
+                        )
+                    )
+                    Row(Modifier.fillMaxWidth(0.82f), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("1", color = Color.White.copy(alpha = 0.55f), fontSize = 10.sp)
+                        Text(stringResource(R.string.max_cases_short, maxAffordable), color = accent, fontSize = 10.sp)
+                    }
+                }
+            },
+            actions = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Button(
+                        onClick = { showBundleDialog = false; viewModel.startOpeningCases(type, selectedCaseCount) },
+                        modifier = Modifier.fillMaxWidth(0.72f).heightIn(min = 44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black)
+                    ) { Text(stringResource(R.string.buy_cases_count, selectedCaseCount), fontWeight = FontWeight.Bold) }
+                }
+            }
+        )
     }
 }
 
@@ -511,14 +568,14 @@ fun ShopRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .padding(12.dp),
+            .background(Color(0xFF0B172C), RoundedCornerShape(14.dp))
+            .border(1.dp, if (fleetActionLabel != null) AppColors.Primary.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
+            .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(32.dp).background(AppColors.WhiteAlpha05, RoundedCornerShape(8.dp)),
+                modifier = Modifier.size(46.dp).background(AppColors.Primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp)).border(1.dp, AppColors.Primary.copy(alpha = 0.14f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (spriteIndex >= 0) {
@@ -526,7 +583,7 @@ fun ShopRow(
                     val rows = 5
                     val row = spriteIndex / columns
                     val col = spriteIndex % columns
-                    val iconSize = 24.dp
+                    val iconSize = 34.dp
                     
                     Box(modifier = Modifier.size(iconSize)) {
                         Image(
@@ -543,21 +600,21 @@ fun ShopRow(
                         painter = painterResource(id = iconRes),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(34.dp)
                     )
                 }
                 if (showLock) {
                     Image(
                         painter = painterResource(R.drawable.ui_button_lock),
                         contentDescription = stringResource(R.string.locked),
-                        modifier = Modifier.size(26.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 if (name.isNotEmpty()) {
-                    Text(name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 Text(meta, color = Color.LightGray, fontSize = 11.sp, lineHeight = 14.sp)
             }

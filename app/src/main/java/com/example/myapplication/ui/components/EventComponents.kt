@@ -109,10 +109,8 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
             }
             val objective = when (event.type) {
                 GameEventType.BLACK_HOLE -> stringResource(R.string.event_taps_left, tapsLeft)
-                GameEventType.ASTEROID -> stringResource(
-                    R.string.event_reward_preview,
-                    formatNum(event.reward)
-                )
+                GameEventType.ASTEROID, GameEventType.STORM, GameEventType.SOLAR_FLARE ->
+                    stringResource(R.string.event_taps_left, tapsLeft)
                 GameEventType.DISTRESS_SIGNAL -> stringResource(R.string.event_choose_response)
                 GameEventType.ABANDONED_STATION -> stringResource(R.string.event_choose_route)
                 GameEventType.PIRATE_RAID -> stringResource(R.string.event_taps_left, tapsLeft)
@@ -148,14 +146,43 @@ private fun eventTitleResource(type: GameEventType): Int = when (type) {
 }
 
 private fun eventIconResource(type: GameEventType): Int = when (type) {
-    GameEventType.ASTEROID, GameEventType.METEOR_SHOWER -> R.drawable.asteroid_gold_game
+    GameEventType.ASTEROID -> R.drawable.asteroid_gold_game
+    GameEventType.METEOR_SHOWER -> R.drawable.event_meteor_hazard_v2
     GameEventType.DISTRESS_SIGNAL -> R.drawable.event_rescue_capsule
-    GameEventType.ABANDONED_STATION, GameEventType.SOLAR_FLARE -> R.drawable.event_reactor_core
+    GameEventType.ABANDONED_STATION -> R.drawable.event_abandoned_station_v2
+    GameEventType.SOLAR_FLARE -> R.drawable.event_solar_cooler_v2
     GameEventType.TRADING_SHIP -> R.drawable.event_trading_ship_game
-    GameEventType.PIRATE_RAID -> R.drawable.event_trade_crate
+    GameEventType.PIRATE_RAID -> R.drawable.event_pirate_ship_v2
     GameEventType.BLACK_HOLE -> R.drawable.event_black_hole_v2
-    GameEventType.CYBER_VIRUS -> R.drawable.event_reactor_core
-    GameEventType.STORM -> R.drawable.asteroid_crystal_game
+    GameEventType.CYBER_VIRUS -> R.drawable.event_cyber_module_v2
+    GameEventType.STORM -> R.drawable.event_storm_node_v2
+}
+
+@Composable
+fun EventChallengeComponent(
+    event: GameEvent,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
+    onClick: () -> Unit
+) {
+    val size = 76.dp
+    val icon = if (event.type == GameEventType.STORM) {
+        R.drawable.event_storm_node_v2
+    } else {
+        R.drawable.event_solar_cooler_v2
+    }
+    Box(
+        modifier = Modifier
+            .offset(
+                x = gameAreaWidth * event.x - size / 2,
+                y = gameAreaHeight * event.y - size / 2
+            )
+            .size(size)
+            .eventClickable(onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(painterResource(icon), contentDescription = null, modifier = Modifier.fillMaxSize())
+    }
 }
 
 @Composable

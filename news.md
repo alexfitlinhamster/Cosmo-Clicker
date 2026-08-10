@@ -1,5 +1,51 @@
 # News
 
+## 1.15.0 — Global Update (version code 34) - 2026-08-10
+
+- Added an Open All option for case bundles and a polished result screen where unique drone cards appear one by one with their total quantities.
+- Added flexible case bundles up to the player's affordable maximum. Case prices now increase only after every 20 opened cases, and bundles open sequentially with a cosmic remaining-case counter.
+- Refined the case quantity dialog: selection now starts at one and uses a compact, centered slider instead of uneven increment buttons.
+- Improved the shop and drone warehouse with a visible purchase balance, clear capacity bars, larger drone cards, and a left-right case shake during opening.
+- Reworked the event roster while preserving the Trading Ship and Black Hole:
+  Golden Asteroids now require seven moving hits, and Space Storm and Solar Flare
+  are active tap challenges with visible objectives and scaled rewards.
+- Kept Meteor Shower, Cyber Virus, Distress Signal, Abandoned Station, and Pirate
+  Raid as distinct interactive encounters with clearer instructions and artwork.
+- Added six cohesive transparent event sprites for storm nodes, molten meteors,
+  solar cooling equipment, cyber-virus modules, abandoned stations, and pirate ships.
+- Replaced the detailed legacy app artwork with a cleaner salvage-drone emblem and
+  rebuilt the Shop, Quests, Hangar, Achievements, Statistics, and Settings icons as
+  one consistent navigation set.
+- Reduced navigation textures to an appropriate 256px size to lower decoded bitmap
+  memory without reducing their on-screen quality.
+- Reduced expensive drone simulation updates by 25% while preserving movement and
+  event-effect speed, cached fleet speed modifiers per tick, and indexed active
+  debris targets for faster lookup on larger fleets.
+- Smoothed planet presses and combo feedback, slowed decorative planet rotation,
+  and capped simultaneous floating reward labels to reduce visual noise and frame load.
+- Rebalanced globally scaled rewards with a stronger late-game curve and readable
+  rounding so quests and achievements remain useful without displaying uneven values.
+- Simplified the navigation artwork into cleaner cel-shaded icons with fewer
+  reflections, textures, and tiny details.
+- Restored the richer original application icon after visual review.
+- Kept disabled drones visible instead of removing them from the game field, cleared
+  stale target assignments when targets disappear or repairs finish, and added a
+  bounded patrol-point fallback so drones cannot become stuck during navigation.
+- Added live second-by-second reset timers to daily and weekly quest sections and
+  automatic calendar-based quest rotation at local midnight and the start of each week.
+- Fixed patrol avoidance trapping returned drones at the exact center of the planet;
+  drones inside the drop-off zone can now fly outward toward their next patrol target.
+- Restyled quest reset timers as compact cosmic clock capsules with a lightweight
+  vector-drawn orbit icon and aligned monospaced countdown digits.
+- Positioned floating tap rewards at the actual touch point on the planet instead
+  of always spawning them at the center of the game field.
+- Preserved the dismissed start screen across configuration changes so rotating the
+  device no longer shows the tap-to-continue prompt again.
+- Updated English and Russian event descriptions to explain the new objectives.
+- Removed 86 unreferenced legacy images, reducing packaged source assets by about
+  16.3 MiB without removing any resource used by the game.
+- Verified Kotlin and Android resource compilation, all 78 unit tests, and Android lint.
+
 ## 1.13.0 (version code 32) - 2026-08-09
 
 - Replaced the complete visual set with a cohesive atlas of 20 unique planets and

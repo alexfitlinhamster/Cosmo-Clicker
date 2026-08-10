@@ -150,13 +150,19 @@ class EngineTest {
     fun asteroidClickAwardsRewardAndResetsEventState() {
         val state = GameState(
             totalDebris = 100.0,
-            activeEvent = GameEvent(GameEventType.ASTEROID, 1_000L),
-            eventMultiplier = 2.0
+            activeEvent = GameEvent(GameEventType.ASTEROID, 1_000L, reward = 500.0),
+            eventMultiplier = 2.0,
+            eventTapsLeft = 7
         )
 
-        val result = EventEngine.onAsteroidClick(state, 500L)
+        val afterFirstHit = EventEngine.onAsteroidClick(state, 400L)
+        val result = (2..7).fold(afterFirstHit) { current, hit ->
+            EventEngine.onAsteroidClick(current, 400L + hit)
+        }
 
-        assertEquals(600.0, result.totalDebris, 0.0)
+        assertEquals(6, afterFirstHit.eventTapsLeft)
+        assertEquals(GameEventType.ASTEROID, afterFirstHit.activeEvent?.type)
+        assertEquals(600.0, result.totalDebris, 0.001)
         assertEquals(null, result.activeEvent)
         assertEquals(1.0, result.eventMultiplier, 0.0)
     }

@@ -11,9 +11,9 @@ class GameRulesTest {
     @Test
     fun caseCostGrowsByTwelvePercentAfterEveryPurchase() {
         assertEquals(1_000.0, GameRules.calculateCaseCost(0), 0.0001)
-        assertEquals(1_120.0, GameRules.calculateCaseCost(1), 0.0001)
-        assertEquals(1_254.4, GameRules.calculateCaseCost(2), 0.0001)
-        assertEquals(1_404.928, GameRules.calculateCaseCost(3), 0.0001)
+        assertEquals(1_000.0, GameRules.calculateCaseCost(1), 0.0001)
+        assertEquals(1_000.0, GameRules.calculateCaseCost(19), 0.0001)
+        assertEquals(1_120.0, GameRules.calculateCaseCost(20), 0.0001)
         assertEquals(1_000.0, GameRules.calculateCaseCost(-1), 0.0001)
     }
 

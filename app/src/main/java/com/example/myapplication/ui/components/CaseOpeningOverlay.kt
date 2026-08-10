@@ -7,10 +7,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,8 +42,13 @@ fun CaseOpeningOverlay(
     isOpening: Boolean,
     caseType: CaseType,
     lastDroppedDrone: FleetConfig?,
+    remainingCases: Int = 1,
+    bundleRewards: List<Pair<FleetConfig, Int>> = emptyList(),
+    showBundleSummary: Boolean = false,
     onFinishOpening: () -> Unit,
+    onOpenAll: () -> Unit,
     onClearReward: () -> Unit,
+    onClearBundleSummary: () -> Unit,
     reduceMotion: Boolean = false
 ) {
     var hasClickedToOpen by remember { mutableStateOf(false) }
@@ -87,6 +95,15 @@ fun CaseOpeningOverlay(
         animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
         label = ""
     )
+    val openingShake by infiniteTransition.animateFloat(
+        initialValue = -9f,
+        targetValue = 9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(75, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "caseOpeningShake"
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         // ЭКРАН КЕЙСА (ОЖИДАНИЕ ИЛИ АНИМАЦИЯ)
         AnimatedVisibility(visible = isOpening, enter = fadeIn(), exit = fadeOut()) {
@@ -109,6 +126,9 @@ fun CaseOpeningOverlay(
                     Box(
                         modifier = Modifier
                             .offset(y = if (!hasClickedToOpen) bounceOffset.dp else 0.dp)
+                            .graphicsLayer {
+                                translationX = if (hasClickedToOpen && !reduceMotion) openingShake else 0f
+                            }
                             .size(250.dp)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -124,6 +144,34 @@ fun CaseOpeningOverlay(
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize().padding(18.dp)
                         )
+                        if (remainingCases > 1) {
+                            Surface(
+                                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                                shape = CircleShape,
+                                color = Color(0xFF10284A),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.75f)),
+                                shadowElevation = 10.dp
+                            ) {
+                                Text(
+                                    text = "×$remainingCases",
+                                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
+                                    color = AppColors.Primary,
+                                    fontSize = 21.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    }
+                    if (!hasClickedToOpen && remainingCases > 1) {
+                        Spacer(Modifier.height(18.dp))
+                        Button(
+                            onClick = onOpenAll,
+                            modifier = Modifier.fillMaxWidth(0.62f).heightIn(min = 46.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(stringResource(R.string.open_all_cases, remainingCases), fontWeight = FontWeight.Black)
+                        }
                     }
                 }
             }
@@ -183,6 +231,49 @@ fun CaseOpeningOverlay(
                         ) {
                             Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
                         }
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(visible = showBundleSummary, enter = fadeIn(), exit = fadeOut()) {
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)), contentAlignment = Alignment.Center) {
+                Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 44.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(R.string.case_results_title), color = AppColors.Primary, fontSize = 26.sp, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.case_results_total, bundleRewards.sumOf { it.second }), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Spacer(Modifier.height(18.dp))
+                    LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        itemsIndexed(bundleRewards, key = { _, reward -> reward.first.id }) { index, (drone, count) ->
+                            var visible by remember(drone.id, showBundleSummary) { mutableStateOf(false) }
+                            LaunchedEffect(showBundleSummary) {
+                                if (showBundleSummary) {
+                                    if (!reduceMotion) delay(index * 180L)
+                                    visible = true
+                                }
+                            }
+                            AnimatedVisibility(visible, enter = fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 3 }) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color(0xFF0D1B31),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, drone.rarity.color.copy(alpha = 0.5f))
+                                ) {
+                                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        FleetIcon(item = drone, iconSize = 58.dp)
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text(drone.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                            Text(rarityLabel(drone.rarity), color = drone.rarity.color, fontSize = 10.sp)
+                                        }
+                                        Text("×$count", color = drone.rarity.color, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onClearBundleSummary, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        Text(stringResource(R.string.collect), fontWeight = FontWeight.Bold)
                     }
                 }
             }

@@ -1,8 +1,8 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -122,7 +122,7 @@ fun SpaceDialog(
 fun ComboIndicator(combo: Int, modifier: Modifier = Modifier) {
     val scale by animateFloatAsState(
         targetValue = 1f + (combo.toFloat() / 100f).coerceAtMost(0.4f),
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "combo_scale"
     )
 

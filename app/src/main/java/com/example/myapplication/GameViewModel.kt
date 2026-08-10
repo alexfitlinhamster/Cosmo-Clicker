@@ -236,6 +236,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isOpeningCase = prefs.getBoolean("isOpeningCase", false),
             openingCaseType = prefs.getString("openingCaseType", null)
                 ?.let { storedType -> CaseType.entries.firstOrNull { it.name == storedType } },
+            pendingCaseOpenings = prefs.getInt("pendingCaseOpenings", 0).coerceAtLeast(0),
             casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum()).coerceAtLeast(0),
             activeQuests = activeQuests,
             completedQuestIds = prefs.getStringSet("completedQuestIds", emptySet()) ?: emptySet(),
@@ -308,6 +309,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putBoolean("isOpeningCase", state.isOpeningCase)
             if (state.openingCaseType == null) remove("openingCaseType")
             else putString("openingCaseType", state.openingCaseType.name)
+            putInt("pendingCaseOpenings", state.pendingCaseOpenings)
             putInt("casesPurchased", state.casesPurchased)
             putInt("prestigePoints", state.prestigePoints)
             putStringSet("technologies", state.technologies.map { it.name }.toSet())
@@ -376,6 +378,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         startDroneLoop()
         startTrashSpawnLoop()
         startDebrisShowerLoop()
+        startQuestRefreshLoop()
     }
 
     fun pauseSimulation() {
@@ -565,6 +568,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     selectedType == GameEventType.DISTRESS_SIGNAL ||
                     selectedType == GameEventType.ABANDONED_STATION ||
                     selectedType == GameEventType.PIRATE_RAID ||
+                    selectedType == GameEventType.STORM ||
+                    selectedType == GameEventType.SOLAR_FLARE ||
                     selectedType == GameEventType.TRADING_SHIP
                 ) calculateClickValue() else 1.0
                 val now = System.currentTimeMillis()
@@ -581,7 +586,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onAsteroidClick() {
         val now = System.currentTimeMillis()
-        _gameState.update { EventEngine.onAsteroidClick(it, now) }
+        _gameState.update { EventEngine.onAsteroidClick(it, now, randomProvider) }
+    }
+
+    fun onEventChallengeClick() {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.onChallengeClick(it, now) }
     }
     
     fun onBlackHoleClick() {
@@ -644,7 +654,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startDroneLoop() {
         launchSimulationLoop {
             while (isActive) {
-                delay(150)
+                delay(DRONE_TICK_MS)
                 updateDrones()
             }
         }
@@ -690,26 +700,39 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     if (distSq < 0.0005f) return@mapNotNull null // Sucked in
                     val dist = sqrt(distSq.toDouble()).toFloat()
                     return@mapNotNull target.copy(
-                        x = target.x + (dx / dist) * 0.02f,
-                        y = target.y + (dy / dist) * 0.02f
+                        x = target.x + (dx / dist) * 0.02f * DRONE_TICK_SCALE,
+                        y = target.y + (dy / dist) * 0.02f * DRONE_TICK_SCALE
                     )
                 }
                 if (!target.isFalling) return@mapNotNull target
                 target.copy(
-                    x = target.x + target.velocityX,
-                    y = target.y + target.velocityY
+                    x = target.x + target.velocityX * DRONE_TICK_SCALE,
+                    y = target.y + target.velocityY * DRONE_TICK_SCALE
                 ).takeIf { it.x in -0.15f..1.15f && it.y <= 1.1f }
             }.toMutableList()
             if (drones.isEmpty()) return@update state.copy(scavengeTargets = targets)
 
             var debrisGained = 0.0
             val claimedTargetIds = drones.filter { it.state != DroneState.BROKEN }.mapNotNullTo(mutableSetOf()) { it.targetId }
+            val targetsById = targets.associateBy { it.id }
+            val fleetSpeedMultiplier = DroneTraitEngine.modifiers(state.activeFleetCounts).speedMultiplier
             var debrisCollectedCount = 0
 
             val updatedDrones = drones.map { drone ->
                 if (drone.state == DroneState.BROKEN) {
                     if (now >= drone.disabledUntil) {
-                        return@map drone.copy(state = DroneState.IDLE, disabledUntil = 0)
+                        return@map drone.copy(
+                            state = DroneState.IDLE,
+                            targetId = null,
+                            hasCargo = false,
+                            cargoRarity = null,
+                            cargoReward = 0.0,
+                            patrolTargetX = null,
+                            patrolTargetY = null,
+                            disabledUntil = 0L,
+                            x = drone.x.coerceIn(0.05f, 0.95f),
+                            y = drone.y.coerceIn(0.05f, 0.95f)
+                        )
                     }
                     return@map drone
                 }
@@ -722,7 +745,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     moveMultiplier = 2.0f
                 }
                 if (isStorm) moveMultiplier *= 0.7f
-                moveMultiplier *= DroneTraitEngine.modifiers(state.activeFleetCounts).speedMultiplier
+                moveMultiplier *= fleetSpeedMultiplier
 
                 var nx = drone.x
                 var ny = drone.y
@@ -750,24 +773,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         nTargetId = null
                         nHasCargo = false
                     } else {
-                        nx += (dx / dist) * gravityStrength
-                        ny += (dy / dist) * gravityStrength
+                        nx += (dx / dist) * gravityStrength * DRONE_TICK_SCALE
+                        ny += (dy / dist) * gravityStrength * DRONE_TICK_SCALE
                         moveMultiplier *= (dist * 2f).coerceIn(0.2f, 1.0f) // Slower near center
                         nState = DroneState.SUCKED_IN
                     }
                 } else if (isSolarFlare) {
-                    nx += randomProvider.nextFloat() * 0.01f - 0.005f
-                    ny += randomProvider.nextFloat() * 0.01f - 0.005f
+                    nx += (randomProvider.nextFloat() * 0.01f - 0.005f) * DRONE_TICK_SCALE
+                    ny += (randomProvider.nextFloat() * 0.01f - 0.005f) * DRONE_TICK_SCALE
                     nState = DroneState.JAMMED
                 } else if (drone.id == infectedId) {
                     nState = DroneState.INFECTED
-                    nx += randomProvider.nextFloat() * 0.04f - 0.02f
-                    ny += randomProvider.nextFloat() * 0.04f - 0.02f
-                    debrisGained -= EventEngine.cyberVirusTheft(state.totalDebris)
+                    nx += (randomProvider.nextFloat() * 0.04f - 0.02f) * DRONE_TICK_SCALE
+                    ny += (randomProvider.nextFloat() * 0.04f - 0.02f) * DRONE_TICK_SCALE
+                    debrisGained -= EventEngine.cyberVirusTheft(state.totalDebris) * DRONE_TICK_SCALE
                 } else {
                     if (nState == DroneState.SUCKED_IN || nState == DroneState.JAMMED || nState == DroneState.INFECTED) nState = DroneState.IDLE
                     
-                    var moveStep = DRONE_MOVE_STEP * moveMultiplier
+                    var moveStep = DRONE_MOVE_STEP * moveMultiplier * DRONE_TICK_SCALE
                     if (planetId == "p18") moveStep *= 1.5f // Cloud City: Drones 50% faster
 
                     when (nState) {
@@ -806,7 +829,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             }
                         }
                         DroneState.MOVING_TO_DEBRIS -> {
-                            val target = targets.find { it.id == drone.targetId }
+                            val target = targetsById[drone.targetId]
                             if (target != null) {
                                 val dx = target.x - nx
                                 val dy = target.y - ny
@@ -855,6 +878,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                             } else {
                                 nState = DroneState.RETURNING
+                                nTargetId = null
                             }
                         }
                         DroneState.RETURNING -> {
@@ -869,6 +893,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                     debrisCollectedCount++
                                 }
                                 nState = DroneState.IDLE
+                                nTargetId = null
                                 nHasCargo = false
                                 nCargoRarity = null
                                 nCargoReward = 0.0
@@ -919,13 +944,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun randomPatrolPoint(): Pair<Float, Float> {
-        while (true) {
+        repeat(12) {
             val x = randomProvider.nextFloat() * 0.9f + 0.05f
             val y = randomProvider.nextFloat() * 0.9f + 0.05f
             if (distanceSquared(x, y, DRONE_HOME_POSITION, DRONE_HOME_POSITION) > PLANET_AVOID_RADIUS_SQ) {
                 return x to y
             }
         }
+        return 0.82f to 0.72f
     }
 
     private fun movePatrolDrone(
@@ -1138,16 +1164,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startOpeningCase(type: CaseType = CaseType.COMMON) {
+        startOpeningCases(type, 1)
+    }
+
+    fun startOpeningCases(type: CaseType, count: Int) {
+        val safeCount = count.coerceAtLeast(1)
         updateStoreState("case") { state ->
-            val caseCost = calculateCaseCost(state.casesPurchased, type)
-            if (state.isOpeningCase || state.totalDebris < caseCost) {
+            val bundleCost = calculateCaseBundleCost(state.casesPurchased, type, safeCount)
+            if (state.isOpeningCase || state.lastDroppedDroneId != null || state.totalDebris < bundleCost) {
                 return@updateStoreState null
             }
             state.copy(
-                totalDebris = state.totalDebris - caseCost,
+                totalDebris = state.totalDebris - bundleCost,
                 isOpeningCase = true,
                 openingCaseType = type,
-                casesPurchased = state.casesPurchased + 1,
+                pendingCaseOpenings = safeCount - 1,
+                caseBundleRewards = emptyMap(),
+                showCaseBundleSummary = false,
                 lastDroppedDroneId = null
             )
         }
@@ -1156,10 +1189,37 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun calculateCaseCost(casesPurchased: Int, type: CaseType = CaseType.COMMON): Double =
         GameRules.calculateCaseCost(casesPurchased, type)
 
+    fun calculateCaseBundleCost(casesPurchased: Int, type: CaseType, count: Int): Double =
+        GameRules.calculateCaseBundleCost(casesPurchased, type, count)
+
+    fun maxAffordableCases(balance: Double, casesPurchased: Int, type: CaseType): Int =
+        GameRules.maxAffordableCases(balance, casesPurchased, type)
+
     fun finishOpeningCase() {
-        _gameState.update { state ->
-            val caseType = state.openingCaseType
-            if (!state.isOpeningCase || caseType == null) return@update state
+        _gameState.update { state -> openOneCase(state, showIndividualReward = true) }
+        saveGameState()
+    }
+
+    fun openAllPendingCases() {
+        _gameState.update { initial ->
+            if (!initial.isOpeningCase || initial.openingCaseType == null) return@update initial
+            val total = initial.pendingCaseOpenings + 1
+            var result = initial
+            repeat(total) { result = openOneCase(result.copy(isOpeningCase = true), showIndividualReward = false) }
+            result.copy(
+                isOpeningCase = false,
+                openingCaseType = null,
+                pendingCaseOpenings = 0,
+                lastDroppedDroneId = null,
+                showCaseBundleSummary = true
+            )
+        }
+        saveGameState()
+    }
+
+    private fun openOneCase(state: GameState, showIndividualReward: Boolean): GameState {
+            val caseType = state.openingCaseType ?: return state
+            if (!state.isOpeningCase) return state
             val selectedRarity = GameRules.rollCaseRarity(caseType, randomProvider.nextInt(100))
             val availableDrones = fleetItems.filter { it.rarity == selectedRarity }
             val selectedDrone = randomProvider.chooseOrNull(availableDrones) ?: fleetItems.first()
@@ -1187,22 +1247,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val updatedActiveFleet = if (isNewDiscovery && hasFleetSlot && activeCount < DroneTraitEngine.MAX_ACTIVE_DRONES) {
                 state.activeFleetCounts + (droneId to ((state.activeFleetCounts[droneId] ?: 0) + 1))
             } else state.activeFleetCounts
-            state.copy(
+            return state.copy(
                 isOpeningCase = false, 
-                openingCaseType = null,
+                openingCaseType = if (state.pendingCaseOpenings > 0) caseType else null,
                 fleetCounts = updatedFleet,
                 activeFleetCounts = updatedActiveFleet,
                 discoveredDroneIds = state.discoveredDroneIds + droneId,
                 droneParts = updatedParts,
-                lastDroppedDroneId = droneId,
+                lastDroppedDroneId = if (showIndividualReward) droneId else null,
+                caseBundleRewards = state.caseBundleRewards + (droneId to ((state.caseBundleRewards[droneId] ?: 0) + 1)),
                 activeQuests = updatedQuests,
                 sessionStats = state.sessionStats.copy(casesOpened = state.sessionStats.casesOpened + 1),
+                casesPurchased = state.casesPurchased + 1,
                 lifetimeStats = state.lifetimeStats.copy(
                     casesOpened = state.lifetimeStats.casesOpened + 1
                 )
-            ) 
-        }
-        saveGameState()
+            )
     }
 
     fun deployDrone(id: String) {
@@ -1302,7 +1362,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearReward() {
-        _gameState.update { it.copy(lastDroppedDroneId = null) }
+        _gameState.update { state ->
+            if (state.pendingCaseOpenings > 0 && state.openingCaseType != null) {
+                state.copy(lastDroppedDroneId = null, isOpeningCase = true, pendingCaseOpenings = state.pendingCaseOpenings - 1)
+            } else {
+                state.copy(
+                    lastDroppedDroneId = null,
+                    openingCaseType = null,
+                    pendingCaseOpenings = 0,
+                    showCaseBundleSummary = state.caseBundleRewards.isNotEmpty()
+                )
+            }
+        }
+        saveGameState()
+    }
+
+    fun clearCaseBundleSummary() {
+        _gameState.update { it.copy(showCaseBundleSummary = false, caseBundleRewards = emptyMap()) }
+        saveGameState()
     }
 
     fun clearOfflineReward() {
@@ -1360,16 +1437,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             var weeklyCompletedAt = state.weeklyQuestsCompletedAt
             val hasDaily = quests.any { it.cadence == QuestCadence.DAILY }
             val hasWeekly = quests.any { it.cadence == QuestCadence.WEEKLY }
-            if ((!hasDaily && dailyCompletedAt < 0L) ||
-                (dailyCompletedAt > 0L && now - dailyCompletedAt >= DAILY_QUEST_COOLDOWN) ||
+            if (state.dailyQuestDay != dayKey ||
+                (!hasDaily && dailyCompletedAt < 0L) ||
                 quests.any { it.cadence == QuestCadence.DAILY && !it.id.startsWith("d4_") }
             ) {
                 quests = quests.filterNot { it.cadence == QuestCadence.DAILY } +
                     createDailyQuests(dayKey, state.currentPlanetId)
                 dailyCompletedAt = -1L
             }
-            if ((!hasWeekly && weeklyCompletedAt < 0L) ||
-                (weeklyCompletedAt > 0L && now - weeklyCompletedAt >= WEEKLY_QUEST_COOLDOWN) ||
+            if (state.weeklyQuestWeek != weekKey ||
+                (!hasWeekly && weeklyCompletedAt < 0L) ||
                 quests.any { it.cadence == QuestCadence.WEEKLY && !it.id.startsWith("w4_") }
             ) {
                 quests = quests.filterNot { it.cadence == QuestCadence.WEEKLY } +
@@ -1383,6 +1460,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 dailyQuestsCompletedAt = dailyCompletedAt,
                 weeklyQuestsCompletedAt = weeklyCompletedAt
             )
+        }
+    }
+
+    private fun startQuestRefreshLoop() {
+        launchSimulationLoop {
+            while (isActive) {
+                refreshTimedQuests()
+                delay(QUEST_REFRESH_CHECK_MS)
+            }
         }
     }
 
@@ -1452,6 +1538,9 @@ private fun Map<String, Int>.limitOwnedFleet(): Map<String, Int> {
 }
 
 private const val DRONE_MOVE_STEP = 0.02f
+private const val DRONE_TICK_MS = 200L
+private const val DRONE_TICK_SCALE = DRONE_TICK_MS / 150f
+private const val QUEST_REFRESH_CHECK_MS = 30_000L
 private const val DAILY_QUEST_COOLDOWN = 24L * 60L * 60L * 1_000L
 private const val WEEKLY_QUEST_COOLDOWN = 7L * 24L * 60L * 60L * 1_000L
 private const val DRONE_HOME_POSITION = 0.5f

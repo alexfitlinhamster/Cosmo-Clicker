@@ -9,6 +9,9 @@ object EventEngine {
     private const val MAX_DURATION_MS = 60_000L
     private const val EVENT_CLICK_MULTIPLIER = 2.0
     private const val BLACK_HOLE_TAPS = 10
+    private const val ASTEROID_TAPS = 7
+    private const val STORM_TAPS = 8
+    private const val SOLAR_FLARE_TAPS = 3
     private const val PIRATE_RAID_TAPS = 15
     private const val ASTEROID_REWARD = 250.0
     private const val VOID_ENERGY_DURATION_MS = 30_000L
@@ -125,6 +128,10 @@ object EventEngine {
                     eventReward(clickValue, 500.0, 25.0, 25_000.0)
                 } else if (actualType == GameEventType.CYBER_VIRUS) {
                     eventReward(clickValue, 1_000.0, 50.0, 75_000.0)
+                } else if (actualType == GameEventType.STORM) {
+                    eventReward(clickValue, 750.0, 35.0, 50_000.0)
+                } else if (actualType == GameEventType.SOLAR_FLARE) {
+                    eventReward(clickValue, 1_000.0, 45.0, 60_000.0)
                 } else {
                     0.0
                 }
@@ -138,6 +145,9 @@ object EventEngine {
             },
             eventTapsLeft = when (actualType) {
                 GameEventType.BLACK_HOLE -> BLACK_HOLE_TAPS
+                GameEventType.ASTEROID -> ASTEROID_TAPS
+                GameEventType.STORM -> STORM_TAPS
+                GameEventType.SOLAR_FLARE -> SOLAR_FLARE_TAPS
                 GameEventType.PIRATE_RAID -> PIRATE_RAID_TAPS
                 else -> 0
             },
@@ -152,17 +162,40 @@ object EventEngine {
         } else state
     }
 
-    fun onAsteroidClick(state: GameState, nowMillis: Long): GameState {
+    fun onAsteroidClick(
+        state: GameState,
+        nowMillis: Long,
+        random: RandomProvider = KotlinRandomProvider
+    ): GameState {
         val event = state.activeEvent
         if (event?.type != GameEventType.ASTEROID) return state
         val reward = event.reward.takeIf { it > 0.0 }
             ?: (ASTEROID_REWARD * state.eventMultiplier)
+        val tapsLeft = state.eventTapsLeft - 1
+        val hitReward = reward / ASTEROID_TAPS
+        if (tapsLeft > 0) return state.copy(
+            totalDebris = state.totalDebris + hitReward,
+            eventTapsLeft = tapsLeft,
+            activeEvent = event.copy(
+                x = 0.12f + random.nextFloat() * 0.76f,
+                y = 0.12f + random.nextFloat() * 0.52f
+            )
+        )
         return finishEvent(
-            state.copy(totalDebris = state.totalDebris + reward),
+            state.copy(totalDebris = state.totalDebris + hitReward),
             EventLogOutcome.COMPLETED,
             nowMillis,
             reward
         )
+    }
+
+    fun onChallengeClick(state: GameState, nowMillis: Long): GameState {
+        val event = state.activeEvent ?: return state
+        if (event.type != GameEventType.STORM && event.type != GameEventType.SOLAR_FLARE) return state
+        val tapsLeft = state.eventTapsLeft - 1
+        if (tapsLeft > 0) return state.copy(eventTapsLeft = tapsLeft)
+        val rewarded = state.copy(totalDebris = state.totalDebris + event.reward)
+        return finishEvent(rewarded, EventLogOutcome.COMPLETED, nowMillis, event.reward)
     }
 
     fun calculateAsteroidReward(clickValue: Double, random: RandomProvider): Double {

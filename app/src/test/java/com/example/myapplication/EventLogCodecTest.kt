@@ -37,7 +37,9 @@ class EventLogCodecTest {
         val started = EventEngine.startEvent(
             GameState(), GameEventType.ASTEROID, 1_000L, 100L, random
         )
-        val completed = EventEngine.onAsteroidClick(started, 200L)
+        val completed = (1..7).fold(started) { state, hit ->
+            EventEngine.onAsteroidClick(state, 200L + hit, random)
+        }
 
         assertEquals(EventLogOutcome.STARTED, completed.eventLog[0].outcome)
         assertEquals(EventLogOutcome.COMPLETED, completed.eventLog[1].outcome)

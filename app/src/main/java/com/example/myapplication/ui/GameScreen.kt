@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -75,7 +76,7 @@ fun GameScreen(
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
 
     // Состояние стартового экрана
-    var showStartScreen by remember { mutableStateOf(true) }
+    var showStartScreen by rememberSaveable { mutableStateOf(true) }
     val startScreenOffset = remember { Animatable(0f) }
     val startScreenAlpha = remember { Animatable(1f) }
 
@@ -244,12 +245,16 @@ fun GameScreen(
                     ) { x, y ->
                         soundManager.playClick()
                         val value = viewModel.onPlanetClick()
-                        addFloatingText("+${formatNum(value)}", x, y)
+                        val planetWidthFraction = GameConstants.PlanetSize.value / maxWidth.value
+                        val planetHeightFraction = GameConstants.PlanetSize.value / maxHeight.value
+                        addFloatingText(
+                            "+${formatNum(value)}",
+                            (0.5f + (x - 0.5f) * planetWidthFraction).coerceIn(0f, 1f),
+                            (0.5f + (y - 0.5f) * planetHeightFraction).coerceIn(0f, 1f)
+                        )
                     }
 
-                val now = System.currentTimeMillis()
-                val combatDrones = state.drones.filter { it.disabledUntil <= now }
-                combatDrones.forEachIndexed { index, drone ->
+                state.drones.forEachIndexed { index, drone ->
                     key(drone.id) {
                         ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
                             val cyberEvent = state.activeEvent?.takeIf { active ->
@@ -273,6 +278,11 @@ fun GameScreen(
                         GameEventType.PIRATE_RAID -> {
                             PirateRaidComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
                                 viewModel.onPirateRaidClick()
+                            }
+                        }
+                        GameEventType.STORM, GameEventType.SOLAR_FLARE -> {
+                            EventChallengeComponent(event, maxWidth, maxHeight) {
+                                viewModel.onEventChallengeClick()
                             }
                         }
                         GameEventType.METEOR_SHOWER -> Unit
@@ -332,21 +342,21 @@ fun GameScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_quest_v2,
+                    icon = R.drawable.ui_button_quest_v3,
                     label = R.string.quests,
                     description = R.string.quests,
                     onClick = { isQuestOpen = true },
                     modifier = Modifier.weight(1f)
                 )
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_shop_v2,
+                    icon = R.drawable.ui_button_shop_v3,
                     label = R.string.navigation_shop,
                     description = R.string.open_shop,
                     onClick = { isShopOpen = true },
                     modifier = Modifier.weight(1f)
                 )
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_hangar,
+                    icon = R.drawable.ui_button_hangar_v2,
                     label = R.string.navigation_hangar,
                     description = R.string.open_hangar,
                     onClick = { isHangarOpen = true },
@@ -378,8 +388,13 @@ fun GameScreen(
             isOpening = state.isOpeningCase,
             caseType = state.openingCaseType ?: com.example.myapplication.CaseType.COMMON,
             lastDroppedDrone = state.lastDroppedDroneId?.let { fleetMap[it] },
+            remainingCases = state.pendingCaseOpenings + if (state.isOpeningCase) 1 else 0,
+            bundleRewards = state.caseBundleRewards.mapNotNull { (id, count) -> fleetMap[id]?.let { it to count } },
+            showBundleSummary = state.showCaseBundleSummary,
             onFinishOpening = { viewModel.finishOpeningCase() },
+            onOpenAll = { viewModel.openAllPendingCases() },
             onClearReward = { viewModel.clearReward() },
+            onClearBundleSummary = { viewModel.clearCaseBundleSummary() },
             reduceMotion = reduceMotion
         )
 
@@ -600,7 +615,7 @@ fun GameScreen(
 @Composable
 fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.ui_button_quest_v2),
+        painter = painterResource(R.drawable.ui_button_quest_v3),
         contentDescription = stringResource(R.string.quests),
         modifier = modifier
             .size(60.dp)
@@ -641,7 +656,7 @@ private fun GameNavigationButton(
     }
 }
 
-private const val MAX_FLOATING_TEXTS = 40
+private const val MAX_FLOATING_TEXTS = 24
 
 private fun formatOfflineDuration(seconds: Long): String {
     val safe = seconds.coerceAtLeast(0L)

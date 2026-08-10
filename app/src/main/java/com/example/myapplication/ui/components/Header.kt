@@ -42,7 +42,7 @@ fun Header(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Image(
-                painter = painterResource(R.drawable.ui_button_statistics),
+                painter = painterResource(R.drawable.ui_button_statistics_v2),
                 contentDescription = stringResource(R.string.open_statistics),
                 modifier = Modifier.size(48.dp).clickable(onClick = onAchievementsClick),
                 contentScale = ContentScale.Fit
@@ -72,7 +72,7 @@ fun Header(
                 )
             }
             Image(
-                painter = painterResource(R.drawable.ui_button_settings_v2),
+                painter = painterResource(R.drawable.ui_button_settings_v3),
                 contentDescription = stringResource(R.string.settings),
                 modifier = Modifier
                     .size(48.dp)

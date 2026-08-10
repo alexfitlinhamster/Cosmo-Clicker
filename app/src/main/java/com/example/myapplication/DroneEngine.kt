@@ -25,7 +25,8 @@ object DroneEngine {
         if (distance <= step) return targetX to targetY
         var stepX = dx / distance * step
         var stepY = dy / distance * step
-        if (distanceSquared(x + stepX, y + stepY, home, home) < avoidRadiusSquared) {
+        val currentlyInsideHome = distanceSquared(x, y, home, home) < avoidRadiusSquared
+        if (!currentlyInsideHome && distanceSquared(x + stepX, y + stepY, home, home) < avoidRadiusSquared) {
             val radialX = x - home
             val radialY = y - home
             val clockwise = if (id and 1L == 0L) 1f else -1f

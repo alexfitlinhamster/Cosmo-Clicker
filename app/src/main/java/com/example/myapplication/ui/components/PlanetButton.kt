@@ -3,13 +3,13 @@ package com.example.myapplication.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -27,7 +27,11 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifier, onClick: (Float, Float) -> Unit) {
     var scaleVal by remember { mutableStateOf(1f) }
-    val animatedScale by animateFloatAsState(targetValue = scaleVal, label = "")
+    val animatedScale by animateFloatAsState(
+        targetValue = scaleVal,
+        animationSpec = tween(120, easing = FastOutSlowInEasing),
+        label = "planet_press"
+    )
     val isLocked = planetConfig.price < 0
     val containerSize = GameConstants.PlanetSize
 
@@ -36,7 +40,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(60_000, easing = LinearEasing),
+            animation = tween(90_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "rotation"
@@ -46,15 +50,20 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
         modifier = modifier
             .size(containerSize)
             .scale(animatedScale)
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                if (!isLocked) {
-                    scaleVal = 0.92f
-                    onClick(0.5f, 0.5f)
+            .pointerInput(isLocked) {
+                detectTapGestures { position ->
+                    if (!isLocked && size.width > 0 && size.height > 0) {
+                        scaleVal = 0.92f
+                        onClick(
+                            (position.x / size.width).coerceIn(0f, 1f),
+                            (position.y / size.height).coerceIn(0f, 1f)
+                        )
+                    }
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        LaunchedEffect(scaleVal) { if (scaleVal < 1f) { delay(80); scaleVal = 1f } }
+        LaunchedEffect(scaleVal) { if (scaleVal < 1f) { delay(90); scaleVal = 1f } }
 
         // Обрезка
         Box(
