@@ -53,9 +53,9 @@ object GameRules {
     }
 
     fun caseRarityWeights(type: CaseType): Map<Rarity, Int> = when (type) {
-        CaseType.COMMON -> mapOf(Rarity.COMMON to 60, Rarity.UNCOMMON to 25, Rarity.RARE to 10, Rarity.EPIC to 4, Rarity.LEGENDARY to 1)
-        CaseType.RARE -> mapOf(Rarity.COMMON to 20, Rarity.UNCOMMON to 35, Rarity.RARE to 28, Rarity.EPIC to 14, Rarity.LEGENDARY to 3)
-        CaseType.LEGENDARY -> mapOf(Rarity.COMMON to 5, Rarity.UNCOMMON to 15, Rarity.RARE to 35, Rarity.EPIC to 32, Rarity.LEGENDARY to 13)
+        CaseType.COMMON -> mapOf(Rarity.COMMON to 70, Rarity.UNCOMMON to 20, Rarity.RARE to 7, Rarity.EPIC to 2, Rarity.LEGENDARY to 1)
+        CaseType.RARE -> mapOf(Rarity.COMMON to 30, Rarity.UNCOMMON to 38, Rarity.RARE to 22, Rarity.EPIC to 8, Rarity.LEGENDARY to 2)
+        CaseType.LEGENDARY -> mapOf(Rarity.COMMON to 10, Rarity.UNCOMMON to 22, Rarity.RARE to 38, Rarity.EPIC to 24, Rarity.LEGENDARY to 6)
     }
 
     fun rollCaseRarity(type: CaseType, roll: Int): Rarity {

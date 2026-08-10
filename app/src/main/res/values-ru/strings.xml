@@ -42,8 +42,8 @@
     <string name="navigation_shop">Магазин</string>
     <string name="navigation_hangar">Ангар</string>
     <string name="open_achievements">Открыть достижения</string>
-    <string name="case_shop_title">Магазин кейсов</string>
-    <string name="case_shop_subtitle">Кейсы, планеты и улучшения клика</string>
+    <string name="case_shop_title">Космо-магазин</string>
+    <string name="case_shop_subtitle">Кейсы, планеты, улучшения и системы корабля</string>
     <string name="shop_balance">Доступные обломки</string>
     <string name="hangar_overview">Вместимость ангара</string>
     <string name="drones_in_flight">В полёте</string>
@@ -56,6 +56,13 @@
     <string name="open_all_cases">Открыть все ×%1$d</string>
     <string name="case_results_title">Результаты открытия</string>
     <string name="case_results_total">Получено из %1$d кейсов</string>
+    <string name="utility_upgrades">Системы</string>
+    <string name="upgrade_flight_slots">Слоты в полёте</string>
+    <string name="upgrade_spawn_speed">Сканер мусора</string>
+    <string name="upgrade_magnet_radius">Магнит обломков</string>
+    <string name="utility_level">Уровень %1$d/%2$d</string>
+    <string name="drones_in_storage_count">Дронов на складе: %1$d</string>
+    <string name="drones_owned_count">Дронов получено: %1$d</string>
     <string name="drone_hangar_title">Ангар дронов</string>
     <string name="drone_hangar_subtitle">Хранение, запуск и управление флотом</string>
     <string name="mystery_case">Таинственный кейс</string>

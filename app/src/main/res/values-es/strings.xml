@@ -42,8 +42,8 @@
     <string name="navigation_shop">Tienda</string>
     <string name="navigation_hangar">Hangar</string>
     <string name="open_achievements">Abrir logros</string>
-    <string name="case_shop_title">Tienda de cajas</string>
-    <string name="case_shop_subtitle">Cajas, planetas y mejoras de toque</string>
+    <string name="case_shop_title">Tienda cósmica</string>
+    <string name="case_shop_subtitle">Cajas, planetas, mejoras y sistemas de la nave</string>
     <string name="shop_balance">Restos disponibles</string>
     <string name="hangar_overview">Capacidad del hangar</string>
     <string name="drones_in_flight">En vuelo</string>
@@ -56,6 +56,13 @@
     <string name="open_all_cases">Abrir todo ×%1$d</string>
     <string name="case_results_title">Resultados de cajas</string>
     <string name="case_results_total">Recibido de %1$d cajas</string>
+    <string name="utility_upgrades">Sistemas</string>
+    <string name="upgrade_flight_slots">Ranuras de vuelo</string>
+    <string name="upgrade_spawn_speed">Escáner de restos</string>
+    <string name="upgrade_magnet_radius">Imán de restos</string>
+    <string name="utility_level">Nivel %1$d/%2$d</string>
+    <string name="drones_in_storage_count">Drones en almacén: %1$d</string>
+    <string name="drones_owned_count">Drones obtenidos: %1$d</string>
     <string name="drone_hangar_title">Hangar de drones</string>
     <string name="drone_hangar_subtitle">Almacena, despliega y gestiona tu flota</string>
     <string name="mystery_case">Caja misteriosa</string>

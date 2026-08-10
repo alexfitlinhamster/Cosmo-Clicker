@@ -42,8 +42,8 @@
     <string name="navigation_shop">Shop</string>
     <string name="navigation_hangar">Hangar</string>
     <string name="open_achievements">Open achievements</string>
-    <string name="case_shop_title">Case Shop</string>
-    <string name="case_shop_subtitle">Cases, planets and click upgrades</string>
+    <string name="case_shop_title">Cosmic Shop</string>
+    <string name="case_shop_subtitle">Cases, planets, upgrades and ship systems</string>
     <string name="shop_balance">Available debris</string>
     <string name="hangar_overview">Hangar capacity</string>
     <string name="drones_in_flight">In flight</string>
@@ -56,6 +56,13 @@
     <string name="open_all_cases">Open all ×%1$d</string>
     <string name="case_results_title">Case results</string>
     <string name="case_results_total">Received from %1$d cases</string>
+    <string name="utility_upgrades">Systems</string>
+    <string name="upgrade_flight_slots">Flight slots</string>
+    <string name="upgrade_spawn_speed">Debris scanner</string>
+    <string name="upgrade_magnet_radius">Salvage magnet</string>
+    <string name="utility_level">Level %1$d/%2$d</string>
+    <string name="drones_in_storage_count">Drones in warehouse: %1$d</string>
+    <string name="drones_owned_count">Drones owned: %1$d</string>
     <string name="drone_hangar_title">Drone Hangar</string>
     <string name="drone_hangar_subtitle">Store, deploy and inspect your fleet</string>
     <string name="mystery_case">Mystery Case</string>

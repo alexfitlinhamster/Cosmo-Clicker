@@ -5,7 +5,7 @@ import kotlin.math.floor
 import kotlin.math.log10
 
 object EconomyBalance {
-    const val MAX_DRONES = 10
+    const val MAX_DRONES = Int.MAX_VALUE
     const val MAX_CLICK_UPGRADE_LEVEL = 20
     const val MAX_CLICK_UPGRADE_COST = 5_000.0
     const val PRESTIGE_PLANET_INDEX = 10

@@ -153,6 +153,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             clickLevels[it.id] = prefs.getInt("click_${it.id}", 0)
                 .coerceIn(0, EconomyBalance.MAX_CLICK_UPGRADE_LEVEL)
         }
+        listOf("flight", "spawn", "magnet").forEach { id ->
+            clickLevels["utility_$id"] = prefs.getInt("click_utility_$id", 0).coerceIn(0, if (id == "flight") 2 else 5)
+        }
+        val loadedActiveCapacity = DroneTraitEngine.MAX_ACTIVE_DRONES + (clickLevels["utility_flight"] ?: 0)
         
         val rawFleetCounts = mutableMapOf<String, Int>()
         fleetItems.forEach { rawFleetCounts[it.id] = prefs.getInt("fleet_${it.id}", 0).coerceAtLeast(0) }
@@ -161,9 +165,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             fleetItems.associate { item ->
                 item.id to prefs.getInt("activeFleet_${item.id}", 0)
                     .coerceIn(0, fleetCounts[item.id] ?: 0)
-            }.limitActiveFleet()
+            }.limitActiveFleet(loadedActiveCapacity)
         } else {
-            fleetCounts.limitActiveFleet()
+            fleetCounts.limitActiveFleet(loadedActiveCapacity)
         }
         val migratedDiscoveries = fleetCounts.filterValues { it > 0 }.keys
         val discoveredDroneIds = prefs.getStringSet("discoveredDroneIds", migratedDiscoveries)
@@ -237,6 +241,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             openingCaseType = prefs.getString("openingCaseType", null)
                 ?.let { storedType -> CaseType.entries.firstOrNull { it.name == storedType } },
             pendingCaseOpenings = prefs.getInt("pendingCaseOpenings", 0).coerceAtLeast(0),
+            caseBundleRewards = fleetItems.mapNotNull { item ->
+                prefs.getInt("caseBundleReward_${item.id}", 0).takeIf { it > 0 }?.let { item.id to it }
+            }.toMap(),
+            showCaseBundleSummary = prefs.getBoolean("showCaseBundleSummary", false),
             casesPurchased = prefs.getInt("casesPurchased", fleetCounts.values.sum()).coerceAtLeast(0),
             activeQuests = activeQuests,
             completedQuestIds = prefs.getStringSet("completedQuestIds", emptySet()) ?: emptySet(),
@@ -310,6 +318,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (state.openingCaseType == null) remove("openingCaseType")
             else putString("openingCaseType", state.openingCaseType.name)
             putInt("pendingCaseOpenings", state.pendingCaseOpenings)
+            fleetItems.forEach { item -> putInt("caseBundleReward_${item.id}", state.caseBundleRewards[item.id] ?: 0) }
+            putBoolean("showCaseBundleSummary", state.showCaseBundleSummary)
             putInt("casesPurchased", state.casesPurchased)
             putInt("prestigePoints", state.prestigePoints)
             putStringSet("technologies", state.technologies.map { it.name }.toSet())
@@ -415,7 +425,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val interval = if (state.activeEvent?.type == GameEventType.BLACK_HOLE) {
                     randomProvider.nextLong(1500, 4000) // Spits out void debris faster
                 } else {
-                    randomProvider.nextLong(2000, 40000)
+                    val spawnLevel = (state.clickLevels["utility_spawn"] ?: 0).coerceIn(0, 5)
+                    val speed = 1.0 + spawnLevel * 0.22
+                    randomProvider.nextLong((2000 / speed).toLong(), (40000 / speed).toLong())
                 }
                 delay(interval)
                 
@@ -710,13 +722,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     y = target.y + target.velocityY * DRONE_TICK_SCALE
                 ).takeIf { it.x in -0.15f..1.15f && it.y <= 1.1f }
             }.toMutableList()
-            if (drones.isEmpty()) return@update state.copy(scavengeTargets = targets)
-
             var debrisGained = 0.0
+            var debrisCollectedCount = 0
+            val magnetLevel = (state.clickLevels["utility_magnet"] ?: 0).coerceIn(0, 5)
+            if (magnetLevel > 0) {
+                val radius = 0.06f + magnetLevel * 0.035f
+                val attracted = targets.filter { distanceSquared(it.x, it.y, DRONE_HOME_POSITION, DRONE_HOME_POSITION) <= radius * radius }
+                debrisGained += attracted.sumOf { it.reward }
+                debrisCollectedCount += attracted.size
+                targets.removeAll(attracted.toSet())
+            }
+            if (drones.isEmpty()) return@update state.copy(
+                scavengeTargets = targets,
+                totalDebris = state.totalDebris + debrisGained
+            )
+
             val claimedTargetIds = drones.filter { it.state != DroneState.BROKEN }.mapNotNullTo(mutableSetOf()) { it.targetId }
             val targetsById = targets.associateBy { it.id }
             val fleetSpeedMultiplier = DroneTraitEngine.modifiers(state.activeFleetCounts).speedMultiplier
-            var debrisCollectedCount = 0
 
             val updatedDrones = drones.map { drone ->
                 if (drone.state == DroneState.BROKEN) {
@@ -758,27 +781,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 var nPatrolTargetY = drone.patrolTargetY
                 var nDisabledUntil = 0L
 
-                if (isBlackHole) {
-                    val dx = bhX - nx
-                    val dy = bhY - ny
-                    val distSq = dx * dx + dy * dy
-                    
-                    // Gravity Pull
-                    val dist = sqrt(distSq.toDouble()).toFloat().coerceAtLeast(0.01f)
-                    val gravityStrength = (0.002f / distSq).coerceIn(0.005f, 0.02f)
-                    
-                    if (distSq < 0.0008f) { // Sucked in
-                        nState = DroneState.BROKEN
-                        nDisabledUntil = now + 120_000 // 2 minutes
-                        nTargetId = null
-                        nHasCargo = false
-                    } else {
-                        nx += (dx / dist) * gravityStrength * DRONE_TICK_SCALE
-                        ny += (dy / dist) * gravityStrength * DRONE_TICK_SCALE
-                        moveMultiplier *= (dist * 2f).coerceIn(0.2f, 1.0f) // Slower near center
-                        nState = DroneState.SUCKED_IN
-                    }
-                } else if (isSolarFlare) {
+                if (isSolarFlare) {
                     nx += (randomProvider.nextFloat() * 0.01f - 0.005f) * DRONE_TICK_SCALE
                     ny += (randomProvider.nextFloat() * 0.01f - 0.005f) * DRONE_TICK_SCALE
                     nState = DroneState.JAMMED
@@ -1146,7 +1149,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             val rawCost = item.base * 1.15.pow((currentCount - 1).toDouble())
             if (!rawCost.isFinite()) return@updateStoreState null
-            val refund = rawCost.toLong().toDouble() / 2.0
+            // A drone returns roughly one third of its value. This keeps bulk case
+            // openings from becoming a profitable sell-back loop.
+            val refund = rawCost.toLong().toDouble() / 3.0
             state.copy(
                 totalDebris = state.totalDebris + refund,
                 fleetCounts = state.fleetCounts + (id to currentCount - 1),
@@ -1166,6 +1171,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun startOpeningCase(type: CaseType = CaseType.COMMON) {
         startOpeningCases(type, 1)
     }
+
+    fun utilityUpgradeLevel(id: String): Int = _gameState.value.clickLevels["utility_$id"] ?: 0
+
+    fun utilityUpgradeCost(id: String, level: Int): Double {
+        val base = when (id) { "flight" -> 5_000_000.0; "spawn" -> 2_500_000.0; else -> 3_500_000.0 }
+        return base * 4.0.pow(level.toDouble())
+    }
+
+    fun buyUtilityUpgrade(id: String) {
+        updateStoreState("utility:$id") { state ->
+            val key = "utility_$id"
+            val level = state.clickLevels[key] ?: 0
+            val max = if (id == "flight") 2 else 5
+            val cost = utilityUpgradeCost(id, level)
+            if (level >= max || state.totalDebris < cost) null else state.copy(
+                totalDebris = state.totalDebris - cost,
+                clickLevels = state.clickLevels + (key to level + 1)
+            )
+        }
+    }
+
+    fun activeDroneCapacity(state: GameState = _gameState.value): Int =
+        DroneTraitEngine.MAX_ACTIVE_DRONES + (state.clickLevels["utility_flight"] ?: 0).coerceIn(0, 2)
 
     fun startOpeningCases(type: CaseType, count: Int) {
         val safeCount = count.coerceAtLeast(1)
@@ -1222,7 +1250,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (!state.isOpeningCase) return state
             val selectedRarity = GameRules.rollCaseRarity(caseType, randomProvider.nextInt(100))
             val availableDrones = fleetItems.filter { it.rarity == selectedRarity }
-            val selectedDrone = randomProvider.chooseOrNull(availableDrones) ?: fleetItems.first()
+            val notYetDropped = availableDrones.filterNot { it.id in state.caseBundleRewards }
+            val selectionPool = notYetDropped.ifEmpty { availableDrones }
+            val selectedDrone = randomProvider.chooseOrNull(selectionPool) ?: fleetItems.first()
             val droneId = selectedDrone.id
             val updatedQuests = QuestEngine.advance(
                 QuestEngine.advance(
@@ -1234,17 +1264,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 droneRarity = selectedRarity
             )
             val isNewDiscovery = droneId !in state.discoveredDroneIds
-            val hasFleetSlot = state.fleetCounts.values.sum() < EconomyBalance.MAX_DRONES
-            val updatedFleet = if (isNewDiscovery && hasFleetSlot) {
-                state.fleetCounts + (droneId to ((state.fleetCounts[droneId] ?: 0) + 1))
-            } else state.fleetCounts
-            val updatedParts = if (isNewDiscovery && hasFleetSlot) {
-                state.droneParts
-            } else {
-                state.droneParts + (droneId to ((state.droneParts[droneId] ?: 0) + 1))
-            }
+            val updatedFleet = state.fleetCounts + (droneId to ((state.fleetCounts[droneId] ?: 0) + 1))
+            val updatedParts = state.droneParts
             val activeCount = state.activeFleetCounts.values.sum()
-            val updatedActiveFleet = if (isNewDiscovery && hasFleetSlot && activeCount < DroneTraitEngine.MAX_ACTIVE_DRONES) {
+            val updatedActiveFleet = if (isNewDiscovery && activeCount < activeDroneCapacity(state)) {
                 state.activeFleetCounts + (droneId to ((state.activeFleetCounts[droneId] ?: 0) + 1))
             } else state.activeFleetCounts
             return state.copy(
@@ -1269,7 +1292,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         updateStoreState("deploy:$id") { state ->
             val owned = state.fleetCounts[id] ?: 0
             val active = state.activeFleetCounts[id] ?: 0
-            if (active > 0 || owned <= 0 || state.activeFleetCounts.values.sum() >= DroneTraitEngine.MAX_ACTIVE_DRONES) null
+            if (active > 0 || owned <= 0 || state.activeFleetCounts.values.sum() >= activeDroneCapacity(state)) null
             else state.copy(activeFleetCounts = state.activeFleetCounts + (id to 1))
         }
     }
@@ -1366,11 +1389,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (state.pendingCaseOpenings > 0 && state.openingCaseType != null) {
                 state.copy(lastDroppedDroneId = null, isOpeningCase = true, pendingCaseOpenings = state.pendingCaseOpenings - 1)
             } else {
+                val isBundle = state.caseBundleRewards.values.sum() >= 2
                 state.copy(
                     lastDroppedDroneId = null,
                     openingCaseType = null,
                     pendingCaseOpenings = 0,
-                    showCaseBundleSummary = state.caseBundleRewards.isNotEmpty()
+                    showCaseBundleSummary = isBundle,
+                    caseBundleRewards = if (isBundle) state.caseBundleRewards else emptyMap()
                 )
             }
         }
@@ -1519,8 +1544,8 @@ data class ItemConfig(val id: String, val name: String, val base: Double, val va
 data class FleetConfig(val id: String, val name: String, val base: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
 data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)
 
-private fun Map<String, Int>.limitActiveFleet(): Map<String, Int> {
-    var slotsLeft = DroneTraitEngine.MAX_ACTIVE_DRONES
+private fun Map<String, Int>.limitActiveFleet(capacity: Int = DroneTraitEngine.MAX_ACTIVE_DRONES): Map<String, Int> {
+    var slotsLeft = capacity
     return entries.associate { (id, rawCount) ->
         val active = rawCount.coerceIn(0, 1).coerceAtMost(slotsLeft)
         slotsLeft -= active

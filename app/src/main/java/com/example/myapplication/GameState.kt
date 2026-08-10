@@ -41,9 +41,9 @@ enum class QuestCadence { DAILY, WEEKLY }
 enum class QuestDifficulty { EASY, MEDIUM, HARD }
 
 enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
-    COMMON(1.0, 5),
-    RARE(5.0, 17),
-    LEGENDARY(20.0, 45)
+    COMMON(1.0, 3),
+    RARE(5.0, 10),
+    LEGENDARY(20.0, 30)
 }
 
 enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }

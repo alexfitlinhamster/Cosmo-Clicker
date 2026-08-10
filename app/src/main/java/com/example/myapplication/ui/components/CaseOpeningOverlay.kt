@@ -108,7 +108,10 @@ fun CaseOpeningOverlay(
         // ЭКРАН КЕЙСА (ОЖИДАНИЕ ИЛИ АНИМАЦИЯ)
         AnimatedVisibility(visible = isOpening, enter = fadeIn(), exit = fadeOut()) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.92f))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -184,7 +187,10 @@ fun CaseOpeningOverlay(
             exit = fadeOut()
         ) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)).clickable { onClearReward() },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
                 contentAlignment = Alignment.Center
             ) {
                 lastDroppedDrone?.let { drone ->
@@ -237,7 +243,11 @@ fun CaseOpeningOverlay(
         }
 
         AnimatedVisibility(visible = showBundleSummary, enter = fadeIn(), exit = fadeOut()) {
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
+                contentAlignment = Alignment.Center
+            ) {
                 Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 44.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(stringResource(R.string.case_results_title), color = AppColors.Primary, fontSize = 26.sp, fontWeight = FontWeight.Black)
                     Text(stringResource(R.string.case_results_total, bundleRewards.sumOf { it.second }), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)

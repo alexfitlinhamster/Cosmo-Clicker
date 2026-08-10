@@ -44,7 +44,7 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
             SpaceSheetHeader(stringResource(R.string.case_shop_title), stringResource(R.string.case_shop_subtitle), onClose)
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                listOf(R.string.mystery_case, R.string.tab_planets, R.string.tab_click).forEachIndexed { index, title ->
+                listOf(R.string.mystery_case, R.string.tab_planets, R.string.tab_click, R.string.utility_upgrades).forEachIndexed { index, title ->
                     SpaceTab(stringResource(title), selectedTab == index, { selectedTab = index }, Modifier.weight(1f))
                 }
             }
@@ -90,7 +90,7 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             onClick = { viewModel.buyPlanet(id) }
                         )
                     }
-                    else -> items(viewModel.clickItems, key = { it.id }) { upgrade ->
+                    2 -> items(viewModel.clickItems, key = { it.id }) { upgrade ->
                         val level = state.clickLevels[upgrade.id] ?: 0
                         val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == com.example.myapplication.WeeklyRule.VOLATILE_MARKET) {
                             com.example.myapplication.FeatureEngine.volatilePriceMultiplier()
@@ -103,6 +103,19 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             enabled = level < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
                             iconRes = upgrade.iconRes,
                             onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
+                        )
+                    }
+                    else -> items(listOf("flight", "spawn", "magnet")) { id ->
+                        val level = viewModel.utilityUpgradeLevel(id)
+                        val max = if (id == "flight") 2 else 5
+                        val cost = viewModel.utilityUpgradeCost(id, level)
+                        ClickUpgradeRow(
+                            name = stringResource(when (id) { "flight" -> R.string.upgrade_flight_slots; "spawn" -> R.string.upgrade_spawn_speed; else -> R.string.upgrade_magnet_radius }),
+                            meta = stringResource(R.string.utility_level, level, max),
+                            cost = cost.toLong(),
+                            enabled = level < max && state.totalDebris >= cost,
+                            iconRes = if (id == "magnet") R.drawable.upgrade_magnet_v2 else R.drawable.debris_01,
+                            onBuy = { viewModel.buyUtilityUpgrade(id) }
                         )
                     }
                 }
@@ -192,8 +205,8 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.hangar_overview), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    HangarCapacityLine(stringResource(R.string.drones_in_flight), active, DroneTraitEngine.MAX_ACTIVE_DRONES, AppColors.Primary)
-                    HangarCapacityLine(stringResource(R.string.drones_in_storage), owned, EconomyBalance.MAX_DRONES, AppColors.Secondary)
+                    HangarCapacityLine(stringResource(R.string.drones_in_flight), active, viewModel.activeDroneCapacity(state), AppColors.Primary)
+                    Text(stringResource(R.string.drones_in_storage_count, owned), color = AppColors.Secondary, fontSize = 11.sp)
                 }
             }
         }
@@ -221,7 +234,7 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
                     count > 0 -> stringResource(R.string.send_to_flight)
                     else -> null
                 },
-                fleetActionEnabled = activeCount > 0 || state.activeFleetCounts.values.sum() < DroneTraitEngine.MAX_ACTIVE_DRONES,
+                fleetActionEnabled = activeCount > 0 || state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state),
                 onFleetAction = { if (activeCount > 0) viewModel.recallDrone(drone.id) else viewModel.deployDrone(drone.id) },
                 onBuy = {},
                 onSell = { viewModel.sellFleet(drone.id) }

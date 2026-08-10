@@ -478,7 +478,7 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(title), color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.random_drone_count, totalDrones, EconomyBalance.MAX_DRONES), color = Color.Gray, fontSize = 11.sp)
+                Text(stringResource(R.string.drones_owned_count, totalDrones), color = Color.Gray, fontSize = 11.sp)
                 Text(stringResource(R.string.premium_drop_chance, type.premiumChance), color = accent, fontSize = 9.sp)
             }
         }
