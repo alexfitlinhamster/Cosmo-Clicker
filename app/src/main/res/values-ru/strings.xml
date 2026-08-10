@@ -23,6 +23,20 @@
     <string name="open_guide">Открыть справку</string>
     <string name="reduce_motion">Уменьшить анимации и вспышки</string>
     <string name="reduce_motion_desc">Отключает мерцание и сокращает переходы</string>
+    <string name="background_particles">Фоновые частицы</string>
+    <string name="background_particles_desc">Показывать уменьшенное количество декоративных звёзд</string>
+    <string name="guide_basics_title">Начало игры</string>
+    <string name="guide_basics_body">Нажимайте на планету, чтобы получать обломки. Тратьте их на улучшения клика и новые планеты: каждая планета меняет доход и даёт уникальный бонус.</string>
+    <string name="guide_drones_title">Дроны и ангар</string>
+    <string name="guide_drones_body">Дроны собирают обломки и создают пассивный доход. В ангаре можно выбрать активных дронов; редкость и мастерство улучшают их эффективность.</string>
+    <string name="guide_cases_title">Кейсы и коллекция</string>
+    <string name="guide_cases_body">В кейсах находятся дроны разной редкости. Повторные дроны дают детали для мастерства, а этапы коллекции — дополнительные награды.</string>
+    <string name="guide_events_title">События и задания</string>
+    <string name="guide_events_body">Временные события меняют правила и предлагают риск или награду. Ежедневные и еженедельные задания дают дополнительные цели и призы.</string>
+    <string name="guide_progress_title">Престиж и станция</string>
+    <string name="guide_progress_body">Престиж открывается после достижения планеты 10. Станция и технологии дают постоянные улучшения для следующих прохождений.</string>
+    <string name="guide_performance_title">Настройки изображения</string>
+    <string name="guide_performance_body">Если на экране слишком много эффектов, отключите фоновые частицы или включите уменьшение анимаций в настройках.</string>
     <string name="close">Закрыть</string>
     <string name="tap_to_continue">Нажми на меня, чтобы продолжить</string>
     <string name="game_guide_body" formatted="false">Нажимайте на планету, чтобы получать обломки, и покупайте улучшения клика.\n\nДроны собирают космический мусор и дают пассивный доход в зависимости от редкости. Награды, клики и пассивный доход масштабируются выбранной планетой.\n\nОткрывайте кейсы, чтобы получить до 12 дронов. Редкие дроны собирают лучшие обломки и дают больше дохода.\n\nВременные события меняют правила и предлагают риск или награду.\n\nПрестиж открывается на планете 10. У каждой планеты есть уникальный бонус и множитель дохода.</string>
@@ -133,6 +147,7 @@
     <string name="event_cyber_virus">Кибер-вирус!</string>
     <string name="cyber_minigame_title">АВАРИЯ: заражён терминал</string>
     <string name="cyber_minigame_hint">Повторите код узлов по порядку. Шаг %1$d/%2$d · ошибок %3$d/%4$d</string>
+    <string name="cyber_memorize">Запомните код · шаг %1$d/%2$d · ошибок %3$d/%4$d</string>
     <string name="cyber_minigame_sequence">Код: %1$s</string>
     <string name="cyber_banner_objective">Нажмите и восстановите заражённый терминал</string>
     <string name="cyber_success">Вирус удалён. Награда: %1$s обломков.</string>
@@ -358,4 +373,53 @@
     <string name="station_trade_bonus">+10% к награде недели за уровень</string>
     <string name="continue_button">Продолжить</string>
     <string name="start_challenge">Начать испытание</string>
+    <string name="upgrade_quantum_amplifier">Квантовый усилитель</string>
+    <string name="upgrade_neural_matrix">Нейронная матрица</string>
+    <string name="upgrade_void_compressor">Компрессор пустоты</string>
+    <string name="upgrade_singularity_tap">Сингулярный клик</string>
+    <string name="planet_chronos_rift">Разлом Хроноса</string>
+    <string name="planet_aurora_forge">Кузница Авроры</string>
+    <string name="planet_prism_sanctuary">Призматическое святилище</string>
+    <string name="planet_eventide_crown">Корона Сумерек</string>
+    <string name="planet_desc_chronos_rift">Мир, расколотый временем</string>
+    <string name="planet_desc_aurora_forge">Автоматическая кузница размером с планету</string>
+    <string name="planet_desc_prism_sanctuary">Кристаллы отзываются на каждое нажатие</string>
+    <string name="planet_desc_eventide_crown">Последний рубеж галактики</string>
+    <string name="planet_bonus_chronos_rift" formatted="false">Бонус: +35% пассивного дохода</string>
+    <string name="planet_bonus_aurora_forge" formatted="false">Бонус: +40% силы клика</string>
+    <string name="planet_bonus_prism_sanctuary" formatted="false">Бонус: 20% шанс на клик x5</string>
+    <string name="planet_bonus_eventide_crown" formatted="false">Бонус: x2 ко всему доходу</string>
+    <string name="achievement_click_1000">Сделать 1 000 нажатий</string>
+    <string name="achievement_click_100000">Сделать 100 000 нажатий</string>
+    <string name="achievement_fleet_50">Собрать 50 дронов</string>
+    <string name="achievement_collection_15">Открыть 15 типов дронов</string>
+    <string name="achievement_collection_29">Собрать всю коллекцию дронов</string>
+    <string name="achievement_planets_24">Открыть все 24 планеты</string>
+    <string name="achievement_events_50">Завершить 50 событий</string>
+    <string name="achievement_cases_25">Открыть 25 кейсов</string>
+    <string name="achievement_cases_100">Открыть 100 кейсов</string>
+    <string name="achievement_prestige_5">Совершить 5 престижей</string>
+    <string name="prestige_explained_title">Для чего нужны очки престижа</string>
+    <string name="prestige_explained_body">Престиж сбрасывает планеты, дронов, обломки и обычные улучшения. Очки и купленные технологии сохраняются навсегда и усиливают каждое новое прохождение.</string>
+    <string name="prestige_preview">Награда за этот престиж: +%1$d очков</string>
+    <string name="achievement_click_250k">Сделать 250 000 нажатий</string><string name="achievement_click_1m">Сделать 1 миллион нажатий</string><string name="achievement_click_5m">Сделать 5 миллионов нажатий</string>
+    <string name="achievement_debris_10m">Собрать 10 миллионов обломков</string><string name="achievement_debris_100m">Собрать 100 миллионов обломков</string><string name="achievement_debris_1b">Собрать 1 миллиард обломков</string><string name="achievement_debris_10b">Собрать 10 миллиардов обломков</string>
+    <string name="achievement_cases_250">Открыть 250 кейсов</string><string name="achievement_cases_500">Открыть 500 кейсов</string><string name="achievement_cases_1000">Открыть 1 000 кейсов</string>
+    <string name="achievement_events_100">Завершить 100 событий</string><string name="achievement_events_250">Завершить 250 событий</string><string name="achievement_events_500">Завершить 500 событий</string>
+    <string name="achievement_prestige_10">Совершить 10 престижей</string><string name="achievement_prestige_25">Совершить 25 престижей</string><string name="achievement_prestige_50">Совершить 50 престижей</string>
+    <string name="achievement_fleet_100">Собрать 100 дронов</string><string name="achievement_fleet_250">Собрать 250 дронов</string><string name="achievement_fleet_500">Собрать 500 дронов</string>
+    <string name="achievement_parts_25">Собрать 25 деталей мастерства</string><string name="achievement_parts_100">Собрать 100 деталей мастерства</string><string name="achievement_parts_300">Собрать 300 деталей мастерства</string>
+    <string name="achievement_station_5">Получить 5 суммарных уровней станции</string><string name="achievement_station_10">Получить 10 суммарных уровней станции</string><string name="achievement_station_20">Полностью улучшить станцию</string>
+    <string name="achievement_planets_21">Достичь Разлома Хроноса</string><string name="achievement_planets_22">Достичь Кузницы Авроры</string><string name="achievement_planets_23">Достичь Призматического святилища</string>
+    <string name="achievement_wealth_1t">Накопить 1 триллион обломков</string><string name="achievement_wealth_1q">Накопить 1 квадриллион обломков</string>
+    <string name="achievement_tech_all">Открыть все технологии престижа</string><string name="achievement_achievements_40">Забрать 40 достижений</string>
+    <string name="event_choice_instruction">Выберите вариант. Ниже точно указаны награда и возможный риск.</string>
+    <string name="event_salvage_explained">Гарантированно: сразу получить %1$s обломков. Без риска и ожидания.</string>
+    <string name="event_rescue_explained">Риск: 70%% шанс получить %1$s обломков через 10 секунд. При провале награды не будет, но обломки не потеряются.</string>
+    <string name="event_station_safe_explained">Низкий риск: 90%% шанс получить %1$s обломков. При провале штрафа нет.</string>
+    <string name="event_station_reactor_explained">Высокий риск: 50%% шанс получить %1$s обломков. При провале потеряете 2%% текущих обломков.</string>
+    <string name="background_music">Фоновая музыка</string>
+    <string name="background_music_desc">Воспроизводить музыку во время игры</string>
+    <string name="late_galaxy_preview">Дальняя галактика · планеты 21–24</string>
+    <string name="late_galaxy_preview_desc">Новые миры в конце маршрута планет</string>
 </resources>

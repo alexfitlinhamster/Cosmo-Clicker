@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -86,6 +87,7 @@ private fun LegacyOperationsPanel(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     when (selectedTab) {
                         0 -> {
+                            item { LateGalaxyPreview(viewModel) }
                             items(viewModel.planets.toList(), key = { it.first }) { (id, config) ->
                                 val active = state.currentPlanetId == id
                                 val owned = state.ownedPlanets.contains(id)
@@ -113,42 +115,13 @@ private fun LegacyOperationsPanel(
                             item {
                                 MysteryCaseRow(viewModel, state)
                             }
-                            items(viewModel.fleetItems, key = { it.id }) { item ->
-                                val count = state.fleetCounts[item.id] ?: 0
-                                val discovered = item.id in state.discoveredDroneIds || count > 0
-                                val parts = state.droneParts[item.id] ?: 0
-                                val mastery = MetaProgressEngine.masteryLevel(parts)
-                                val activeCount = state.activeFleetCounts[item.id] ?: 0
-                                val activeTotal = state.activeFleetCounts.values.sum()
-                                val trait = droneTraitDescription(item.id)
-                                ShopRow(
-                                    name = if (discovered) item.name else "???",
-                                    meta = if (discovered) {
-                                        buildString {
-                                            append(stringResource(R.string.drone_storage_meta, count, activeCount, mastery, parts))
-                                            if (trait != null) append("\n").append(trait)
-                                        }
-                                    } else {
-                                        stringResource(R.string.collection_drone_unknown)
-                                    },
-                                    cost = 0,
-                                    canBuy = false,
-                                    canSell = count > 0,
-                                    iconRes = item.iconRes,
-                                    spriteIndex = item.spriteIndex,
-                                    showLock = !discovered,
-                                    fleetActionLabel = when {
-                                        activeCount > 0 -> stringResource(R.string.send_to_storage)
-                                        count > 0 -> stringResource(R.string.send_to_flight)
-                                        else -> null
-                                    },
-                                    fleetActionEnabled = activeCount > 0 || activeTotal < com.example.myapplication.DroneTraitEngine.MAX_ACTIVE_DRONES,
-                                    onFleetAction = {
-                                        if (activeCount > 0) viewModel.recallDrone(item.id) else viewModel.deployDrone(item.id)
-                                    },
-                                    onBuy = { },
-                                    onSell = { viewModel.sellFleet(item.id) }
-                                )
+                            items(viewModel.fleetItems.chunked(3), key = { row -> "hangar_${row.first().id}" }) { row ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    row.forEach { drone ->
+                                        CompactHangarDroneCard(drone, viewModel, state, Modifier.weight(1f))
+                                    }
+                                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                                }
                             }
                             item {
                                 Button(
@@ -242,7 +215,21 @@ private fun DroneCollectionHeader(state: GameState, viewModel: GameViewModel) {
 @Composable
 private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(stringResource(R.string.prestige_points, state.prestigePoints), color = Color.White)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                Modifier.size(30.dp).background(AppColors.Warning.copy(alpha = .14f), CircleShape)
+                    .border(1.dp, AppColors.Warning.copy(alpha = .4f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_prestige_core),
+                    contentDescription = null,
+                    tint = AppColors.Warning,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Text(stringResource(R.string.prestige_points, state.prestigePoints), color = Color.White, fontWeight = FontWeight.Bold)
+        }
         Text(
             stringResource(
                 R.string.session_stats,
@@ -257,6 +244,23 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
             MetaProgressEngine.masteryMultiplier(state.droneParts)) - 1.0) * 100).toInt()
         Text(stringResource(R.string.collection_bonus, collectionPercent), color = Color.LightGray)
         val canPrestige = EconomyBalance.canPrestige(state)
+        val prestigeReward = if (canPrestige) EconomyBalance.prestigeReward(state) else 0
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = AppColors.Primary.copy(alpha = 0.08f),
+            border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.22f))
+        ) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(stringResource(R.string.prestige_explained_title), color = AppColors.Primary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.prestige_explained_body), color = Color.White.copy(alpha = .72f), fontSize = 11.sp, lineHeight = 15.sp)
+                Text(
+                    stringResource(R.string.prestige_preview, prestigeReward),
+                    color = if (canPrestige) AppColors.Warning else Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
         Button(onClick = viewModel::prestige, enabled = canPrestige) {
             Text(stringResource(if (canPrestige) R.string.prestige else R.string.prestige_requirement))
         }
@@ -403,14 +407,56 @@ private fun eventLogOutcomeResource(outcome: EventLogOutcome): Int = when (outco
 
 private fun achievementNameResource(id: String): Int = when (id) {
     "click_100" -> R.string.achievement_click_100
+    "click_1000" -> R.string.achievement_click_1000
     "click_10000" -> R.string.achievement_click_10000
+    "click_100000" -> R.string.achievement_click_100000
     "fleet_5" -> R.string.achievement_fleet_5
     "fleet_12" -> R.string.achievement_fleet_12
+    "fleet_50" -> R.string.achievement_fleet_50
+    "collection_15" -> R.string.achievement_collection_15
+    "collection_29" -> R.string.achievement_collection_29
     "planets_5" -> R.string.achievement_planets_5
     "planets_10" -> R.string.achievement_planets_10
     "planets_20" -> R.string.achievement_planets_20
+    "planets_24" -> R.string.achievement_planets_24
     "events_10" -> R.string.achievement_events_10
+    "events_50" -> R.string.achievement_events_50
+    "cases_25" -> R.string.achievement_cases_25
+    "cases_100" -> R.string.achievement_cases_100
     "prestige_1" -> R.string.achievement_prestige_1
+    "prestige_5" -> R.string.achievement_prestige_5
+    "click_250k" -> R.string.achievement_click_250k
+    "click_1m" -> R.string.achievement_click_1m
+    "click_5m" -> R.string.achievement_click_5m
+    "debris_10m" -> R.string.achievement_debris_10m
+    "debris_100m" -> R.string.achievement_debris_100m
+    "debris_1b" -> R.string.achievement_debris_1b
+    "debris_10b" -> R.string.achievement_debris_10b
+    "cases_250" -> R.string.achievement_cases_250
+    "cases_500" -> R.string.achievement_cases_500
+    "cases_1000" -> R.string.achievement_cases_1000
+    "events_100" -> R.string.achievement_events_100
+    "events_250" -> R.string.achievement_events_250
+    "events_500" -> R.string.achievement_events_500
+    "prestige_10" -> R.string.achievement_prestige_10
+    "prestige_25" -> R.string.achievement_prestige_25
+    "prestige_50" -> R.string.achievement_prestige_50
+    "fleet_100" -> R.string.achievement_fleet_100
+    "fleet_250" -> R.string.achievement_fleet_250
+    "fleet_500" -> R.string.achievement_fleet_500
+    "parts_25" -> R.string.achievement_parts_25
+    "parts_100" -> R.string.achievement_parts_100
+    "parts_300" -> R.string.achievement_parts_300
+    "station_5" -> R.string.achievement_station_5
+    "station_10" -> R.string.achievement_station_10
+    "station_20" -> R.string.achievement_station_20
+    "planets_21" -> R.string.achievement_planets_21
+    "planets_22" -> R.string.achievement_planets_22
+    "planets_23" -> R.string.achievement_planets_23
+    "wealth_1t" -> R.string.achievement_wealth_1t
+    "wealth_1q" -> R.string.achievement_wealth_1q
+    "tech_all" -> R.string.achievement_tech_all
+    "achievements_40" -> R.string.achievement_achievements_40
     else -> R.string.unknown_item
 }
 
@@ -545,6 +591,31 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun LateGalaxyPreview(viewModel: GameViewModel) {
+    Column(
+        Modifier.fillMaxWidth()
+            .padding(bottom = 10.dp)
+            .background(AppColors.Primary.copy(alpha = .055f), RoundedCornerShape(16.dp))
+            .border(1.dp, AppColors.Primary.copy(alpha = .18f), RoundedCornerShape(16.dp))
+            .padding(12.dp)
+    ) {
+        Text(stringResource(R.string.late_galaxy_preview), color = AppColors.Primary, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.late_galaxy_preview_desc), color = Color.White.copy(alpha = .62f), fontSize = 10.sp)
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            (21..24).forEach { index ->
+                val id = "p$index"
+                val planet = viewModel.planets[id] ?: return@forEach
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(painterResource(planet.imageRes), null, Modifier.size(58.dp), contentScale = ContentScale.Fit)
+                    Text(localizedPlanetName(id), color = Color.White, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
     }
 }
 
@@ -791,6 +862,10 @@ internal fun planetNameResource(id: String): Int =
         "p18" -> R.string.planet_cloud_city
         "p19" -> R.string.planet_rocky_bastion
         "p20" -> R.string.planet_foggy_void
+        "p21" -> R.string.planet_chronos_rift
+        "p22" -> R.string.planet_aurora_forge
+        "p23" -> R.string.planet_prism_sanctuary
+        "p24" -> R.string.planet_eventide_crown
         else -> R.string.unknown_item
     }
 
@@ -802,6 +877,10 @@ internal fun localizedUpgradeName(id: String): String = stringResource(
         "wrench" -> R.string.upgrade_quantum_wrench
         "harvester" -> R.string.upgrade_debris_harvester
         "beacon" -> R.string.upgrade_signal_beacon
+        "amplifier" -> R.string.upgrade_quantum_amplifier
+        "matrix" -> R.string.upgrade_neural_matrix
+        "compressor" -> R.string.upgrade_void_compressor
+        "singularity" -> R.string.upgrade_singularity_tap
         else -> R.string.unknown_item
     }
 )
@@ -832,6 +911,10 @@ internal fun planetDescriptionResource(id: String): Int =
         "p18" -> R.string.planet_desc_cloud_city
         "p19" -> R.string.planet_desc_rocky_bastion
         "p20" -> R.string.planet_desc_foggy_void
+        "p21" -> R.string.planet_desc_chronos_rift
+        "p22" -> R.string.planet_desc_aurora_forge
+        "p23" -> R.string.planet_desc_prism_sanctuary
+        "p24" -> R.string.planet_desc_eventide_crown
         else -> R.string.unknown_item
     }
 
@@ -860,5 +943,9 @@ internal fun planetBonusResource(id: String): Int =
         "p18" -> R.string.planet_bonus_cloud_city
         "p19" -> R.string.planet_bonus_rocky_bastion
         "p20" -> R.string.planet_bonus_foggy_void
+        "p21" -> R.string.planet_bonus_chronos_rift
+        "p22" -> R.string.planet_bonus_aurora_forge
+        "p23" -> R.string.planet_bonus_prism_sanctuary
+        "p24" -> R.string.planet_bonus_eventide_crown
         else -> R.string.unknown_item
     }

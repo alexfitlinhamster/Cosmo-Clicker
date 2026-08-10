@@ -210,35 +210,65 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
                 }
             }
         }
-        items(viewModel.fleetItems, key = { it.id }) { drone ->
-            val count = state.fleetCounts[drone.id] ?: 0
-            val activeCount = state.activeFleetCounts[drone.id] ?: 0
-            val discovered = drone.id in state.discoveredDroneIds || count > 0
-            ShopRow(
-                name = if (discovered) drone.name else "???",
-                meta = if (discovered) stringResource(
-                    R.string.drone_storage_meta,
-                    count,
-                    activeCount,
-                    com.example.myapplication.MetaProgressEngine.masteryLevel(state.droneParts[drone.id] ?: 0),
-                    state.droneParts[drone.id] ?: 0
-                ) else stringResource(R.string.collection_drone_unknown),
-                cost = 0,
-                canBuy = false,
-                canSell = count > 0,
-                iconRes = drone.iconRes,
-                spriteIndex = drone.spriteIndex,
-                showLock = !discovered,
-                fleetActionLabel = when {
-                    activeCount > 0 -> stringResource(R.string.send_to_storage)
-                    count > 0 -> stringResource(R.string.send_to_flight)
-                    else -> null
-                },
-                fleetActionEnabled = activeCount > 0 || state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state),
-                onFleetAction = { if (activeCount > 0) viewModel.recallDrone(drone.id) else viewModel.deployDrone(drone.id) },
-                onBuy = {},
-                onSell = { viewModel.sellFleet(drone.id) }
-            )
+        items(viewModel.fleetItems.chunked(3), key = { row -> row.first().id }) { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { drone ->
+                    CompactHangarDroneCard(drone, viewModel, state, Modifier.weight(1f))
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun CompactHangarDroneCard(
+    drone: com.example.myapplication.FleetConfig,
+    viewModel: GameViewModel,
+    state: GameState,
+    modifier: Modifier = Modifier
+) {
+    val count = state.fleetCounts[drone.id] ?: 0
+    val active = state.activeFleetCounts[drone.id] ?: 0
+    val discovered = drone.id in state.discoveredDroneIds || count > 0
+    val canDeploy = active > 0 || (count > 0 && state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state))
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = if (active > 0) AppColors.Primary.copy(alpha = .12f) else Color.White.copy(alpha = .04f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (active > 0) AppColors.Primary.copy(alpha = .45f) else Color.White.copy(alpha = .08f))
+    ) {
+        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(drone.iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(58.dp).clip(CircleShape),
+                    contentScale = ContentScale.Fit,
+                    alpha = if (discovered) 1f else .18f
+                )
+                if (!discovered) Text("?", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+            }
+            Text(if (discovered) drone.name else "???", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("$active / $count", color = if (active > 0) AppColors.Primary else Color.Gray, fontSize = 10.sp)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                OutlinedButton(
+                    onClick = { if (active > 0) viewModel.recallDrone(drone.id) else viewModel.deployDrone(drone.id) },
+                    enabled = canDeploy,
+                    modifier = Modifier.weight(1f).height(32.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .55f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppColors.Primary)
+                ) { Text(if (active > 0) "↓" else "↑", fontSize = 15.sp) }
+                OutlinedButton(
+                    onClick = { viewModel.sellFleet(drone.id) },
+                    enabled = count > 0,
+                    modifier = Modifier.weight(1f).height(32.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Danger.copy(alpha = .45f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppColors.Danger)
+                ) { Text("−", fontSize = 15.sp) }
+            }
         }
     }
 }
@@ -361,13 +391,55 @@ private fun LauncherIcon(icon: Int, description: Int, onClick: () -> Unit) {
 
 private fun achievementTitle(id: String): Int = when (id) {
     "click_100" -> R.string.achievement_click_100
+    "click_1000" -> R.string.achievement_click_1000
     "click_10000" -> R.string.achievement_click_10000
+    "click_100000" -> R.string.achievement_click_100000
     "fleet_5" -> R.string.achievement_fleet_5
     "fleet_12" -> R.string.achievement_fleet_12
+    "fleet_50" -> R.string.achievement_fleet_50
+    "collection_15" -> R.string.achievement_collection_15
+    "collection_29" -> R.string.achievement_collection_29
     "planets_5" -> R.string.achievement_planets_5
     "planets_10" -> R.string.achievement_planets_10
     "planets_20" -> R.string.achievement_planets_20
+    "planets_24" -> R.string.achievement_planets_24
     "events_10" -> R.string.achievement_events_10
+    "events_50" -> R.string.achievement_events_50
+    "cases_25" -> R.string.achievement_cases_25
+    "cases_100" -> R.string.achievement_cases_100
     "prestige_1" -> R.string.achievement_prestige_1
+    "prestige_5" -> R.string.achievement_prestige_5
+    "click_250k" -> R.string.achievement_click_250k
+    "click_1m" -> R.string.achievement_click_1m
+    "click_5m" -> R.string.achievement_click_5m
+    "debris_10m" -> R.string.achievement_debris_10m
+    "debris_100m" -> R.string.achievement_debris_100m
+    "debris_1b" -> R.string.achievement_debris_1b
+    "debris_10b" -> R.string.achievement_debris_10b
+    "cases_250" -> R.string.achievement_cases_250
+    "cases_500" -> R.string.achievement_cases_500
+    "cases_1000" -> R.string.achievement_cases_1000
+    "events_100" -> R.string.achievement_events_100
+    "events_250" -> R.string.achievement_events_250
+    "events_500" -> R.string.achievement_events_500
+    "prestige_10" -> R.string.achievement_prestige_10
+    "prestige_25" -> R.string.achievement_prestige_25
+    "prestige_50" -> R.string.achievement_prestige_50
+    "fleet_100" -> R.string.achievement_fleet_100
+    "fleet_250" -> R.string.achievement_fleet_250
+    "fleet_500" -> R.string.achievement_fleet_500
+    "parts_25" -> R.string.achievement_parts_25
+    "parts_100" -> R.string.achievement_parts_100
+    "parts_300" -> R.string.achievement_parts_300
+    "station_5" -> R.string.achievement_station_5
+    "station_10" -> R.string.achievement_station_10
+    "station_20" -> R.string.achievement_station_20
+    "planets_21" -> R.string.achievement_planets_21
+    "planets_22" -> R.string.achievement_planets_22
+    "planets_23" -> R.string.achievement_planets_23
+    "wealth_1t" -> R.string.achievement_wealth_1t
+    "wealth_1q" -> R.string.achievement_wealth_1q
+    "tech_all" -> R.string.achievement_tech_all
+    "achievements_40" -> R.string.achievement_achievements_40
     else -> R.string.unknown_item
 }

@@ -55,8 +55,8 @@ import java.util.concurrent.atomic.AtomicLong
 fun GameScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
-    reduceMotion: Boolean,
-    onReduceMotionChanged: (Boolean) -> Unit,
+    backgroundMusicEnabled: Boolean,
+    onBackgroundMusicChanged: (Boolean) -> Unit,
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -66,6 +66,9 @@ fun GameScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val soundManager = remember(context) { SoundManager(context) }
+    LaunchedEffect(backgroundMusicEnabled) {
+        if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic() else soundManager.pauseBackgroundMusic()
+    }
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
     var isShopOpen by remember { mutableStateOf(false) }
@@ -132,12 +135,12 @@ fun GameScreen(
         previousClaimedAchievements = state.claimedAchievementIds
     }
 
-    DisposableEffect(lifecycleOwner, viewModel) {
+    DisposableEffect(lifecycleOwner, viewModel, backgroundMusicEnabled) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
                     viewModel.resumeSimulation()
-                    soundManager.resumeBackgroundMusic()
+                    if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic()
                 }
                 Lifecycle.Event.ON_STOP -> {
                     viewModel.pauseSimulation()
@@ -149,7 +152,7 @@ fun GameScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             viewModel.resumeSimulation()
-            soundManager.resumeBackgroundMusic()
+            if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic()
         }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -182,10 +185,30 @@ fun GameScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // ДИНАМИЧЕСКИЙ ФОН
+        val backgroundMotion = rememberInfiniteTransition(label = "game_background_motion")
+        val backgroundShiftX by backgroundMotion.animateFloat(
+            initialValue = -24f,
+            targetValue = 24f,
+            animationSpec = infiniteRepeatable(tween(11_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "background_shift_x"
+        )
+        val backgroundShiftY by backgroundMotion.animateFloat(
+            initialValue = -14f,
+            targetValue = 14f,
+            animationSpec = infiniteRepeatable(tween(15_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "background_shift_y"
+        )
         Image(
             painter = painterResource(id = backgroundRes),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                if (state.activeEvent == null) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                    translationX = backgroundShiftX
+                    translationY = backgroundShiftY
+                }
+            },
             contentScale = ContentScale.FillBounds
         )
 
@@ -198,8 +221,8 @@ fun GameScreen(
         )
 
         // Звезды
-        repeat(if (reduceMotion) GameConstants.ReducedStarCount else GameConstants.StarCount) {
-            Star(reduceMotion)
+        repeat(GameConstants.StarCount) {
+            Star(false)
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -395,15 +418,15 @@ fun GameScreen(
             onOpenAll = { viewModel.openAllPendingCases() },
             onClearReward = { viewModel.clearReward() },
             onClearBundleSummary = { viewModel.clearCaseBundleSummary() },
-            reduceMotion = reduceMotion
+            reduceMotion = false
         )
 
         if (showSettings) {
             SettingsScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = onLanguageSelected,
-                reduceMotion = reduceMotion,
-                onReduceMotionChanged = onReduceMotionChanged,
+                backgroundMusicEnabled = backgroundMusicEnabled,
+                onBackgroundMusicChanged = onBackgroundMusicChanged,
                 onResetGame = {
                     viewModel.resetGame()
                     showSettings = false
@@ -530,8 +553,8 @@ fun GameScreen(
                 ),
                 label = "start_prompt_alpha"
             )
-            val promptOffset = if (reduceMotion) 0f else animatedPromptOffset
-            val promptAlpha = if (reduceMotion) 1f else animatedPromptAlpha
+            val promptOffset = animatedPromptOffset
+            val promptAlpha = animatedPromptAlpha
 
             Box(
                 modifier = Modifier
@@ -546,10 +569,6 @@ fun GameScreen(
                     ) {
                         scope.launch {
                             soundManager.playClick()
-                            if (reduceMotion) {
-                                showStartScreen = false
-                                return@launch
-                            }
                             // Анимация ухода вверх и исчезновения
                             launch {
                                 startScreenOffset.animateTo(

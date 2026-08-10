@@ -11,9 +11,17 @@ class EconomyBalanceTest {
         assertEquals(10_000.0, EconomyBalance.planetPrice(2), 0.0)
         assertEquals(19_000.0, EconomyBalance.planetPrice(3), 0.0)
         assertEquals(36_100.0, EconomyBalance.planetPrice(4), 0.0001)
-        assertEquals(1_000_000_000.0, EconomyBalance.planetPrice(20), 0.0)
+        assertTrue(EconomyBalance.planetPrice(20) > EconomyBalance.planetPrice(19))
+        assertTrue(EconomyBalance.planetPrice(24) > EconomyBalance.planetPrice(20))
         assertEquals(1.0, EconomyBalance.planetIncomeMultiplier("p1"), 0.0)
         assertEquals(1.21, EconomyBalance.planetIncomeMultiplier("p3"), 0.0001)
+    }
+
+    @Test
+    fun planetIndexSupportsExpandedGalaxyAndStillClampsInvalidIds() {
+        assertEquals(24, EconomyBalance.planetIndex("p24"))
+        assertEquals(24, EconomyBalance.planetIndex("p999"))
+        assertEquals(1, EconomyBalance.planetIndex("invalid"))
     }
 
     @Test
@@ -24,14 +32,15 @@ class EconomyBalanceTest {
             fleetCounts = mapOf("rare" to 2),
             technologies = setOf(Technology.POWER_CORE)
         )
-        assertEquals(30.25, EconomyBalance.passiveIncome(state, fleet), 0.0001)
+        assertEquals(302.5, EconomyBalance.passiveIncome(state, fleet), 0.0001)
     }
 
     @Test
-    fun clickUpgradeCostNeverExceedsFiveThousand() {
-        assertEquals(15.0, EconomyBalance.clickUpgradeCost(15.0, 0), 0.0)
-        assertEquals(5_000.0, EconomyBalance.clickUpgradeCost(5_000.0, 20), 0.0)
-        assertEquals(5_000.0, EconomyBalance.clickUpgradeCost(4_000.0, 20, 1.5), 0.0)
+    fun clickUpgradeCostGrowsSmoothlyAndNeverExceedsCap() {
+        assertEquals(150.0, EconomyBalance.clickUpgradeCost(15.0, 0), 0.0)
+        assertEquals(1_086.0, EconomyBalance.clickUpgradeCost(15.0, 100), 0.0)
+        assertEquals(2_500_000.0, EconomyBalance.clickUpgradeCost(5_000.0, 1_000), 0.0)
+        assertEquals(2_500_000.0, EconomyBalance.clickUpgradeCost(4_000.0, 1_000, 1.5), 0.0)
     }
 
     @Test

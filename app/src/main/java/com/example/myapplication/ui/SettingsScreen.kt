@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -55,8 +57,8 @@ private data class LanguageOption(val tag: String?, val label: Int)
 fun SettingsScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
-    reduceMotion: Boolean,
-    onReduceMotionChanged: (Boolean) -> Unit,
+    backgroundMusicEnabled: Boolean,
+    onBackgroundMusicChanged: (Boolean) -> Unit,
     onResetGame: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -169,14 +171,14 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.reduce_motion), color = Color.White)
+                        Text(stringResource(R.string.background_music), color = Color.White)
                         Text(
-                            stringResource(R.string.reduce_motion_desc),
+                            stringResource(R.string.background_music_desc),
                             color = Color.LightGray,
                             fontSize = 11.sp
                         )
                     }
-                    Switch(checked = reduceMotion, onCheckedChange = onReduceMotionChanged)
+                    Switch(checked = backgroundMusicEnabled, onCheckedChange = onBackgroundMusicChanged)
                 }
             }
 
@@ -244,16 +246,37 @@ fun SettingsScreen(
     }
 
     if (showGameGuideDialog) {
+        val guideSections = listOf(
+            R.string.guide_basics_title to R.string.guide_basics_body,
+            R.string.guide_drones_title to R.string.guide_drones_body,
+            R.string.guide_cases_title to R.string.guide_cases_body,
+            R.string.guide_events_title to R.string.guide_events_body,
+            R.string.guide_progress_title to R.string.guide_progress_body,
+            R.string.guide_performance_title to R.string.guide_performance_body
+        )
         SpaceDialog(
             title = stringResource(R.string.how_to_play),
             onDismiss = { showGameGuideDialog = false },
             content = {
-                Text(
-                    text = stringResource(R.string.game_guide_body),
-                    modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 420.dp),
-                    color = Color.White.copy(alpha = 0.82f),
-                    lineHeight = 20.sp
-                )
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 460.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(guideSections, key = { it.first }) { (title, body) ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White.copy(alpha = 0.05f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                        ) {
+                            Column(Modifier.padding(14.dp)) {
+                                Text(stringResource(title), color = AppColors.Primary, fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.height(5.dp))
+                                Text(stringResource(body), color = Color.White.copy(alpha = 0.82f), lineHeight = 19.sp)
+                            }
+                        }
+                    }
+                }
             },
             actions = {
                 Button(onClick = { showGameGuideDialog = false }) {

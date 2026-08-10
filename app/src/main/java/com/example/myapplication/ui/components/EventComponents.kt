@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.LinearEasing
@@ -30,8 +31,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.EventChainResult
+import kotlinx.coroutines.delay
 import com.example.myapplication.EventEngine
 import com.example.myapplication.TradeOffer
 import com.example.myapplication.CaseType
@@ -530,11 +534,8 @@ private fun tradeOfferIcon(offer: TradeOffer): Int = when (offer) {
 
 @Composable
 fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(
+    SpaceDialog(
+        title = stringResource(
                     when (event.type) {
                         GameEventType.STORM -> R.string.event_space_storm
                         GameEventType.ASTEROID -> R.string.event_gold_asteroid
@@ -548,10 +549,15 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                         GameEventType.TRADING_SHIP -> R.string.event_trading_ship
                     }
                 ),
-                fontWeight = FontWeight.Bold
+        onDismiss = onDismiss,
+        content = {
+            Image(
+                painter = painterResource(eventIconResource(event.type)),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(18.dp)),
+                contentScale = ContentScale.Crop
             )
-        },
-        text = {
+            Spacer(Modifier.height(14.dp))
             Text(
                 text = stringResource(
                     when (event.type) {
@@ -566,14 +572,10 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                         GameEventType.PIRATE_RAID -> R.string.event_desc_pirate_raid
                         GameEventType.TRADING_SHIP -> R.string.event_desc_trading_ship
                     }
-                )
+                ), color = Color.White.copy(alpha = .82f), lineHeight = 19.sp
             )
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
-            }
-        }
+        actions = { Button(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
     )
 }
 
@@ -581,20 +583,44 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
 fun CyberVirusDialog(event: GameEvent, onResolved: (Boolean) -> Unit, onDismiss: () -> Unit) {
     val sequence = remember(event.startedAt) {
         var seed = event.startedAt
-        List(5) {
+        List(6) {
             seed = seed * 1_103_515_245L + 12_345L
             ((seed ushr 16) % 9).toInt()
         }
     }
     var progress by remember(event.startedAt) { mutableIntStateOf(0) }
     var mistakes by remember(event.startedAt) { mutableIntStateOf(0) }
+    var isMemorizing by remember(event.startedAt) { mutableStateOf(true) }
+    LaunchedEffect(event.startedAt, mistakes) {
+        isMemorizing = true
+        delay(2_600L)
+        isMemorizing = false
+    }
     val targetNode = sequence.getOrElse(progress) { -1 }
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.cyber_minigame_title), color = AppColors.Danger, fontWeight = FontWeight.Bold) },
-        text = {
+    SpaceDialog(
+        title = stringResource(R.string.cyber_minigame_title),
+        onDismiss = onDismiss,
+        content = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.cyber_minigame_hint, progress + 1, sequence.size, mistakes, 3), textAlign = TextAlign.Center)
+                Image(
+                    painter = painterResource(R.drawable.event_cyber_terminal_v3),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(128.dp).clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    progress = { progress.toFloat() / sequence.size },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                    color = AppColors.Primary,
+                    trackColor = Color.White.copy(alpha = .1f)
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(if (isMemorizing) R.string.cyber_memorize else R.string.cyber_minigame_hint, progress + 1, sequence.size, mistakes, 3),
+                    color = if (isMemorizing) AppColors.Primary else Color.White.copy(alpha = .82f),
+                    textAlign = TextAlign.Center
+                )
                 Spacer(Modifier.height(12.dp))
                 repeat(3) { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -607,13 +633,16 @@ fun CyberVirusDialog(event: GameEvent, onResolved: (Boolean) -> Unit, onDismiss:
                                         if (progress == sequence.size) onResolved(true)
                                     } else {
                                         mistakes++
-                                        progress = 0
+                                        progress = (progress - 1).coerceAtLeast(0)
                                         if (mistakes >= 3) onResolved(false)
                                     }
                                 },
                                 modifier = Modifier.size(62.dp),
+                                enabled = !isMemorizing,
                                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = if (node == targetNode) Color(0xFF1B5E20) else Color(0xFF263238)
+                                    containerColor = Color(0xFF14283D),
+                                    disabledContainerColor = if (node in sequence) Color(0xFF7A1741) else Color(0xFF14283D),
+                                    contentColor = Color.White
                                 ),
                                 contentPadding = PaddingValues(0.dp)
                             ) { Text((node + 1).toString(), fontWeight = FontWeight.Black) }
@@ -621,10 +650,13 @@ fun CyberVirusDialog(event: GameEvent, onResolved: (Boolean) -> Unit, onDismiss:
                     }
                     Spacer(Modifier.height(8.dp))
                 }
-                Text(stringResource(R.string.cyber_minigame_sequence, sequence.joinToString(" → ") { (it + 1).toString() }), color = AppColors.Primary, fontSize = 12.sp)
+                if (isMemorizing) Text(
+                    stringResource(R.string.cyber_minigame_sequence, sequence.joinToString(" → ") { (it + 1).toString() }),
+                    color = AppColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.Bold
+                )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
+        actions = { Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = .1f))) { Text(stringResource(R.string.close)) } }
     )
 }
 
@@ -635,19 +667,47 @@ fun DistressSignalDialog(
     onRescue: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.event_distress_signal), fontWeight = FontWeight.Bold) },
-        text = { Text(stringResource(R.string.event_distress_choice, formatNum(reward), formatNum(reward * 3.0))) },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onRescue) {
-                Text(stringResource(R.string.event_rescue))
-            }
+    SpaceDialog(
+        title = stringResource(R.string.event_distress_signal),
+        onDismiss = onDismiss,
+        content = {
+            Image(
+                painter = painterResource(R.drawable.event_distress_background_v2),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(18.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                stringResource(R.string.event_choice_instruction),
+                color = Color.White.copy(alpha = 0.82f),
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
+            Spacer(Modifier.height(10.dp))
+            EventChoicePreview(
+                title = stringResource(R.string.event_salvage),
+                description = stringResource(R.string.event_salvage_explained, formatNum(reward)),
+                accent = AppColors.Primary
+            )
+            Spacer(Modifier.height(8.dp))
+            EventChoicePreview(
+                title = stringResource(R.string.event_rescue),
+                description = stringResource(R.string.event_rescue_explained, formatNum(reward * 3.0)),
+                accent = AppColors.Warning
+            )
         },
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onSalvage) {
-                Text(stringResource(R.string.event_salvage))
-            }
+        actions = {
+            Button(
+                onClick = onSalvage,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.10f), contentColor = Color.White)
+            ) { Text(stringResource(R.string.event_salvage), fontWeight = FontWeight.Bold) }
+            Button(
+                onClick = onRescue,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black)
+            ) { Text(stringResource(R.string.event_rescue), fontWeight = FontWeight.Black) }
         }
     )
 }
@@ -656,10 +716,10 @@ fun DistressSignalDialog(
 fun EventChainResultDialog(result: EventChainResult, onDismiss: () -> Unit) {
     val isStation = result.eventType == GameEventType.ABANDONED_STATION
     val isCyberVirus = result.eventType == GameEventType.CYBER_VIRUS
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (result.success) R.string.event_action_success else R.string.event_rescue_failed)) },
-        text = {
+    SpaceDialog(
+        title = stringResource(if (result.success) R.string.event_action_success else R.string.event_rescue_failed),
+        onDismiss = onDismiss,
+        content = {
             Text(
                 when {
                     isCyberVirus && result.success -> stringResource(R.string.cyber_success, formatNum(result.reward))
@@ -671,13 +731,9 @@ fun EventChainResultDialog(result: EventChainResult, onDismiss: () -> Unit) {
                     )
                     else -> stringResource(R.string.event_rescue_no_reward)
                 }
-            )
+            , color = Color.White.copy(alpha = .82f), lineHeight = 19.sp)
         },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        }
+        actions = { Button(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } }
     )
 }
 
@@ -688,29 +744,35 @@ fun AbandonedStationDialog(
     onReactorCore: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.event_abandoned_station), fontWeight = FontWeight.Bold) },
-        text = {
-            Text(
-                stringResource(
-                    R.string.event_station_choice,
-                    formatNum(reward * 1.5),
-                    formatNum(reward * 5.0)
-                )
-            )
+    SpaceDialog(
+        title = stringResource(R.string.event_abandoned_station),
+        onDismiss = onDismiss,
+        content = {
+            Text(stringResource(R.string.event_choice_instruction), color = Color.White.copy(alpha = .82f))
+            Spacer(Modifier.height(10.dp))
+            EventChoicePreview(stringResource(R.string.event_station_safe), stringResource(R.string.event_station_safe_explained, formatNum(reward * 1.5)), AppColors.Primary)
+            Spacer(Modifier.height(8.dp))
+            EventChoicePreview(stringResource(R.string.event_station_reactor), stringResource(R.string.event_station_reactor_explained, formatNum(reward * 5.0)), AppColors.Danger)
         },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onReactorCore) {
-                Text(stringResource(R.string.event_station_reactor))
-            }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onSafeRoute) {
-                Text(stringResource(R.string.event_station_safe))
-            }
+        actions = {
+            Button(onClick = onSafeRoute, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = .1f))) { Text(stringResource(R.string.event_station_safe)) }
+            Button(onClick = onReactorCore, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.event_station_reactor)) }
         }
     )
+}
+
+@Composable
+private fun EventChoicePreview(title: String, description: String, accent: Color) {
+    Column(
+        Modifier.fillMaxWidth()
+            .background(accent.copy(alpha = .08f), RoundedCornerShape(12.dp))
+            .border(1.dp, accent.copy(alpha = .28f), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Text(title, color = accent, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(3.dp))
+        Text(description, color = Color.White.copy(alpha = .76f), fontSize = 12.sp, lineHeight = 17.sp)
+    }
 }
 
 @Composable

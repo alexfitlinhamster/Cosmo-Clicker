@@ -7,8 +7,8 @@ object GameConstants {
     val ShopCollapsedHeight = 60.dp
     val ShopExpandedHeight = 350.dp
     val PlanetSize = 250.dp // Вернули изначальный крупный размер
-    val StarCount = 30
-    val ReducedStarCount = 12
+    val StarCount = 18
+    val ReducedStarCount = 6
     
     // Зона отрисовки дронов и мусора (высота экрана минус панель магазина)
     val GameAreaHeightOffset = 350

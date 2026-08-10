@@ -33,6 +33,9 @@ object EconomyEngine {
             "p6" -> if (random.nextInt(100) < 30) value *= 4.0
             "p14" -> if (state.activeEvent != null) value *= 2.0
             "p20" -> if (random.nextInt(100) < 10) value *= 10.0
+            "p22" -> value *= 1.4
+            "p23" -> if (random.nextInt(100) < 20) value *= 5.0
+            "p24" -> value *= 2.0
             "p15" -> {
                 if (random.nextInt(100) < 25) value *= 3.0
                 value += 20.0

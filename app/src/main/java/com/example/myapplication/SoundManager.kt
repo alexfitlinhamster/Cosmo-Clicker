@@ -97,13 +97,20 @@ class SoundManager(context: Context) : AutoCloseable {
 
     fun playPlanetUnlock() = playEffect(R.raw.planet_unlock)
 
-    fun playAchievementClaimed() = playEffect(R.raw.achievement_claimed)
+    fun playAchievementClaimed() = playEffect(
+        resourceId = R.raw.achievement_claimed,
+        volume = ACHIEVEMENT_VOLUME,
+        playbackSpeed = ACHIEVEMENT_PLAYBACK_SPEED
+    )
 
-    private fun playEffect(resourceId: Int) {
+    private fun playEffect(resourceId: Int, volume: Float = EFFECT_VOLUME, playbackSpeed: Float = 1f) {
         synchronized(lock) {
             effectPlayer?.release()
             effectPlayer = MediaPlayer.create(appContext, resourceId)?.also { player ->
-                player.setVolume(EFFECT_VOLUME, EFFECT_VOLUME)
+                player.setVolume(volume, volume)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && playbackSpeed != 1f) {
+                    player.playbackParams = player.playbackParams.setSpeed(playbackSpeed)
+                }
                 player.setOnCompletionListener {
                     synchronized(lock) {
                         if (effectPlayer === it) effectPlayer = null
@@ -204,5 +211,7 @@ class SoundManager(context: Context) : AutoCloseable {
         const val CLICK_VOLUME_PERCENT = 35
         const val MUSIC_VOLUME = 0.45f
         const val EFFECT_VOLUME = 0.7f
+        const val ACHIEVEMENT_VOLUME = 0.34f
+        const val ACHIEVEMENT_PLAYBACK_SPEED = 0.92f
     }
 }

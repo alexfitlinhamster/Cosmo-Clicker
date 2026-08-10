@@ -2,6 +2,11 @@
 
 ## 1.16.0 — Cosmic Shop Update - 2026-08-10
 
+- Made Space Storm more active: its energy node jumps to a new safe position after every hit and pays part of the reward immediately instead of behaving like a stationary tap counter.
+- Expanded click upgrades from 20 to 1,000 levels, raised their starting prices by 10×, and introduced a smooth 2% level curve capped at 2.5 million per purchase.
+- Made the achievement-claim sound quieter and slightly slower for a softer, less intrusive reward cue without changing other effects.
+- Greatly increased drone income with a stronger rarity curve: 5, 20, 100, 500, 2,500, and 10,000 base income from Common through Void. Drone collection access remains rarity-based, so higher-rarity salvage requires an equally capable drone.
+- Rebuilt the Distress Signal choice menu around a custom illustrated rescue-capsule background with clearer, evenly weighted action buttons.
 - Fixed drones becoming permanently trapped or disabled during Black Hole events; they now keep collecting moving debris while the singularity affects the salvage field.
 - Fixed case rewards surviving app restarts, made every dropped duplicate count as a real warehouse drone, removed the artificial ten-drone storage cap, and prevented reward screens from closing through background taps.
 - Renamed the Case Shop to the Cosmic Shop to reflect its expanded selection of cases, planets, upgrades, and ship systems.

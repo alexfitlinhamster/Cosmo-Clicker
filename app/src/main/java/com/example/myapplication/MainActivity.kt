@@ -33,8 +33,8 @@ class MainActivity : ComponentActivity() {
                 GameScreen(
                     selectedLanguage = getSelectedLanguage(),
                     onLanguageSelected = ::setSelectedLanguage,
-                    reduceMotion = getReduceMotion(),
-                    onReduceMotionChanged = ::setReduceMotion
+                    backgroundMusicEnabled = getBackgroundMusicEnabled(),
+                    onBackgroundMusicChanged = ::setBackgroundMusicEnabled
                 )
             }
         }
@@ -53,12 +53,12 @@ class MainActivity : ComponentActivity() {
         recreate()
     }
 
-    private fun getReduceMotion(): Boolean =
-        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).getBoolean(REDUCE_MOTION_KEY, false)
+    private fun getBackgroundMusicEnabled(): Boolean =
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).getBoolean(BACKGROUND_MUSIC_KEY, true)
 
-    private fun setReduceMotion(enabled: Boolean) {
+    private fun setBackgroundMusicEnabled(enabled: Boolean) {
         getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
-            .putBoolean(REDUCE_MOTION_KEY, enabled)
+            .putBoolean(BACKGROUND_MUSIC_KEY, enabled)
             .apply()
         recreate()
     }
@@ -66,6 +66,6 @@ class MainActivity : ComponentActivity() {
     private companion object {
         const val PREFERENCES_NAME = "settings"
         const val LANGUAGE_KEY = "language"
-        const val REDUCE_MOTION_KEY = "reduceMotion"
+        const val BACKGROUND_MUSIC_KEY = "backgroundMusic"
     }
 }

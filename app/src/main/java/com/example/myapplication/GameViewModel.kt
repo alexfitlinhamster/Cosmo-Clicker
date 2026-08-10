@@ -44,7 +44,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ItemConfig("torch", "Weld Torch", 75.0, 2.0, R.drawable.upgrade_weld_torch_v2),
         ItemConfig("wrench", "Quantum Wrench", 350.0, 8.0, R.drawable.upgrade_quantum_wrench_v2),
         ItemConfig("harvester", "Debris Harvester", 1_500.0, 25.0, R.drawable.upgrade_debris_harvester_v2),
-        ItemConfig("beacon", "Signal Beacon", 5_000.0, 75.0, R.drawable.upgrade_signal_beacon_v2)
+        ItemConfig("beacon", "Signal Beacon", 5_000.0, 75.0, R.drawable.upgrade_signal_beacon_v2),
+        ItemConfig("amplifier", "Quantum Amplifier", 18_000.0, 220.0, R.drawable.event_reactor_core),
+        ItemConfig("matrix", "Neural Matrix", 70_000.0, 650.0, R.drawable.event_cyber_module_v2),
+        ItemConfig("compressor", "Void Compressor", 260_000.0, 1_900.0, R.drawable.upgrade_debris_harvester_v2),
+        ItemConfig("singularity", "Singularity Tap", 950_000.0, 5_500.0, R.drawable.event_black_hole_v2)
     )
 
     val fleetItems = (1..29).map { i ->
@@ -86,7 +90,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         "p17" to PlanetConfig("Pink Nebula", 305175781250000.0, "Sweet shimmer", Color(0xFFF06292), R.drawable.planet_17_v2),
         "p18" to PlanetConfig("Cloud City", 1525878906250000.0, "Floating", Color(0xFF81D4FA), R.drawable.planet_18_v2),
         "p19" to PlanetConfig("Rocky Bastion", 17629394531250000.0, "Stone fortress", Color(0xFF8D6E63), R.drawable.planet_19_v2),
-        "p20" to PlanetConfig("Foggy Void", 38146972656250000.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_20_v2)
+        "p20" to PlanetConfig("Foggy Void", 0.0, "Light disappears", Color(0xFF455A64), R.drawable.planet_20_v2),
+        "p21" to PlanetConfig("Chronos Rift", 0.0, "Time fractures", Color(0xFF536DFE), R.drawable.planet_21_v2),
+        "p22" to PlanetConfig("Aurora Forge", 0.0, "Living machine world", Color(0xFF00BFA5), R.drawable.planet_22_v2),
+        "p23" to PlanetConfig("Prism Sanctuary", 0.0, "Crystal resonance", Color(0xFFCE93D8), R.drawable.planet_23_v2),
+        "p24" to PlanetConfig("Eventide Crown", 0.0, "Edge of the known galaxy", Color(0xFFFFD740), R.drawable.planet_24_v2)
     ).mapValues { (id, config) -> config.copy(price = EconomyBalance.planetPrice(EconomyBalance.planetIndex(id))) }
 
     private val _gameState = MutableStateFlow(loadGameState())
@@ -603,7 +611,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onEventChallengeClick() {
         val now = System.currentTimeMillis()
-        _gameState.update { EventEngine.onChallengeClick(it, now) }
+        _gameState.update { EventEngine.onChallengeClick(it, now, randomProvider) }
     }
     
     fun onBlackHoleClick() {

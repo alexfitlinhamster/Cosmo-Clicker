@@ -23,6 +23,20 @@
     <string name="open_guide">Open guide</string>
     <string name="reduce_motion">Reduce motion and flashes</string>
     <string name="reduce_motion_desc">Disables blinking effects and shortens transitions</string>
+    <string name="background_particles">Background particles</string>
+    <string name="background_particles_desc">Show a reduced number of decorative stars</string>
+    <string name="guide_basics_title">Getting started</string>
+    <string name="guide_basics_body">Tap the planet to earn debris. Spend it on click upgrades and new planets; each planet changes income and adds a unique bonus.</string>
+    <string name="guide_drones_title">Drones and hangar</string>
+    <string name="guide_drones_body">Drones collect debris and generate passive income. Use the hangar to choose active drones; rarity and mastery improve their results.</string>
+    <string name="guide_cases_title">Cases and collection</string>
+    <string name="guide_cases_body">Cases contain drones of different rarities. Duplicates grant parts for mastery, while collection milestones provide extra rewards.</string>
+    <string name="guide_events_title">Events and missions</string>
+    <string name="guide_events_body">Temporary events change the rules and offer risks or rewards. Daily and weekly missions provide additional goals and prizes.</string>
+    <string name="guide_progress_title">Prestige and station</string>
+    <string name="guide_progress_body">Prestige unlocks after reaching planet 10. The station and technologies provide permanent improvements for later runs.</string>
+    <string name="guide_performance_title">Display settings</string>
+    <string name="guide_performance_body">If the screen feels too busy, disable background particles or enable reduced motion in Settings.</string>
     <string name="close">Close</string>
     <string name="tap_to_continue">Tap me to continue</string>
     <string name="game_guide_body" formatted="false">Tap the planet to earn debris and buy upgrades to increase every tap.\n\nDrones collect space debris and generate passive income based on rarity. Rewards, clicks, and passive income scale with the selected planet.\n\nOpen cases to receive up to 12 drones. Higher-rarity drones collect better debris and produce more income.\n\nTemporary events change the rules and offer risks or rewards.\n\nPrestige unlocks at planet 10. Every planet has a unique bonus and an income multiplier.</string>
@@ -133,6 +147,7 @@
     <string name="event_cyber_virus">Cyber Virus!</string>
     <string name="cyber_minigame_title">EMERGENCY: terminal infected</string>
     <string name="cyber_minigame_hint">Enter the node code in order. Step %1$d/%2$d · errors %3$d/%4$d</string>
+    <string name="cyber_memorize">Memorize the code · step %1$d/%2$d · errors %3$d/%4$d</string>
     <string name="cyber_minigame_sequence">Code: %1$s</string>
     <string name="cyber_banner_objective">Tap to repair the infected terminal</string>
     <string name="cyber_success">Virus removed. Reward: %1$s debris.</string>
@@ -358,4 +373,53 @@
     <string name="station_trade_bonus">+10% weekly reward per level</string>
     <string name="continue_button">Continue</string>
     <string name="start_challenge">Start challenge</string>
+    <string name="upgrade_quantum_amplifier">Quantum Amplifier</string>
+    <string name="upgrade_neural_matrix">Neural Matrix</string>
+    <string name="upgrade_void_compressor">Void Compressor</string>
+    <string name="upgrade_singularity_tap">Singularity Tap</string>
+    <string name="planet_chronos_rift">Chronos Rift</string>
+    <string name="planet_aurora_forge">Aurora Forge</string>
+    <string name="planet_prism_sanctuary">Prism Sanctuary</string>
+    <string name="planet_eventide_crown">Eventide Crown</string>
+    <string name="planet_desc_chronos_rift">A world fractured by time</string>
+    <string name="planet_desc_aurora_forge">A planet-sized automated foundry</string>
+    <string name="planet_desc_prism_sanctuary">Crystals resonate with every tap</string>
+    <string name="planet_desc_eventide_crown">The final frontier of the galaxy</string>
+    <string name="planet_bonus_chronos_rift" formatted="false">Bonus: +35% passive income</string>
+    <string name="planet_bonus_aurora_forge" formatted="false">Bonus: +40% tap power</string>
+    <string name="planet_bonus_prism_sanctuary" formatted="false">Bonus: 20% chance for x5 taps</string>
+    <string name="planet_bonus_eventide_crown" formatted="false">Bonus: x2 all income</string>
+    <string name="achievement_click_1000">Make 1,000 taps</string>
+    <string name="achievement_click_100000">Make 100,000 taps</string>
+    <string name="achievement_fleet_50">Own 50 drones</string>
+    <string name="achievement_collection_15">Discover 15 drone types</string>
+    <string name="achievement_collection_29">Complete the drone collection</string>
+    <string name="achievement_planets_24">Unlock all 24 planets</string>
+    <string name="achievement_events_50">Complete 50 events</string>
+    <string name="achievement_cases_25">Open 25 cases</string>
+    <string name="achievement_cases_100">Open 100 cases</string>
+    <string name="achievement_prestige_5">Complete 5 prestiges</string>
+    <string name="prestige_explained_title">What prestige points do</string>
+    <string name="prestige_explained_body">Prestige resets planets, drones, debris and ordinary upgrades. Points and purchased technologies remain permanently and make every new run stronger.</string>
+    <string name="prestige_preview">Reward for this prestige: +%1$d points</string>
+    <string name="achievement_click_250k">Make 250,000 taps</string><string name="achievement_click_1m">Make 1 million taps</string><string name="achievement_click_5m">Make 5 million taps</string>
+    <string name="achievement_debris_10m">Collect 10 million debris</string><string name="achievement_debris_100m">Collect 100 million debris</string><string name="achievement_debris_1b">Collect 1 billion debris</string><string name="achievement_debris_10b">Collect 10 billion debris</string>
+    <string name="achievement_cases_250">Open 250 cases</string><string name="achievement_cases_500">Open 500 cases</string><string name="achievement_cases_1000">Open 1,000 cases</string>
+    <string name="achievement_events_100">Complete 100 events</string><string name="achievement_events_250">Complete 250 events</string><string name="achievement_events_500">Complete 500 events</string>
+    <string name="achievement_prestige_10">Complete 10 prestiges</string><string name="achievement_prestige_25">Complete 25 prestiges</string><string name="achievement_prestige_50">Complete 50 prestiges</string>
+    <string name="achievement_fleet_100">Own 100 drones</string><string name="achievement_fleet_250">Own 250 drones</string><string name="achievement_fleet_500">Own 500 drones</string>
+    <string name="achievement_parts_25">Collect 25 mastery parts</string><string name="achievement_parts_100">Collect 100 mastery parts</string><string name="achievement_parts_300">Collect 300 mastery parts</string>
+    <string name="achievement_station_5">Reach 5 total station levels</string><string name="achievement_station_10">Reach 10 total station levels</string><string name="achievement_station_20">Fully upgrade the station</string>
+    <string name="achievement_planets_21">Reach Chronos Rift</string><string name="achievement_planets_22">Reach Aurora Forge</string><string name="achievement_planets_23">Reach Prism Sanctuary</string>
+    <string name="achievement_wealth_1t">Hold 1 trillion debris</string><string name="achievement_wealth_1q">Hold 1 quadrillion debris</string>
+    <string name="achievement_tech_all">Unlock every prestige technology</string><string name="achievement_achievements_40">Claim 40 achievements</string>
+    <string name="event_choice_instruction">Choose an option. Its reward and risk are shown below.</string>
+    <string name="event_salvage_explained">Guaranteed: receive %1$s debris immediately. No risk and no waiting.</string>
+    <string name="event_rescue_explained">Risk: 70%% chance to receive %1$s debris after 10 seconds. On failure you receive nothing, but lose no debris.</string>
+    <string name="event_station_safe_explained">Low risk: 90%% chance to receive %1$s debris. Failure has no penalty.</string>
+    <string name="event_station_reactor_explained">High risk: 50%% chance to receive %1$s debris. Failure removes 2%% of your current debris.</string>
+    <string name="background_music">Background music</string>
+    <string name="background_music_desc">Play the looping soundtrack during the game</string>
+    <string name="late_galaxy_preview">Distant galaxy · planets 21–24</string>
+    <string name="late_galaxy_preview_desc">New worlds waiting at the end of the planet route</string>
 </resources>

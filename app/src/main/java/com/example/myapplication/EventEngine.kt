@@ -189,12 +189,25 @@ object EventEngine {
         )
     }
 
-    fun onChallengeClick(state: GameState, nowMillis: Long): GameState {
+    fun onChallengeClick(
+        state: GameState,
+        nowMillis: Long,
+        random: RandomProvider = KotlinRandomProvider
+    ): GameState {
         val event = state.activeEvent ?: return state
         if (event.type != GameEventType.STORM && event.type != GameEventType.SOLAR_FLARE) return state
         val tapsLeft = state.eventTapsLeft - 1
-        if (tapsLeft > 0) return state.copy(eventTapsLeft = tapsLeft)
-        val rewarded = state.copy(totalDebris = state.totalDebris + event.reward)
+        val hitReward = if (event.type == GameEventType.STORM) event.reward / STORM_TAPS else 0.0
+        if (tapsLeft > 0) return state.copy(
+            totalDebris = state.totalDebris + hitReward,
+            eventTapsLeft = tapsLeft,
+            activeEvent = if (event.type == GameEventType.STORM) event.copy(
+                x = 0.12f + random.nextFloat() * 0.76f,
+                y = 0.12f + random.nextFloat() * 0.52f
+            ) else event
+        )
+        val finalReward = if (event.type == GameEventType.STORM) hitReward else event.reward
+        val rewarded = state.copy(totalDebris = state.totalDebris + finalReward)
         return finishEvent(rewarded, EventLogOutcome.COMPLETED, nowMillis, event.reward)
     }
 
