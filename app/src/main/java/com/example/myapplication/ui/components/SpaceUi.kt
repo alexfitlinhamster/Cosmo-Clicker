@@ -28,11 +28,6 @@ import com.example.myapplication.ui.theme.AppColors
 @Composable
 fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier.size(42.dp).background(AppColors.Primary.copy(alpha = 0.14f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) { Text("✦", color = AppColors.Primary, fontSize = 20.sp) }
-        Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
@@ -54,7 +49,7 @@ fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Uni
         }
         Surface(
             modifier = Modifier.size(38.dp).clickable(onClick = onClose),
-            shape = CircleShape,
+            shape = RoundedCornerShape(9.dp),
             color = Color.White.copy(alpha = 0.07f),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
         ) { Box(contentAlignment = Alignment.Center) { Text("×", color = Color.White, fontSize = 24.sp) } }
@@ -65,7 +60,7 @@ fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Uni
 fun SpaceTab(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.height(42.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(13.dp),
+        shape = RoundedCornerShape(9.dp),
         color = if (selected) AppColors.Primary.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.035f),
         border = BorderStroke(1.dp, if (selected) AppColors.Primary.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.08f))
     ) {
@@ -94,8 +89,8 @@ fun SpaceDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(26.dp),
+            modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
             color = AppColors.CardBackground,
             border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.35f)),
             shadowElevation = 18.dp

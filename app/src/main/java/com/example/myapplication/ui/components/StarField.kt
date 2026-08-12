@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,18 +21,17 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.ScavengeTarget
 import com.example.myapplication.R
 import kotlin.random.Random
+import kotlin.math.sin
 
 @Composable
-fun Star(reduceMotion: Boolean = false) {
+fun Star(index: Int, twinklePhase: Float, reduceMotion: Boolean = false) {
     val x = remember { Random.nextFloat() }
     val y = remember { Random.nextFloat() }
     val size = remember { Random.nextFloat() * 2 + 1 }
-    val animatedAlpha by rememberInfiniteTransition(label = "").animateFloat(
-        initialValue = 0.2f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1000 + Random.nextInt(2000)), RepeatMode.Reverse),
-        label = ""
-    )
-    val alpha = if (reduceMotion) 0.55f else animatedAlpha
+    // All stars share one animation clock from GameScreen instead of creating
+    // a separate infinite transition for every star.
+    val twinkle = ((sin(twinklePhase + index * 1.73f) + 1f) * .5f)
+    val alpha = if (reduceMotion) 0.55f else 0.2f + twinkle * 0.8f
     Box(
         modifier = Modifier
             .offset(

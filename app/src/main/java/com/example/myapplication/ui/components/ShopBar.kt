@@ -467,6 +467,7 @@ fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentDescription = stringResource(R.string.open_shop),
         modifier = modifier
             .size(60.dp)
+            .clip(RoundedCornerShape(11.dp))
             .clickable(onClick = onClick),
         contentScale = ContentScale.Fit
     )

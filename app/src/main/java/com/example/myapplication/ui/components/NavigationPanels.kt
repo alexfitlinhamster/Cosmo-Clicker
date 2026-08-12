@@ -28,6 +28,7 @@ import com.example.myapplication.EconomyBalance
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.R
+import com.example.myapplication.Technology
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 
@@ -35,7 +36,7 @@ import com.example.myapplication.utils.formatNum
 fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
     var selectedTab by remember { mutableIntStateOf(0) }
     Card(
-        modifier = modifier.fillMaxWidth().fillMaxHeight(0.80f),
+        modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.80f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
@@ -49,24 +50,6 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = AppColors.Primary.copy(alpha = 0.08f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.22f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(painterResource(R.drawable.debris_01), null, Modifier.size(28.dp), contentScale = ContentScale.Fit)
-                    Spacer(Modifier.width(9.dp))
-                    Text(stringResource(R.string.shop_balance), color = Color.LightGray, fontSize = 11.sp)
-                    Spacer(Modifier.weight(1f))
-                    Text(formatNum(state.totalDebris), color = AppColors.Primary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            Spacer(Modifier.height(10.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 when (selectedTab) {
                     0 -> item { MysteryCaseRow(viewModel, state) }
@@ -105,16 +88,21 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
                         )
                     }
-                    else -> items(listOf("flight", "spawn", "magnet")) { id ->
+                    else -> items(listOf("autoclick", "flight", "spawn", "magnet")) { id ->
                         val level = viewModel.utilityUpgradeLevel(id)
-                        val max = if (id == "flight") 2 else 5
+                        val max = viewModel.utilityUpgradeMaxLevel(id)
                         val cost = viewModel.utilityUpgradeCost(id, level)
                         ClickUpgradeRow(
-                            name = stringResource(when (id) { "flight" -> R.string.upgrade_flight_slots; "spawn" -> R.string.upgrade_spawn_speed; else -> R.string.upgrade_magnet_radius }),
-                            meta = stringResource(R.string.utility_level, level, max),
+                            name = stringResource(when (id) { "autoclick" -> R.string.upgrade_autoclicker; "flight" -> R.string.upgrade_flight_slots; "spawn" -> R.string.upgrade_spawn_speed; else -> R.string.upgrade_magnet_radius }),
+                            meta = if (id == "autoclick") stringResource(R.string.autoclicker_rate, level, max) else stringResource(R.string.utility_level, level, max),
                             cost = cost.toLong(),
                             enabled = level < max && state.totalDebris >= cost,
-                            iconRes = if (id == "magnet") R.drawable.upgrade_magnet_v2 else R.drawable.debris_01,
+                            iconRes = when (id) {
+                                "autoclick" -> R.drawable.upgrade_neural_matrix_v2
+                                "flight" -> R.drawable.upgrade_flight_slots_v2
+                                "spawn" -> R.drawable.upgrade_spawn_speed_v2
+                                else -> R.drawable.upgrade_magnet_v2
+                            },
                             onBuy = { viewModel.buyUtilityUpgrade(id) }
                         )
                     }
@@ -143,7 +131,7 @@ private fun ClickUpgradeRow(
     ) {
         Surface(
             modifier = Modifier.size(42.dp),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(9.dp),
             color = AppColors.Primary.copy(alpha = 0.09f)
         ) {
             Image(
@@ -176,7 +164,7 @@ private fun ClickUpgradeRow(
             onClick = onBuy,
             enabled = enabled,
             modifier = Modifier.widthIn(min = 82.dp, max = 104.dp).heightIn(min = 38.dp),
-            shape = RoundedCornerShape(9.dp),
+            shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(horizontal = 9.dp, vertical = 4.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black)
         ) {
@@ -199,7 +187,7 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
             val owned = state.fleetCounts.values.sum()
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = AppColors.Primary.copy(alpha = 0.07f)),
                 border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.20f))
             ) {
@@ -234,40 +222,55 @@ internal fun CompactHangarDroneCard(
     val canDeploy = active > 0 || (count > 0 && state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state))
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = if (active > 0) AppColors.Primary.copy(alpha = .12f) else Color.White.copy(alpha = .04f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, if (active > 0) AppColors.Primary.copy(alpha = .45f) else Color.White.copy(alpha = .08f))
     ) {
         Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(62.dp)
+                    .background(Color(0xFF07182A), RoundedCornerShape(12.dp))
+                    .border(1.dp, if (discovered) AppColors.Primary.copy(alpha = .35f) else Color.White.copy(alpha = .18f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
                 Image(
                     painter = painterResource(drone.iconRes),
                     contentDescription = null,
-                    modifier = Modifier.size(58.dp).clip(CircleShape),
+                    modifier = Modifier.size(54.dp).clip(RoundedCornerShape(10.dp)),
                     contentScale = ContentScale.Fit,
                     alpha = if (discovered) 1f else .18f
                 )
-                if (!discovered) Text("?", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                if (!discovered) Icon(
+                    painter = painterResource(R.drawable.ic_space_lock),
+                    contentDescription = stringResource(R.string.locked),
+                    tint = Color.White.copy(alpha = .85f),
+                    modifier = Modifier.size(25.dp)
+                )
             }
-            Text(if (discovered) drone.name else "???", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(if (discovered) drone.name else stringResource(R.string.locked), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("$active / $count", color = if (active > 0) AppColors.Primary else Color.Gray, fontSize = 10.sp)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 OutlinedButton(
                     onClick = { if (active > 0) viewModel.recallDrone(drone.id) else viewModel.deployDrone(drone.id) },
                     enabled = canDeploy,
-                    modifier = Modifier.weight(1f).height(32.dp),
-                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxWidth().height(34.dp),
+                    shape = RoundedCornerShape(9.dp),
+                    contentPadding = PaddingValues(horizontal = 3.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .55f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppColors.Primary)
-                ) { Text(if (active > 0) "↓" else "↑", fontSize = 15.sp) }
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = AppColors.Primary.copy(alpha = .10f), contentColor = AppColors.Primary)
+                ) {
+                    Text(stringResource(if (active > 0) R.string.send_to_storage else R.string.send_to_flight), fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
                 OutlinedButton(
                     onClick = { viewModel.sellFleet(drone.id) },
                     enabled = count > 0,
-                    modifier = Modifier.weight(1f).height(32.dp),
-                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxWidth().height(32.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 3.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Danger.copy(alpha = .45f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AppColors.Danger)
-                ) { Text("−", fontSize = 15.sp) }
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = AppColors.Danger.copy(alpha = .07f), contentColor = AppColors.Danger)
+                ) { Text(stringResource(R.string.sell), fontSize = 9.sp, fontWeight = FontWeight.Bold) }
             }
         }
     }
@@ -293,7 +296,7 @@ private fun HangarCapacityLine(label: String, value: Int, maximum: Int, color: C
 fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
     var selectedTab by remember { mutableIntStateOf(0) }
     Card(
-        modifier = modifier.fillMaxWidth().fillMaxHeight(0.80f),
+        modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.80f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
@@ -350,6 +353,87 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
 }
 
 @Composable
+fun PrestigeShopPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    SpacePanel(stringResource(R.string.prestige_shop), stringResource(R.string.prestige_shop_subtitle), onClose, modifier) {
+        item {
+            Surface(
+                modifier = Modifier.fillMaxWidth()
+                    .heightIn(min = 72.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = AppColors.Warning.copy(alpha = .10f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Warning.copy(alpha = .45f))
+            ) {
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Image(painterResource(R.drawable.ic_prestige_core), null, Modifier.size(42.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(stringResource(R.string.prestige_balance), color = Color.LightGray, fontSize = 11.sp)
+                        Text("${state.prestigePoints}", color = AppColors.Warning, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                    }
+                }
+            }
+        }
+        items(Technology.entries, key = { it.name }) { technology ->
+            val owned = technology in state.technologies
+            val name = when (technology) {
+                Technology.POWER_CORE -> R.string.technology_power_core
+                Technology.OFFLINE_AI -> R.string.technology_offline_ai
+                Technology.LUCK_MATRIX -> R.string.technology_luck_matrix
+            }
+            val description = when (technology) {
+                Technology.POWER_CORE -> R.string.technology_power_core_desc
+                Technology.OFFLINE_AI -> R.string.technology_offline_ai_desc
+                Technology.LUCK_MATRIX -> R.string.technology_luck_matrix_desc
+            }
+            val icon = when (technology) {
+                Technology.POWER_CORE -> R.drawable.prestige_click_amplifier
+                Technology.OFFLINE_AI -> R.drawable.prestige_offline_collector
+                Technology.LUCK_MATRIX -> R.drawable.prestige_rare_signal
+            }
+            val accent = when (technology) {
+                Technology.POWER_CORE -> Color(0xFFFF9D3D)
+                Technology.OFFLINE_AI -> Color(0xFF55D9FF)
+                Technology.LUCK_MATRIX -> Color(0xFFB987FF)
+            }
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = accent.copy(alpha = if (owned) .06f else .10f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = if (owned) .25f else .50f))
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(modifier = Modifier.size(64.dp), shape = RoundedCornerShape(12.dp), color = accent.copy(alpha = .13f)) {
+                            Image(painterResource(icon), null, Modifier.padding(5.dp), contentScale = ContentScale.Fit, alpha = if (owned) .55f else 1f)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(stringResource(name), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, lineHeight = 17.sp)
+                            Text(stringResource(description), color = Color.White.copy(alpha = .70f), fontSize = 11.sp, lineHeight = 15.sp)
+                        }
+                    }
+                    HorizontalDivider(color = accent.copy(alpha = .20f))
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Image(painterResource(R.drawable.ic_prestige_core), null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("${technology.cost}", color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = { viewModel.buyTechnology(technology) },
+                            enabled = !owned && state.prestigePoints >= technology.cost,
+                            modifier = Modifier.widthIn(min = 104.dp).height(40.dp),
+                            shape = RoundedCornerShape(9.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp)
+                        ) { Text(stringResource(if (owned) R.string.prestige_owned else R.string.prestige_buy), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StatisticRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth()
@@ -368,7 +452,7 @@ private fun StatisticRow(label: String, value: String) {
 @Composable
 private fun SpacePanel(title: String, subtitle: String, onClose: () -> Unit, modifier: Modifier, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
     Card(
-        modifier = modifier.fillMaxWidth().fillMaxHeight(0.80f),
+        modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.80f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
@@ -386,7 +470,12 @@ private fun SpacePanel(title: String, subtitle: String, onClose: () -> Unit, mod
 
 @Composable
 private fun LauncherIcon(icon: Int, description: Int, onClick: () -> Unit) {
-    Image(painterResource(icon), stringResource(description), Modifier.size(60.dp).clickable(onClick = onClick), contentScale = ContentScale.Fit)
+    Image(
+        painterResource(icon),
+        stringResource(description),
+        Modifier.size(60.dp).clip(RoundedCornerShape(11.dp)).clickable(onClick = onClick),
+        contentScale = ContentScale.Fit
+    )
 }
 
 private fun achievementTitle(id: String): Int = when (id) {

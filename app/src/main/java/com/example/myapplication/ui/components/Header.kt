@@ -1,9 +1,12 @@
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +32,7 @@ fun Header(
     state: GameState,
     dps: Double,
     onAchievementsClick: () -> Unit,
+    onPrestigeShopClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Column(
@@ -44,7 +48,7 @@ fun Header(
             Image(
                 painter = painterResource(R.drawable.ui_button_statistics_v2),
                 contentDescription = stringResource(R.string.open_statistics),
-                modifier = Modifier.size(48.dp).clickable(onClick = onAchievementsClick),
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(9.dp)).clickable(onClick = onAchievementsClick),
                 contentScale = ContentScale.Fit
             )
             Spacer(Modifier.width(10.dp))
@@ -76,15 +80,41 @@ fun Header(
                 contentDescription = stringResource(R.string.settings),
                 modifier = Modifier
                     .size(48.dp)
+                    .clip(RoundedCornerShape(9.dp))
                     .clickable { onSettingsClick() },
                 contentScale = ContentScale.Fit
             )
         }
-        Text(
-            text = stringResource(R.string.per_second, formatNum(dps)),
-            color = AppColors.Secondary,
-            fontSize = 14.sp
-        )
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.per_second, formatNum(dps)),
+                modifier = Modifier.weight(1f),
+                color = AppColors.Secondary,
+                fontSize = 14.sp
+            )
+            Row(
+                modifier = Modifier
+                    .width(72.dp)
+                    .height(36.dp)
+                    .background(Color(0xFF10182A).copy(alpha = .92f), RoundedCornerShape(10.dp))
+                    .border(1.dp, AppColors.Warning.copy(alpha = .65f), RoundedCornerShape(10.dp))
+                    .clickable(onClick = onPrestigeShopClick)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(painterResource(R.drawable.ic_prestige_core), stringResource(R.string.open_prestige_shop), Modifier.size(22.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = state.prestigePoints.toString(),
+                    modifier = Modifier.weight(1f),
+                    color = AppColors.Warning,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
 
         if (state.isHotelDebtActive) {
             Column(modifier = Modifier.padding(top = 8.dp)) {

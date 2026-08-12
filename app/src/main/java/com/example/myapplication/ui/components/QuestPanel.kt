@@ -40,6 +40,7 @@ fun QuestPanel(
 ) {
     Card(
         modifier = modifier
+            .widthIn(max = 720.dp)
             .fillMaxWidth()
             .fillMaxHeight(0.72f),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),

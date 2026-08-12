@@ -31,8 +31,14 @@ class ImageSlicer {
 
     @Test
     fun allDrawablePngFilesAreDecodable() {
-        val pngFiles = File(drawableDir).listFiles { file -> file.extension.equals("png", true) }.orEmpty()
-        assertTrue("No drawable PNG files found in $drawableDir", pngFiles.isNotEmpty())
+        val drawableRoot = File(drawableDir).parentFile
+        val resourceDirs = drawableRoot.listFiles { file ->
+            file.isDirectory && file.name.startsWith("drawable")
+        }.orEmpty()
+        val pngFiles = resourceDirs.flatMap { dir ->
+            dir.listFiles { file -> file.extension.equals("png", true) }.orEmpty().toList()
+        }
+        assertTrue("No drawable PNG files found in $drawableRoot", pngFiles.isNotEmpty())
         pngFiles.forEach { file ->
             assertTrue("Drawable PNG is empty: ${file.name}", file.length() > 0)
             assertNotNull("Drawable PNG cannot be decoded: ${file.name}", ImageIO.read(file))

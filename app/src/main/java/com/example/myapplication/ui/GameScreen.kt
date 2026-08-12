@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -75,7 +76,9 @@ fun GameScreen(
     var isHangarOpen by remember { mutableStateOf(false) }
     var isAchievementsOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
-    var showSettings by remember { mutableStateOf(false) }
+    var isPrestigeShopOpen by remember { mutableStateOf(false) }
+    // Settings must survive Activity recreation when the app locale changes.
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
 
     // Состояние стартового экрана
@@ -91,6 +94,7 @@ fun GameScreen(
             isShopOpen ||
             isHangarOpen ||
             isAchievementsOpen ||
+            isPrestigeShopOpen ||
             isQuestOpen
     ) {
         when {
@@ -101,6 +105,7 @@ fun GameScreen(
             isShopOpen -> isShopOpen = false
             isHangarOpen -> isHangarOpen = false
             isAchievementsOpen -> isAchievementsOpen = false
+            isPrestigeShopOpen -> isPrestigeShopOpen = false
             isQuestOpen -> isQuestOpen = false
         }
     }
@@ -185,30 +190,10 @@ fun GameScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // ДИНАМИЧЕСКИЙ ФОН
-        val backgroundMotion = rememberInfiniteTransition(label = "game_background_motion")
-        val backgroundShiftX by backgroundMotion.animateFloat(
-            initialValue = -24f,
-            targetValue = 24f,
-            animationSpec = infiniteRepeatable(tween(11_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "background_shift_x"
-        )
-        val backgroundShiftY by backgroundMotion.animateFloat(
-            initialValue = -14f,
-            targetValue = 14f,
-            animationSpec = infiniteRepeatable(tween(15_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "background_shift_y"
-        )
         Image(
             painter = painterResource(id = backgroundRes),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize().graphicsLayer {
-                if (state.activeEvent == null) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
-                    translationX = backgroundShiftX
-                    translationY = backgroundShiftY
-                }
-            },
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
 
@@ -221,8 +206,8 @@ fun GameScreen(
         )
 
         // Звезды
-        repeat(GameConstants.StarCount) {
-            Star(false)
+        repeat(GameConstants.StarCount) { index ->
+            Star(index = index, twinklePhase = 0f)
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -230,6 +215,7 @@ fun GameScreen(
                 state = state,
                 dps = viewModel.calculateDPS(),
                 onAchievementsClick = { isAchievementsOpen = true },
+                onPrestigeShopClick = { isPrestigeShopOpen = true },
                 onSettingsClick = { showSettings = true }
             )
             
@@ -348,6 +334,13 @@ fun GameScreen(
                 onClose = { isAchievementsOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
+        } else if (isPrestigeShopOpen) {
+            PrestigeShopPanel(
+                viewModel = viewModel,
+                state = state,
+                onClose = { isPrestigeShopOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         } else if (isQuestOpen) {
             QuestPanel(
                 state = state,
@@ -359,6 +352,7 @@ fun GameScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .widthIn(max = 560.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -638,6 +632,7 @@ fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentDescription = stringResource(R.string.quests),
         modifier = modifier
             .size(60.dp)
+            .clip(RoundedCornerShape(11.dp))
             .clickable(onClick = onClick),
         contentScale = ContentScale.Fit
     )
@@ -654,12 +649,12 @@ private fun GameNavigationButton(
     Column(
         modifier = modifier.height(80.dp).clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Center
     ) {
         Image(
             painter = painterResource(icon),
             contentDescription = stringResource(description),
-            modifier = Modifier.size(60.dp),
+            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(11.dp)),
             contentScale = ContentScale.Fit
         )
         Spacer(Modifier.height(3.dp))

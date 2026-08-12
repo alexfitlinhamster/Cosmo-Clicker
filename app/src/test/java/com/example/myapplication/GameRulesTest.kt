@@ -9,19 +9,19 @@ import org.junit.Test
 class GameRulesTest {
 
     @Test
-    fun caseCostGrowsByTwelvePercentAfterEveryPurchase() {
-        assertEquals(1_000.0, GameRules.calculateCaseCost(0), 0.0001)
-        assertEquals(1_000.0, GameRules.calculateCaseCost(1), 0.0001)
-        assertEquals(1_000.0, GameRules.calculateCaseCost(19), 0.0001)
-        assertEquals(1_120.0, GameRules.calculateCaseCost(20), 0.0001)
-        assertEquals(1_000.0, GameRules.calculateCaseCost(-1), 0.0001)
+    fun caseCostGrowsByThirtyFivePercentEveryTenPurchases() {
+        assertEquals(25_000.0, GameRules.calculateCaseCost(0), 0.0001)
+        assertEquals(25_000.0, GameRules.calculateCaseCost(1), 0.0001)
+        assertEquals(25_000.0, GameRules.calculateCaseCost(9), 0.0001)
+        assertEquals(33_750.0, GameRules.calculateCaseCost(10), 0.0001)
+        assertEquals(25_000.0, GameRules.calculateCaseCost(-1), 0.0001)
     }
 
     @Test
     fun higherTierCasesCostMoreAndIncreasePremiumChance() {
-        assertEquals(1_000.0, GameRules.calculateCaseCost(0, CaseType.COMMON), 0.0001)
-        assertEquals(5_000.0, GameRules.calculateCaseCost(0, CaseType.RARE), 0.0001)
-        assertEquals(20_000.0, GameRules.calculateCaseCost(0, CaseType.LEGENDARY), 0.0001)
+        assertEquals(25_000.0, GameRules.calculateCaseCost(0, CaseType.COMMON), 0.0001)
+        assertEquals(125_000.0, GameRules.calculateCaseCost(0, CaseType.RARE), 0.0001)
+        assertEquals(500_000.0, GameRules.calculateCaseCost(0, CaseType.LEGENDARY), 0.0001)
         assertTrue(CaseType.COMMON.premiumChance < CaseType.RARE.premiumChance)
         assertTrue(CaseType.RARE.premiumChance < CaseType.LEGENDARY.premiumChance)
     }
@@ -31,6 +31,13 @@ class GameRulesTest {
         CaseType.entries.forEach { type ->
             assertEquals(100, GameRules.caseRarityWeights(type).values.sum())
         }
+    }
+
+    @Test
+    fun cheapCaseCannotDropLegendaryAndSingleDroneSaleCannotExplodeEconomy() {
+        assertEquals(0, GameRules.caseRarityWeights(CaseType.COMMON)[Rarity.LEGENDARY])
+        val mostExpensiveDroneBase = 250.0 * Math.pow(1.45, 28.0)
+        assertTrue(GameRules.droneSaleValue(mostExpensiveDroneBase, 1) < GameRules.calculateCaseCost(0))
     }
 
     @Test

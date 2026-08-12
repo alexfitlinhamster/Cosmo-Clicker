@@ -13,6 +13,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -92,11 +93,15 @@ fun EventBanner(event: GameEvent, tapsLeft: Int, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(eventIconResource(event.type)),
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp).padding(end = 8.dp)
-                )
+                Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(eventIconResource(event.type)),
+                        contentDescription = null,
+                        modifier = Modifier.size(34.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(eventTitleResource(event.type)),
                     modifier = Modifier.weight(1f),
@@ -147,6 +152,16 @@ private fun eventTitleResource(type: GameEventType): Int = when (type) {
     GameEventType.ABANDONED_STATION -> R.string.event_abandoned_station
     GameEventType.PIRATE_RAID -> R.string.event_pirate_raid
     GameEventType.TRADING_SHIP -> R.string.event_trading_ship
+}
+
+private fun eventAccent(type: GameEventType): Color = when (type) {
+    GameEventType.STORM, GameEventType.METEOR_SHOWER -> AppColors.Warning
+    GameEventType.BLACK_HOLE, GameEventType.CYBER_VIRUS, GameEventType.PIRATE_RAID -> AppColors.Danger
+    GameEventType.SOLAR_FLARE -> Color(0xFFFF6B35)
+    GameEventType.ASTEROID -> Color(0xFF66D17A)
+    GameEventType.DISTRESS_SIGNAL -> AppColors.Primary
+    GameEventType.ABANDONED_STATION -> Color(0xFF80CBC4)
+    GameEventType.TRADING_SHIP -> Color(0xFF66E0FF)
 }
 
 private fun eventIconResource(type: GameEventType): Int = when (type) {
@@ -534,6 +549,7 @@ private fun tradeOfferIcon(offer: TradeOffer): Int = when (offer) {
 
 @Composable
 fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
+    val accent = eventAccent(event.type)
     SpaceDialog(
         title = stringResource(
                     when (event.type) {
@@ -551,15 +567,33 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                 ),
         onDismiss = onDismiss,
         content = {
-            Image(
-                painter = painterResource(eventIconResource(event.type)),
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(18.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(Modifier.height(14.dp))
-            Text(
-                text = stringResource(
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(132.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = accent.copy(alpha = .10f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = .42f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(eventIconResource(event.type)),
+                        contentDescription = null,
+                        modifier = Modifier.size(104.dp).padding(8.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = .035f), RoundedCornerShape(14.dp))
+                    .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(14.dp))
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(stringResource(R.string.event_how_to_play), color = accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = stringResource(
                     when (event.type) {
                         GameEventType.STORM -> R.string.event_desc_storm
                         GameEventType.ASTEROID -> R.string.event_desc_asteroid
@@ -572,8 +606,9 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                         GameEventType.PIRATE_RAID -> R.string.event_desc_pirate_raid
                         GameEventType.TRADING_SHIP -> R.string.event_desc_trading_ship
                     }
-                ), color = Color.White.copy(alpha = .82f), lineHeight = 19.sp
-            )
+                    ), color = Color.White.copy(alpha = .86f), fontSize = 13.sp, lineHeight = 19.sp
+                )
+            }
         },
         actions = { Button(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
     )
@@ -700,12 +735,12 @@ fun DistressSignalDialog(
         actions = {
             Button(
                 onClick = onSalvage,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.10f), contentColor = Color.White)
             ) { Text(stringResource(R.string.event_salvage), fontWeight = FontWeight.Bold) }
             Button(
                 onClick = onRescue,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black)
             ) { Text(stringResource(R.string.event_rescue), fontWeight = FontWeight.Black) }
         }
@@ -755,8 +790,8 @@ fun AbandonedStationDialog(
             EventChoicePreview(stringResource(R.string.event_station_reactor), stringResource(R.string.event_station_reactor_explained, formatNum(reward * 5.0)), AppColors.Danger)
         },
         actions = {
-            Button(onClick = onSafeRoute, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = .1f))) { Text(stringResource(R.string.event_station_safe)) }
-            Button(onClick = onReactorCore, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.event_station_reactor)) }
+            Button(onClick = onSafeRoute, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = .1f))) { Text(stringResource(R.string.event_station_safe), maxLines = 2, textAlign = TextAlign.Center) }
+            Button(onClick = onReactorCore, modifier = Modifier.weight(1f).height(52.dp)) { Text(stringResource(R.string.event_station_reactor), maxLines = 2, textAlign = TextAlign.Center) }
         }
     )
 }

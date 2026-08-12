@@ -1,6 +1,13 @@
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -113,6 +123,9 @@ fun ScavengingDrone(
     ) {
         if (fleetItem != null) {
             FleetIcon(fleetItem, droneSize)
+            droneRotorColor(fleetItem.id)?.let { rotorColor ->
+                DroneRotors(rotorColor = rotorColor, modifier = Modifier.fillMaxSize())
+            }
         } else {
             Box(modifier = Modifier.size(droneSize).background(Color.Red, RoundedCornerShape(2.dp)))
         }
@@ -131,4 +144,63 @@ fun ScavengingDrone(
             Text("!", color = Color.White, fontSize = 14.sp, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
+}
+
+/** Four-frame rotor overlay. The frame is supplied by one shared game clock. */
+@Composable
+private fun DroneRotors(rotorColor: Color, modifier: Modifier = Modifier) {
+    val rotorMotion = rememberInfiniteTransition(label = "drone_rotors")
+    val rotorPhase by rotorMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = 4f,
+        animationSpec = infiniteRepeatable(tween(320, easing = LinearEasing), RepeatMode.Restart),
+        label = "rotor_frame"
+    )
+    val rotorFrame = rotorPhase.toInt().coerceIn(0, 3)
+    Canvas(modifier) {
+        val angle = (rotorFrame and 3) * 45f
+        val bladeRadius = size.minDimension * 0.13f
+        val stroke = (size.minDimension * 0.045f).coerceAtLeast(1f)
+        val hubs = listOf(
+            androidx.compose.ui.geometry.Offset(size.width * 0.27f, size.height * 0.23f),
+            androidx.compose.ui.geometry.Offset(size.width * 0.73f, size.height * 0.23f)
+        )
+        hubs.forEach { hub ->
+            rotate(angle, hub) {
+                drawLine(
+                    color = rotorColor.copy(alpha = 0.92f),
+                    start = hub.copy(x = hub.x - bladeRadius),
+                    end = hub.copy(x = hub.x + bladeRadius),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    color = rotorColor.copy(alpha = 0.68f),
+                    start = hub.copy(y = hub.y - bladeRadius * 0.65f),
+                    end = hub.copy(y = hub.y + bladeRadius * 0.65f),
+                    strokeWidth = stroke * 0.65f,
+                    cap = StrokeCap.Round
+                )
+            }
+            drawCircle(rotorColor.copy(alpha = 0.95f), radius = stroke * 0.75f, center = hub)
+        }
+    }
+}
+
+/** Only sprites that visibly contain propellers receive the animated overlay. */
+private fun droneRotorColor(id: String): Color? = when (id) {
+    "drone_1" -> Color(0xFFE9EDF2)
+    "drone_3" -> Color(0xFF76B82A)
+    "drone_5" -> Color(0xFFD85B16)
+    "drone_7" -> Color(0xFFE0A21E)
+    "drone_8" -> Color(0xFF8E36C7)
+    "drone_10" -> Color(0xFFB72A22)
+    "drone_14" -> Color(0xFFC89A64)
+    "drone_15" -> Color(0xFF146B8F)
+    "drone_17" -> Color(0xFF3E9B55)
+    "drone_21" -> Color(0xFFBE2370)
+    "drone_22" -> Color(0xFF258FC4)
+    "drone_27" -> Color(0xFF3B2469)
+    "drone_28" -> Color(0xFFE5B64D)
+    else -> null
 }

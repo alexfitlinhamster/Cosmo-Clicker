@@ -45,10 +45,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ItemConfig("wrench", "Quantum Wrench", 350.0, 8.0, R.drawable.upgrade_quantum_wrench_v2),
         ItemConfig("harvester", "Debris Harvester", 1_500.0, 25.0, R.drawable.upgrade_debris_harvester_v2),
         ItemConfig("beacon", "Signal Beacon", 5_000.0, 75.0, R.drawable.upgrade_signal_beacon_v2),
-        ItemConfig("amplifier", "Quantum Amplifier", 18_000.0, 220.0, R.drawable.event_reactor_core),
-        ItemConfig("matrix", "Neural Matrix", 70_000.0, 650.0, R.drawable.event_cyber_module_v2),
-        ItemConfig("compressor", "Void Compressor", 260_000.0, 1_900.0, R.drawable.upgrade_debris_harvester_v2),
-        ItemConfig("singularity", "Singularity Tap", 950_000.0, 5_500.0, R.drawable.event_black_hole_v2)
+        ItemConfig("amplifier", "Quantum Amplifier", 18_000.0, 220.0, R.drawable.upgrade_quantum_amplifier_v2),
+        ItemConfig("matrix", "Neural Matrix", 70_000.0, 650.0, R.drawable.upgrade_neural_matrix_v2),
+        ItemConfig("compressor", "Void Compressor", 260_000.0, 1_900.0, R.drawable.upgrade_void_compressor_v2),
+        ItemConfig("singularity", "Singularity Tap", 950_000.0, 5_500.0, R.drawable.upgrade_singularity_tap_v2)
     )
 
     val fleetItems = (1..29).map { i ->
@@ -62,7 +62,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         FleetConfig(
             id = "drone_$i",
             name = droneNames.getOrElse(i-1) { "Drone #$i" },
-            base = 10.0 * 1.8.pow(i.toDouble() - 1),
+            base = 250.0 * 1.45.pow(i.toDouble() - 1),
             iconRes = GameResourceRegistry.drone(i),
             spriteIndex = -1,
             rarity = rarity
@@ -161,8 +161,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             clickLevels[it.id] = prefs.getInt("click_${it.id}", 0)
                 .coerceIn(0, EconomyBalance.MAX_CLICK_UPGRADE_LEVEL)
         }
-        listOf("flight", "spawn", "magnet").forEach { id ->
-            clickLevels["utility_$id"] = prefs.getInt("click_utility_$id", 0).coerceIn(0, if (id == "flight") 2 else 5)
+        listOf("flight", "spawn", "magnet", "autoclick").forEach { id ->
+            clickLevels["utility_$id"] = prefs.getInt("click_utility_$id", 0).coerceIn(0, utilityUpgradeMaxLevel(id))
         }
         val loadedActiveCapacity = DroneTraitEngine.MAX_ACTIVE_DRONES + (clickLevels["utility_flight"] ?: 0)
         
@@ -983,9 +983,32 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun processEconomyTick() {
         val passiveIncome = calculateDPS()
+        val autoClicks = utilityUpgradeLevel("autoclick").coerceIn(0, utilityUpgradeMaxLevel("autoclick"))
+        val autoClickIncome = if (autoClicks > 0) calculateClickValue() * autoClicks else 0.0
         val now = System.currentTimeMillis()
         _gameState.update {
             var next = EconomyEngine.processTick(it, now, passiveIncome)
+            if (autoClicks > 0) {
+                val payment = if (next.isHotelDebtActive) {
+                    GameRules.applyHotelDebtPayment(next.totalDebris, next.currentHotelDebt, autoClickIncome)
+                } else null
+                next = next.copy(
+                    totalDebris = payment?.totalDebris ?: (next.totalDebris + autoClickIncome),
+                    currentHotelDebt = payment?.remainingDebt ?: next.currentHotelDebt,
+                    isHotelDebtActive = payment?.isDebtActive ?: next.isHotelDebtActive,
+                    activeQuests = QuestEngine.advance(next.activeQuests, QuestType.CLICK_PLANET, autoClicks.toDouble()),
+                    sessionStats = next.sessionStats.copy(
+                        clicks = next.sessionStats.clicks + autoClicks,
+                        debrisEarned = next.sessionStats.debrisEarned + autoClickIncome
+                    ),
+                    lifetimeStats = next.lifetimeStats.copy(clicks = next.lifetimeStats.clicks + autoClicks)
+                )
+                if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.CLICKS_ONLY) {
+                    next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
+                        progress = (next.weeklyGalaxy.progress + autoClicks).coerceAtMost(next.weeklyGalaxy.target)
+                    ))
+                }
+            }
             if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.FRAGILE_DRONES) {
                 next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
                     progress = (next.weeklyGalaxy.progress + passiveIncome).coerceAtMost(next.weeklyGalaxy.target)
@@ -1155,11 +1178,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val currentCount = state.fleetCounts[id] ?: 0
             if (currentCount <= 0) return@updateStoreState null
 
-            val rawCost = item.base * 1.15.pow((currentCount - 1).toDouble())
-            if (!rawCost.isFinite()) return@updateStoreState null
-            // A drone returns roughly one third of its value. This keeps bulk case
-            // openings from becoming a profitable sell-back loop.
-            val refund = rawCost.toLong().toDouble() / 3.0
+            val refund = GameRules.droneSaleValue(item.base, currentCount)
             state.copy(
                 totalDebris = state.totalDebris + refund,
                 fleetCounts = state.fleetCounts + (id to currentCount - 1),
@@ -1183,15 +1202,27 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun utilityUpgradeLevel(id: String): Int = _gameState.value.clickLevels["utility_$id"] ?: 0
 
     fun utilityUpgradeCost(id: String, level: Int): Double {
-        val base = when (id) { "flight" -> 5_000_000.0; "spawn" -> 2_500_000.0; else -> 3_500_000.0 }
-        return base * 4.0.pow(level.toDouble())
+        val base = when (id) {
+            "flight" -> 5_000_000.0
+            "spawn" -> 2_500_000.0
+            "autoclick" -> 25_000.0
+            else -> 3_500_000.0
+        }
+        val growth = if (id == "autoclick") 3.0 else 4.0
+        return base * growth.pow(level.toDouble())
+    }
+
+    fun utilityUpgradeMaxLevel(id: String): Int = when (id) {
+        "flight" -> 2
+        "autoclick" -> 10
+        else -> 5
     }
 
     fun buyUtilityUpgrade(id: String) {
         updateStoreState("utility:$id") { state ->
             val key = "utility_$id"
             val level = state.clickLevels[key] ?: 0
-            val max = if (id == "flight") 2 else 5
+            val max = utilityUpgradeMaxLevel(id)
             val cost = utilityUpgradeCost(id, level)
             if (level >= max || state.totalDebris < cost) null else state.copy(
                 totalDebris = state.totalDebris - cost,
