@@ -2,6 +2,7 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ScavengeTarget
@@ -44,8 +46,8 @@ fun Star(index: Int, twinklePhase: Float, reduceMotion: Boolean = false) {
 }
 
 @Composable
-fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) {
-    val targetSize = if (target.isMeteor) 38.dp else (30 + target.rarity.ordinal * 2).dp
+fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: (() -> Unit)? = null) {
+    val targetSize = if (target.isMeteor) 38.dp else if (target.isGoldenShard) 44.dp else (30 + target.rarity.ordinal * 2).dp
 
     Box(
         modifier = Modifier
@@ -54,7 +56,8 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) 
                 y = gameAreaHeight * target.y - (targetSize / 2)
             )
             .size(targetSize)
-            .alpha(0.88f),
+            .alpha(if (target.isGoldenShard) 1f else 0.88f)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center
     ) {
         if (target.isMeteor) {
@@ -69,7 +72,7 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp) 
         } else {
             Image(
                 painter = painterResource(debrisDrawable(target.imageIndex)),
-                contentDescription = null,
+                contentDescription = if (target.isGoldenShard) stringResource(R.string.event_gold_asteroid) else null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(targetSize - 4.dp)

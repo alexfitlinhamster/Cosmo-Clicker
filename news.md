@@ -1,5 +1,15 @@
 # News
 
+## 1.17.0 — Helios Protocol Update - 2026-08-13
+
+- Rebuilt Solar Flare as the four-phase Helios Protocol instead of a three-tap challenge.
+- Added four plasma channels with symbols, increasingly long sequences, phase progress and escalating rewards.
+- Wrong channel inputs now reset the current phase, drain a small amount of debris and reduce the reward multiplier.
+- Completing the protocol grants its scaled reward and a 30-second fleet-speed overdrive.
+- Added goal artwork for drones, planets and prestige, plus objective nodes inside the galaxy route.
+- Expanded the galaxy route to 39 planets and introduced fleet, drone-discovery and first-prestige progression requirements.
+- Replaced the drone cargo square with a transparent minimalist sci-fi crate and reduced per-drone animation overhead.
+
 ## 1.16.0 — Cosmic Shop Update - 2026-08-10
 
 - Made Space Storm more active: its energy node jumps to a new safe position after every hit and pays part of the reward immediately instead of behaving like a stationary tap counter.
@@ -73,7 +83,7 @@
   minification, resource shrinking, signing, and release APK packaging.
 
 ## 1.12.0 - 2026-08-08
-1
+1    
 - Prepared the first store-ready release: added release signing, code and resource
   shrinking, and the permanent `com.orbitsalvagers.droneclicker` application ID.
 - Rebalanced all four Command Center bosses with a smoother difficulty curve,

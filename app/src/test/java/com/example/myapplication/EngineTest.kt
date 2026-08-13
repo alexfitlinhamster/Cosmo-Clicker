@@ -152,19 +152,36 @@ class EngineTest {
             totalDebris = 100.0,
             activeEvent = GameEvent(GameEventType.ASTEROID, 1_000L, reward = 500.0),
             eventMultiplier = 2.0,
-            eventTapsLeft = 7
+            eventTapsLeft = 5
         )
 
         val afterFirstHit = EventEngine.onAsteroidClick(state, 400L)
-        val result = (2..7).fold(afterFirstHit) { current, hit ->
+        val result = (2..5).fold(afterFirstHit) { current, hit ->
             EventEngine.onAsteroidClick(current, 400L + hit)
         }
 
-        assertEquals(6, afterFirstHit.eventTapsLeft)
+        assertEquals(4, afterFirstHit.eventTapsLeft)
         assertEquals(GameEventType.ASTEROID, afterFirstHit.activeEvent?.type)
         assertEquals(600.0, result.totalDebris, 0.001)
         assertEquals(null, result.activeEvent)
         assertEquals(1.0, result.eventMultiplier, 0.0)
+        assertEquals(5, result.goldenShardsRemaining)
+        assertEquals(5, result.scavengeTargets.count { it.isGoldenShard })
+    }
+
+    @Test
+    fun collectingEveryGoldenFragmentActivatesSalvageRush() {
+        val shards = (1L..2L).map { id ->
+            ScavengeTarget(id = id, x = 0.5f, y = 0.5f, reward = 50.0, isGoldenShard = true)
+        }
+        val state = GameState(totalDebris = 100.0, scavengeTargets = shards, goldenShardsRemaining = 2)
+
+        val first = EventEngine.collectGoldenShard(state, 1L, 1_000L)
+        val result = EventEngine.collectGoldenShard(first, 2L, 2_000L)
+
+        assertEquals(200.0, result.totalDebris, 0.0)
+        assertEquals(0, result.goldenShardsRemaining)
+        assertEquals(17_000L, result.activeEffects[SkillType.SALVAGE_RUSH.id])
     }
 
     @Test
@@ -353,11 +370,12 @@ class EngineTest {
     fun pirateRaidStealsBoundedPercentageEachEconomyTick() {
         val state = GameState(
             totalDebris = 10_000.0,
-            activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L)
+            activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L),
+            eventTapsLeft = 6
         )
         val result = EconomyEngine.processTick(state, 1_000L)
         assertEquals(9_980.0, result.totalDebris, 0.0)
-        assertEquals(5.0, EventEngine.pirateRaidTheft(0.0), 0.0)
+        assertEquals(1.0, EventEngine.pirateRaidTheft(0.0), 0.0)
         assertEquals(5_000_000.0, EventEngine.pirateRaidTheft(Double.MAX_VALUE), 0.0)
     }
 

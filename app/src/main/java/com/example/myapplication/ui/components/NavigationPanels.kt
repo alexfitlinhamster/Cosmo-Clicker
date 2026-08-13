@@ -45,15 +45,30 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
             SpaceSheetHeader(stringResource(R.string.case_shop_title), stringResource(R.string.case_shop_subtitle), onClose)
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                listOf(R.string.mystery_case, R.string.tab_planets, R.string.tab_click, R.string.utility_upgrades).forEachIndexed { index, title ->
+                listOf(R.string.shop_tab_upgrades, R.string.shop_tab_cases, R.string.shop_tab_planets, R.string.shop_tab_systems).forEachIndexed { index, title ->
                     SpaceTab(stringResource(title), selectedTab == index, { selectedTab = index }, Modifier.weight(1f))
                 }
             }
             Spacer(Modifier.height(12.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 when (selectedTab) {
-                    0 -> item { MysteryCaseRow(viewModel, state) }
-                    1 -> items(viewModel.planets.toList(), key = { it.first }) { (id, planet) ->
+                    0 -> items(viewModel.clickItems, key = { it.id }) { upgrade ->
+                        val level = state.clickLevels[upgrade.id] ?: 0
+                        val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == com.example.myapplication.WeeklyRule.VOLATILE_MARKET) {
+                            com.example.myapplication.FeatureEngine.volatilePriceMultiplier()
+                        } else 1.0
+                        val cost = EconomyBalance.clickUpgradeCost(upgrade.base, level, marketMultiplier).toLong()
+                        ClickUpgradeRow(
+                            name = localizedUpgradeName(upgrade.id),
+                            meta = stringResource(R.string.click_meta, formatNum(upgrade.value), level),
+                            cost = cost,
+                            enabled = level < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
+                            iconRes = upgrade.iconRes,
+                            onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
+                        )
+                    }
+                    1 -> item { MysteryCaseRow(viewModel, state) }
+                    2 -> items(viewModel.planets.toList(), key = { it.first }) { (id, planet) ->
                         val active = state.currentPlanetId == id
                         val owned = id in state.ownedPlanets
                         PlanetRow(
@@ -71,21 +86,6 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             spriteIndex = planet.spriteIndex,
                             showLock = !owned,
                             onClick = { viewModel.buyPlanet(id) }
-                        )
-                    }
-                    2 -> items(viewModel.clickItems, key = { it.id }) { upgrade ->
-                        val level = state.clickLevels[upgrade.id] ?: 0
-                        val marketMultiplier = if (state.weeklyGalaxy.active && state.weeklyGalaxy.rule == com.example.myapplication.WeeklyRule.VOLATILE_MARKET) {
-                            com.example.myapplication.FeatureEngine.volatilePriceMultiplier()
-                        } else 1.0
-                        val cost = EconomyBalance.clickUpgradeCost(upgrade.base, level, marketMultiplier).toLong()
-                        ClickUpgradeRow(
-                            name = localizedUpgradeName(upgrade.id),
-                            meta = stringResource(R.string.click_meta, formatNum(upgrade.value), level),
-                            cost = cost,
-                            enabled = level < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
-                            iconRes = upgrade.iconRes,
-                            onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
                         )
                     }
                     else -> items(listOf("autoclick", "flight", "spawn", "magnet")) { id ->

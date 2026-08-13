@@ -9,11 +9,11 @@ import org.junit.Test
 class GameRulesTest {
 
     @Test
-    fun caseCostGrowsByThirtyFivePercentEveryTenPurchases() {
+    fun caseCostGrowsByEightPercentAfterEveryPurchase() {
         assertEquals(25_000.0, GameRules.calculateCaseCost(0), 0.0001)
-        assertEquals(25_000.0, GameRules.calculateCaseCost(1), 0.0001)
-        assertEquals(25_000.0, GameRules.calculateCaseCost(9), 0.0001)
-        assertEquals(33_750.0, GameRules.calculateCaseCost(10), 0.0001)
+        assertEquals(27_000.0, GameRules.calculateCaseCost(1), 0.0001)
+        assertEquals(49_975.1157, GameRules.calculateCaseCost(9), 0.001)
+        assertEquals(53_973.1250, GameRules.calculateCaseCost(10), 0.001)
         assertEquals(25_000.0, GameRules.calculateCaseCost(-1), 0.0001)
     }
 

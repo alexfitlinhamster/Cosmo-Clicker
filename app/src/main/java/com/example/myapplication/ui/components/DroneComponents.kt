@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.DroneData
 import com.example.myapplication.DroneState
 import com.example.myapplication.FleetConfig
-import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.R
 
 @Composable
 fun FleetIcon(item: FleetConfig, iconSize: Dp) {
@@ -45,12 +45,6 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
         modifier = Modifier.size(iconSize),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(iconSize * 0.8f)
-                .shadow(12.dp, CircleShape, ambientColor = rarityColor, spotColor = rarityColor)
-        )
-
         if (item.spriteIndex >= 0) {
             val columns = 6
             val rows = 5
@@ -88,6 +82,7 @@ fun ScavengingDrone(
     fleetItems: Map<String, FleetConfig>,
     gameAreaWidth: Dp,
     gameAreaHeight: Dp,
+    rotorPhase: Float = 0f,
     onDroneClick: (Long) -> Unit = {}
 ) {
     val fleetItem = fleetItems[drone.type]
@@ -124,19 +119,21 @@ fun ScavengingDrone(
         if (fleetItem != null) {
             FleetIcon(fleetItem, droneSize)
             droneRotorColor(fleetItem.id)?.let { rotorColor ->
-                DroneRotors(rotorColor = rotorColor, modifier = Modifier.fillMaxSize())
+                DroneRotors(rotorColor = rotorColor, phase = rotorPhase, modifier = Modifier.fillMaxSize())
             }
         } else {
             Box(modifier = Modifier.size(droneSize).background(Color.Red, RoundedCornerShape(2.dp)))
         }
         
         if (drone.hasCargo) {
-            Box(
+            Image(
+                painter = painterResource(R.drawable.cargo_crate_space_v2),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(droneSize / 3)
-                    .background(AppColors.CargoColor, RoundedCornerShape(1.dp)) 
+                    .size(droneSize * 0.42f)
                     .align(Alignment.BottomCenter)
-                    .offset(y = droneSize / 10)
+                    .offset(y = droneSize * 0.14f)
             )
         }
 
@@ -148,15 +145,8 @@ fun ScavengingDrone(
 
 /** Four-frame rotor overlay. The frame is supplied by one shared game clock. */
 @Composable
-private fun DroneRotors(rotorColor: Color, modifier: Modifier = Modifier) {
-    val rotorMotion = rememberInfiniteTransition(label = "drone_rotors")
-    val rotorPhase by rotorMotion.animateFloat(
-        initialValue = 0f,
-        targetValue = 4f,
-        animationSpec = infiniteRepeatable(tween(320, easing = LinearEasing), RepeatMode.Restart),
-        label = "rotor_frame"
-    )
-    val rotorFrame = rotorPhase.toInt().coerceIn(0, 3)
+private fun DroneRotors(rotorColor: Color, phase: Float, modifier: Modifier = Modifier) {
+    val rotorFrame = (phase * 4f).toInt().coerceIn(0, 3)
     Canvas(modifier) {
         val angle = (rotorFrame and 3) * 45f
         val bladeRadius = size.minDimension * 0.13f

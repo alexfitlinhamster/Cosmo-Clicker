@@ -101,7 +101,8 @@ private fun LegacyOperationsPanel(
                                     price = config.price.toLong(),
                                     active = active,
                                     owned = owned,
-                                    canBuy = state.totalDebris >= config.price && !active,
+                                    canBuy = state.totalDebris >= config.price && !active &&
+                                        EconomyBalance.planetFleetObjectiveMet(state, EconomyBalance.planetIndex(id)),
                                     iconRes = config.imageRes,
                                     spriteIndex = config.spriteIndex,
                                     showLock = !owned
@@ -111,6 +112,9 @@ private fun LegacyOperationsPanel(
                         1 -> {
                             item {
                                 DroneCollectionHeader(state, viewModel)
+                            }
+                            item {
+                                DroneCollectionSets(state)
                             }
                             item {
                                 MysteryCaseRow(viewModel, state)
@@ -214,6 +218,9 @@ private fun DroneCollectionHeader(state: GameState, viewModel: GameViewModel) {
 
 @Composable
 private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
+    var showPrestigeConfirmation by remember { mutableStateOf(false) }
+    val canPrestige = EconomyBalance.canPrestige(state)
+    val prestigeReward = if (canPrestige) EconomyBalance.prestigeReward(state) else 0
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
@@ -243,8 +250,6 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
         val collectionPercent = (((MetaProgressEngine.collectionMultiplier(state.fleetCounts, viewModel.fleetById) *
             MetaProgressEngine.masteryMultiplier(state.droneParts)) - 1.0) * 100).toInt()
         Text(stringResource(R.string.collection_bonus, collectionPercent), color = Color.LightGray)
-        val canPrestige = EconomyBalance.canPrestige(state)
-        val prestigeReward = if (canPrestige) EconomyBalance.prestigeReward(state) else 0
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
@@ -261,7 +266,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 )
             }
         }
-        Button(onClick = viewModel::prestige, enabled = canPrestige) {
+        Button(onClick = { showPrestigeConfirmation = true }, enabled = canPrestige) {
             Text(stringResource(if (canPrestige) R.string.prestige else R.string.prestige_requirement))
         }
         Technology.entries.forEach { technology ->
@@ -380,6 +385,29 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 }
             }
         }
+    }
+    if (showPrestigeConfirmation) {
+        SpaceDialog(
+            title = stringResource(R.string.prestige_confirm_title),
+            onDismiss = { showPrestigeConfirmation = false },
+            content = {
+                Text(
+                    stringResource(R.string.prestige_confirm_message, prestigeReward),
+                    color = Color.White.copy(alpha = .86f),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            },
+            actions = {
+                TextButton(onClick = { showPrestigeConfirmation = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Button(onClick = {
+                    showPrestigeConfirmation = false
+                    viewModel.prestige()
+                }) { Text(stringResource(R.string.prestige_confirm)) }
+            }
+        )
     }
 }
 
@@ -592,6 +620,56 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun DroneCollectionSets(state: GameState) {
+    val totalBonus = ((MetaProgressEngine.collectionSetMultiplier(state.discoveredDroneIds) - 1.0) * 100).toInt()
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.collection_sets_title), color = Color.White, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.collection_sets_total_bonus, totalBonus), color = AppColors.Secondary, fontSize = 12.sp)
+        }
+        MetaProgressEngine.collectionSets.forEach { set ->
+            val discovered = set.droneIds.count { it in state.discoveredDroneIds }
+            val complete = discovered == set.droneIds.size
+            val name = stringResource(when (set.id) {
+                "first_expedition" -> R.string.collection_set_first_expedition
+                "emerald_squadron" -> R.string.collection_set_emerald_squadron
+                "crimson_corps" -> R.string.collection_set_crimson_corps
+                "cyber_swarm" -> R.string.collection_set_cyber_swarm
+                "stellar_guard" -> R.string.collection_set_stellar_guard
+                else -> R.string.collection_set_quantum_edge
+            })
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = if (complete) AppColors.Primary.copy(alpha = .11f) else Color.White.copy(alpha = .035f),
+                border = BorderStroke(1.dp, if (complete) AppColors.Primary.copy(alpha = .42f) else Color.White.copy(alpha = .08f))
+            ) {
+                Column(Modifier.padding(11.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(name, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text("$discovered/${set.droneIds.size}", color = if (complete) AppColors.Primary else Color.Gray, fontSize = 11.sp)
+                    }
+                    LinearProgressIndicator(
+                        progress = { discovered.toFloat() / set.droneIds.size },
+                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                        color = AppColors.Primary,
+                        trackColor = Color.White.copy(alpha = .10f)
+                    )
+                    Text(
+                        stringResource(if (complete) R.string.collection_set_bonus_active else R.string.collection_set_bonus_locked, set.bonusPercent),
+                        color = if (complete) AppColors.Secondary else Color.Gray,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -867,6 +945,21 @@ internal fun planetNameResource(id: String): Int =
         "p22" -> R.string.planet_aurora_forge
         "p23" -> R.string.planet_prism_sanctuary
         "p24" -> R.string.planet_eventide_crown
+        "p25" -> R.string.planet_emberglass
+        "p26" -> R.string.planet_verdant_halo
+        "p27" -> R.string.planet_iron_tempest
+        "p28" -> R.string.planet_frozen_reliquary
+        "p29" -> R.string.planet_celestial_bloom
+        "p30" -> R.string.planet_binary_grave
+        "p31" -> R.string.planet_mirage_engine
+        "p32" -> R.string.planet_leviathan_deep
+        "p33" -> R.string.planet_solar_archive
+        "p34" -> R.string.planet_shattered_meridian
+        "p35" -> R.string.planet_clockwork_eden
+        "p36" -> R.string.planet_phantom_orchard
+        "p37" -> R.string.planet_cinder_cathedral
+        "p38" -> R.string.planet_null_beacon
+        "p39" -> R.string.planet_origin_vault
         else -> R.string.unknown_item
     }
 
@@ -916,6 +1009,21 @@ internal fun planetDescriptionResource(id: String): Int =
         "p22" -> R.string.planet_desc_aurora_forge
         "p23" -> R.string.planet_desc_prism_sanctuary
         "p24" -> R.string.planet_desc_eventide_crown
+        "p25" -> R.string.planet_desc_emberglass
+        "p26" -> R.string.planet_desc_verdant_halo
+        "p27" -> R.string.planet_desc_iron_tempest
+        "p28" -> R.string.planet_desc_frozen_reliquary
+        "p29" -> R.string.planet_desc_celestial_bloom
+        "p30" -> R.string.planet_desc_binary_grave
+        "p31" -> R.string.planet_desc_mirage_engine
+        "p32" -> R.string.planet_desc_leviathan_deep
+        "p33" -> R.string.planet_desc_solar_archive
+        "p34" -> R.string.planet_desc_shattered_meridian
+        "p35" -> R.string.planet_desc_clockwork_eden
+        "p36" -> R.string.planet_desc_phantom_orchard
+        "p37" -> R.string.planet_desc_cinder_cathedral
+        "p38" -> R.string.planet_desc_null_beacon
+        "p39" -> R.string.planet_desc_origin_vault
         else -> R.string.unknown_item
     }
 
@@ -948,5 +1056,20 @@ internal fun planetBonusResource(id: String): Int =
         "p22" -> R.string.planet_bonus_aurora_forge
         "p23" -> R.string.planet_bonus_prism_sanctuary
         "p24" -> R.string.planet_bonus_eventide_crown
+        "p25" -> R.string.planet_bonus_emberglass
+        "p26" -> R.string.planet_bonus_verdant_halo
+        "p27" -> R.string.planet_bonus_iron_tempest
+        "p28" -> R.string.planet_bonus_frozen_reliquary
+        "p29" -> R.string.planet_bonus_celestial_bloom
+        "p30" -> R.string.planet_bonus_binary_grave
+        "p31" -> R.string.planet_bonus_mirage_engine
+        "p32" -> R.string.planet_bonus_leviathan_deep
+        "p33" -> R.string.planet_bonus_solar_archive
+        "p34" -> R.string.planet_bonus_shattered_meridian
+        "p35" -> R.string.planet_bonus_clockwork_eden
+        "p36" -> R.string.planet_bonus_phantom_orchard
+        "p37" -> R.string.planet_bonus_cinder_cathedral
+        "p38" -> R.string.planet_bonus_null_beacon
+        "p39" -> R.string.planet_bonus_origin_vault
         else -> R.string.unknown_item
     }

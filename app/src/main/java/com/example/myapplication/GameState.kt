@@ -24,7 +24,8 @@ enum class SkillType(val id: String) {
     TRADE_POWER("trade_power"),
     TRADE_LUCK("trade_luck"),
     TRADE_CLICK_BOOST("trade_click_boost"),
-    TRADE_FLEET_BOOST("trade_fleet_boost")
+    TRADE_FLEET_BOOST("trade_fleet_boost"),
+    SALVAGE_RUSH("salvage_rush")
 }
 
 enum class QuestType {
@@ -120,7 +121,11 @@ data class GameState(
     val claimedAchievementIds: Set<String> = emptySet(),
     val eventLog: List<EventLogEntry> = emptyList(),
     val weeklyGalaxy: WeeklyGalaxy = WeeklyGalaxy(),
-    val stationLevels: Map<StationModule, Int> = emptyMap()
+    val stationLevels: Map<StationModule, Int> = emptyMap(),
+    val goldenShardsRemaining: Int = 0,
+    val stormSequence: List<Int> = emptyList(),
+    val stormProgress: Int = 0,
+    val stormRound: Int = 1
 )
 
 data class DroneData(
@@ -151,7 +156,8 @@ data class ScavengeTarget(
     val velocityX: Float = 0f,
     val velocityY: Float = 0f,
     val isMeteor: Boolean = false,
-    val reward: Double = 0.0
+    val reward: Double = 0.0,
+    val isGoldenShard: Boolean = false
 )
 
 enum class GameEventType {

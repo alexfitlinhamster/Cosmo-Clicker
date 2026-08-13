@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.GameState
+import com.example.myapplication.EconomyBalance
+import com.example.myapplication.GameResourceRegistry
 import com.example.myapplication.ui.theme.AppColors
 import com.example.myapplication.utils.formatNum
 
@@ -31,8 +33,12 @@ import com.example.myapplication.utils.formatNum
 fun Header(
     state: GameState,
     dps: Double,
+    nextPlanetIndex: Int?,
+    nextPlanetPrice: Double?,
+    nextPlanetImageRes: Int?,
     onAchievementsClick: () -> Unit,
     onPrestigeShopClick: () -> Unit,
+    onRouteClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Column(
@@ -113,6 +119,77 @@ fun Header(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
+        }
+
+        if (nextPlanetIndex != null && nextPlanetPrice != null) {
+            val progress = EconomyBalance.planetUnlockProgress(state.totalDebris, nextPlanetPrice)
+            val requiredDrone = EconomyBalance.requiredDroneIdForPlanet(nextPlanetIndex)
+            val requiredPrestige = EconomyBalance.requiredPrestigeForPlanet(nextPlanetIndex)
+            val goalIcon = when {
+                requiredDrone != null && requiredDrone !in state.discoveredDroneIds ->
+                    GameResourceRegistry.drone(requiredDrone.removePrefix("drone_").toIntOrNull() ?: 1)
+                state.lifetimeStats.prestiges < requiredPrestige -> R.drawable.ic_prestige_core
+                else -> nextPlanetImageRes
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+                    .background(Color(0xFF10182A).copy(alpha = .88f), RoundedCornerShape(10.dp))
+                    .border(1.dp, AppColors.Primary.copy(alpha = .28f), RoundedCornerShape(10.dp))
+                    .clickable(onClick = onRouteClick)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(48.dp).background(AppColors.Primary.copy(.13f), CircleShape), contentAlignment = Alignment.Center) {
+                    if (goalIcon != null) Image(painterResource(goalIcon), null, Modifier.size(42.dp), contentScale = ContentScale.Fit)
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        stringResource(R.string.next_goal_planet, nextPlanetIndex, EconomyBalance.MAX_PLANET_INDEX),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        stringResource(
+                            R.string.next_goal_remaining,
+                            formatNum((nextPlanetPrice - state.totalDebris).coerceAtLeast(0.0))
+                        ),
+                        color = AppColors.Secondary,
+                        fontSize = 10.sp
+                    )
+                }
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(5.dp).clip(CircleShape),
+                    color = AppColors.Primary,
+                    trackColor = Color.White.copy(alpha = .10f)
+                )
+                val requiredFleet = EconomyBalance.requiredActiveDronesForPlanet(nextPlanetIndex)
+                if (requiredDrone != null && requiredDrone !in state.discoveredDroneIds) {
+                    Text(
+                        stringResource(R.string.next_goal_drone, requiredDrone.removePrefix("drone_")),
+                        color = AppColors.Warning,
+                        fontSize = 10.sp
+                    )
+                } else if (state.lifetimeStats.prestiges < requiredPrestige) {
+                    Text(
+                        stringResource(R.string.next_goal_prestige, state.lifetimeStats.prestiges, requiredPrestige),
+                        color = AppColors.Warning,
+                        fontSize = 10.sp
+                    )
+                } else if (requiredFleet > 0) {
+                    Text(
+                        stringResource(R.string.next_goal_fleet, state.activeFleetCounts.values.sum(), requiredFleet),
+                        color = if (state.activeFleetCounts.values.sum() >= requiredFleet) AppColors.Primary else AppColors.Warning,
+                        fontSize = 10.sp
+                    )
+                }
+                }
             }
         }
 

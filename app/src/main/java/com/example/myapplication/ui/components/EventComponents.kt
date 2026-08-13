@@ -171,7 +171,7 @@ private fun eventIconResource(type: GameEventType): Int = when (type) {
     GameEventType.ABANDONED_STATION -> R.drawable.event_abandoned_station_v2
     GameEventType.SOLAR_FLARE -> R.drawable.event_solar_cooler_v2
     GameEventType.TRADING_SHIP -> R.drawable.event_trading_ship_game
-    GameEventType.PIRATE_RAID -> R.drawable.event_pirate_ship_v2
+    GameEventType.PIRATE_RAID -> R.drawable.event_pirate_raider_v3
     GameEventType.BLACK_HOLE -> R.drawable.event_black_hole_v2
     GameEventType.CYBER_VIRUS -> R.drawable.event_cyber_module_v2
     GameEventType.STORM -> R.drawable.event_storm_node_v2
@@ -201,6 +201,61 @@ fun EventChallengeComponent(
         contentAlignment = Alignment.Center
     ) {
         Image(painterResource(icon), contentDescription = null, modifier = Modifier.fillMaxSize())
+    }
+}
+
+@Composable
+fun StormNodeChallenge(
+    event: GameEvent,
+    sequence: List<Int>,
+    progress: Int,
+    round: Int,
+    gameAreaWidth: Dp,
+    gameAreaHeight: Dp,
+    onNodeClick: (Int) -> Unit
+) {
+    val nodeColors = listOf(Color(0xFF62E8FF), Color(0xFFB47CFF), Color(0xFFFFC857))
+    val positions = listOf(-92.dp to 34.dp, 0.dp to (-28).dp, 92.dp to 34.dp)
+    Box(
+        Modifier.offset(x = gameAreaWidth * event.x - 130.dp, y = gameAreaHeight * event.y - 74.dp)
+            .size(260.dp, 148.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(stringResource(R.string.event_storm_round, round, 3), color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.TopCenter))
+        positions.forEachIndexed { index, (x, y) ->
+            val isNext = sequence.getOrNull(progress) == index
+            Box(
+                Modifier.offset(x, y).size(if (isNext) 66.dp else 56.dp)
+                    .shadow(if (isNext) 22.dp else 8.dp, CircleShape, spotColor = nodeColors[index])
+                    .background(nodeColors[index].copy(alpha = if (isNext) .95f else .42f), CircleShape)
+                    .border(2.dp, Color.White.copy(alpha = if (isNext) .9f else .25f), CircleShape)
+                    .eventClickable { onNodeClick(index) },
+                contentAlignment = Alignment.Center
+            ) { Text("${index + 1}", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 20.sp) }
+        }
+        Text(sequence.joinToString("  ") { "${it + 1}" }, color = AppColors.Warning, fontSize = 12.sp, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+fun SolarFlareProtocol(event: GameEvent, sequence: List<Int>, progress: Int, phase: Int, gameAreaWidth: Dp, gameAreaHeight: Dp, onChannelClick: (Int) -> Unit) {
+    val colors = listOf(Color(0xFFFF5A36), Color(0xFFFFC247), Color(0xFF65E7FF), Color(0xFFD879FF))
+    val symbols = listOf("▲", "◆", "●", "✦")
+    val positions = listOf(-78.dp to (-34).dp, 78.dp to (-34).dp, -78.dp to 46.dp, 78.dp to 46.dp)
+    Box(Modifier.offset(x = gameAreaWidth * event.x - 142.dp, y = gameAreaHeight * event.y - 112.dp).size(284.dp, 224.dp).background(Color(0xD90A1124), RoundedCornerShape(22.dp)).border(2.dp, Color(0xFFFF7A38).copy(.72f), RoundedCornerShape(22.dp)).padding(12.dp), contentAlignment = Alignment.Center) {
+        Column(Modifier.align(Alignment.TopCenter), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.solar_protocol_phase, phase, 4), color = Color(0xFFFFB14A), fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.solar_protocol_heat, progress * 100 / sequence.size.coerceAtLeast(1)), color = Color.White.copy(.72f), fontSize = 10.sp)
+        }
+        positions.forEachIndexed { index, (x, y) ->
+            val isNext = sequence.getOrNull(progress) == index
+            Box(Modifier.offset(x, y).size(if (isNext) 68.dp else 58.dp).shadow(if (isNext) 24.dp else 6.dp, CircleShape, spotColor = colors[index]).background(colors[index].copy(alpha = if (isNext) .95f else .32f), CircleShape).border(2.dp, Color.White.copy(alpha = if (isNext) .9f else .22f), CircleShape).eventClickable { onChannelClick(index) }, contentAlignment = Alignment.Center) {
+                Text(symbols[index], color = Color(0xFF071426), fontWeight = FontWeight.Black, fontSize = 23.sp)
+            }
+        }
+        Row(Modifier.align(Alignment.BottomCenter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            sequence.forEachIndexed { step, channel -> Text(symbols[channel], color = if (step < progress) AppColors.Primary else colors[channel], fontSize = 15.sp, fontWeight = FontWeight.Black) }
+        }
     }
 }
 
@@ -238,8 +293,8 @@ fun EventChainPendingBanner(pending: PendingEventChain, modifier: Modifier = Mod
 }
 
 @Composable
-fun Asteroid(event: GameEvent, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: () -> Unit) {
-    val asteroidSize = 58.dp
+fun Asteroid(event: GameEvent, tapsLeft: Int, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: () -> Unit) {
+    val asteroidSize = (42 + tapsLeft.coerceIn(1, 5) * 5).dp
     Box(
         modifier = Modifier
             .offset(

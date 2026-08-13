@@ -7,7 +7,7 @@ import org.junit.Test
 
 class PlanetResourceMappingTest {
 
-    private val planetIds = (1..24).map { "p$it" }
+    private val planetIds = (1..39).map { "p$it" }
 
     @Test
     fun everyPlanetHasLocalizedNameDescriptionAndBonusResources() {
@@ -24,9 +24,9 @@ class PlanetResourceMappingTest {
 
     @Test
     fun planetResourceMappingsAreUniqueForAllPlanets() {
-        assertEquals(24, planetIds.map(::planetNameResource).toSet().size)
-        assertEquals(24, planetIds.map(::planetDescriptionResource).toSet().size)
-        assertEquals(24, planetIds.map(::planetBonusResource).toSet().size)
+        assertEquals(39, planetIds.map(::planetNameResource).toSet().size)
+        assertEquals(39, planetIds.map(::planetDescriptionResource).toSet().size)
+        assertEquals(39, planetIds.map(::planetBonusResource).toSet().size)
     }
 
     @Test

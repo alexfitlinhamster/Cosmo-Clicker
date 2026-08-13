@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
 
 @Composable
@@ -116,7 +118,7 @@ fun SpaceDialog(
 @Composable
 fun ComboIndicator(combo: Int, modifier: Modifier = Modifier) {
     val scale by animateFloatAsState(
-        targetValue = 1f + (combo.toFloat() / 100f).coerceAtMost(0.4f),
+        targetValue = 1f + (combo.toFloat() / 10f).coerceAtMost(0.35f),
         animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "combo_scale"
     )
@@ -126,16 +128,59 @@ fun ComboIndicator(combo: Int, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "COMBO",
+            text = when {
+                combo >= 10 -> stringResource(R.string.combo_impossible)
+                combo >= 7 -> stringResource(R.string.combo_master)
+                combo >= 4 -> stringResource(R.string.combo_great)
+                else -> stringResource(R.string.combo)
+            },
             color = AppColors.Primary,
-            fontSize = 12.sp,
+            fontSize = if (combo >= 7) 20.sp else 15.sp,
             fontWeight = FontWeight.Black
         )
         Text(
             text = "x$combo",
             color = Color.White,
-            fontSize = 26.sp,
+            fontSize = if (combo >= 10) 42.sp else 32.sp,
             fontWeight = FontWeight.ExtraBold
         )
+    }
+}
+
+@Composable
+fun PlanetUnlockBanner(
+    planetIndex: Int,
+    planetName: String,
+    incomeBonusPercent: Int,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.widthIn(max = 440.dp).fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFF102A3D).copy(alpha = .97f),
+        border = BorderStroke(1.dp, AppColors.Warning.copy(alpha = .72f)),
+        shadowElevation = 14.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("✦", color = AppColors.Warning, fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(R.string.planet_unlocked_title, planetIndex),
+                    color = AppColors.Warning,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(planetName, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                Text(
+                    stringResource(R.string.planet_unlocked_bonus, incomeBonusPercent),
+                    color = AppColors.Secondary,
+                    fontSize = 11.sp
+                )
+            }
+        }
     }
 }

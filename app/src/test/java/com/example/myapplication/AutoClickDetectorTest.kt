@@ -10,7 +10,10 @@ class AutoClickDetectorTest {
         val detector = AutoClickDetector()
         var result = AutoClickDetector.Result(allowed = true)
 
-        repeat(24) { index -> result = detector.registerClick(index * 100L) }
+        repeat(24) { index ->
+            val candidate = detector.registerClick(index * 100L)
+            if (candidate.newlyDetected) result = candidate
+        }
 
         assertFalse(result.allowed)
         assertTrue(result.newlyDetected)
@@ -33,10 +36,19 @@ class AutoClickDetectorTest {
     fun repeatedDetectionIncreasesBlockDuration() {
         val detector = AutoClickDetector()
         var now = 0L
-        repeat(24) { now += 100L; detector.registerClick(now) }
-        now += 10_001L
+        var firstBlock = 0L
+        repeat(24) {
+            now += 100L
+            val result = detector.registerClick(now)
+            if (result.newlyDetected) firstBlock = result.remainingBlockMillis
+        }
+        now += firstBlock + 1L
         var second = AutoClickDetector.Result(true)
-        repeat(24) { now += 100L; second = detector.registerClick(now) }
+        repeat(24) {
+            now += 100L
+            val candidate = detector.registerClick(now)
+            if (candidate.newlyDetected) second = candidate
+        }
 
         assertFalse(second.allowed)
         assertTrue(second.remainingBlockMillis >= 20_000L)

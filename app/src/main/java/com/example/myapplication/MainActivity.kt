@@ -37,7 +37,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             var selectedLanguage by remember { mutableStateOf(getSelectedLanguage()) }
-            var backgroundMusicEnabled by remember { mutableStateOf(getBackgroundMusicEnabled()) }
             val localizedConfiguration = remember(selectedLanguage) {
                 Configuration(resources.configuration).apply {
                     setLocale(selectedLanguage?.let(Locale::forLanguageTag) ?: Locale.getDefault())
@@ -56,11 +55,6 @@ class MainActivity : ComponentActivity() {
                         onLanguageSelected = { language ->
                             saveSelectedLanguage(language)
                             selectedLanguage = language
-                        },
-                        backgroundMusicEnabled = backgroundMusicEnabled,
-                        onBackgroundMusicChanged = { enabled ->
-                            backgroundMusicEnabled = enabled
-                            saveBackgroundMusicEnabled(enabled)
                         }
                     )
                 }
@@ -80,18 +74,8 @@ class MainActivity : ComponentActivity() {
             .apply()
     }
 
-    private fun getBackgroundMusicEnabled(): Boolean =
-        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).getBoolean(BACKGROUND_MUSIC_KEY, true)
-
-    private fun saveBackgroundMusicEnabled(enabled: Boolean) {
-        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit()
-            .putBoolean(BACKGROUND_MUSIC_KEY, enabled)
-            .apply()
-    }
-
     private companion object {
         const val PREFERENCES_NAME = "settings"
         const val LANGUAGE_KEY = "language"
-        const val BACKGROUND_MUSIC_KEY = "backgroundMusic"
     }
 }

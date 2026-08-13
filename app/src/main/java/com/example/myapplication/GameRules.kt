@@ -4,8 +4,7 @@ import kotlin.math.pow
 
 object GameRules {
     private const val CASE_BASE_COST = 25_000.0
-    private const val CASE_COST_MULTIPLIER = 1.35
-    private const val CASE_PRICE_STEP = 10
+    private const val CASE_COST_MULTIPLIER = 1.08
     private const val DRONE_SALE_SHARE = 0.05
     const val HOTEL_LOAN_AMOUNT = 1_000_000.0
     private const val HOTEL_DEBT_PAYMENT_SHARE = 0.3
@@ -19,19 +18,16 @@ object GameRules {
 
     fun calculateCaseCost(casesPurchased: Int, type: CaseType = CaseType.COMMON): Double =
         CASE_BASE_COST * type.priceMultiplier *
-            CASE_COST_MULTIPLIER.pow((casesPurchased.coerceAtLeast(0) / CASE_PRICE_STEP).toDouble())
+            CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
 
     fun calculateCaseBundleCost(casesOpened: Int, type: CaseType, count: Int): Double {
         var remaining = count.coerceAtLeast(0)
         var opened = casesOpened.coerceAtLeast(0)
         var total = 0.0
         while (remaining > 0) {
-            val inTier = opened % CASE_PRICE_STEP
-            val tierSpace = CASE_PRICE_STEP - inTier
-            val chunk = minOf(remaining, tierSpace)
-            total += calculateCaseCost(opened, type) * chunk
-            opened += chunk
-            remaining -= chunk
+            total += calculateCaseCost(opened, type)
+            opened++
+            remaining--
         }
         return total
     }
@@ -43,12 +39,9 @@ object GameRules {
         while (count < Int.MAX_VALUE) {
             val price = calculateCaseCost(opened, type)
             if (!price.isFinite() || remainingBalance < price) break
-            val tierSpace = CASE_PRICE_STEP - opened % CASE_PRICE_STEP
-            val affordableInTier = (remainingBalance / price).toLong().coerceAtMost(tierSpace.toLong())
-            if (affordableInTier <= 0) break
-            remainingBalance -= price * affordableInTier
-            opened += affordableInTier.toInt()
-            count += affordableInTier
+            remainingBalance -= price
+            opened++
+            count++
         }
         return count.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }

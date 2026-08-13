@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,7 +26,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,13 +56,10 @@ private data class LanguageOption(val tag: String?, val label: Int)
 fun SettingsScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
-    backgroundMusicEnabled: Boolean,
-    onBackgroundMusicChanged: (Boolean) -> Unit,
     onResetGame: () -> Unit,
     onBack: () -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var showGameGuideDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val languages = listOf(
@@ -80,7 +74,6 @@ fun SettingsScreen(
     BackHandler {
         when {
             showLanguageDialog -> showLanguageDialog = false
-            showGameGuideDialog -> showGameGuideDialog = false
             showResetDialog -> showResetDialog = false
             else -> onBack()
         }
@@ -149,12 +142,6 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            SettingsCard {
-                SettingsRow(stringResource(R.string.application), stringResource(R.string.app_name))
-            }
-
-            Spacer(Modifier.height(12.dp))
-
             SettingsCard(
                 modifier = Modifier.clickable { showLanguageDialog = true }
             ) {
@@ -163,44 +150,11 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            SettingsCard(
-                modifier = Modifier.clickable { showGameGuideDialog = true }
-            ) {
-                SettingsRow(stringResource(R.string.how_to_play), stringResource(R.string.open_guide))
-            }
-
-            Spacer(Modifier.height(12.dp))
-
             SettingsCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.background_music), color = Color.White)
-                        Text(
-                            stringResource(R.string.background_music_desc),
-                            color = Color.LightGray,
-                            fontSize = 11.sp
-                        )
-                    }
-                    Switch(checked = backgroundMusicEnabled, onCheckedChange = onBackgroundMusicChanged)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            SettingsCard(modifier = Modifier.clickable { showResetDialog = true }) {
-                Column(Modifier.padding(vertical = 8.dp)) {
-                    Text(stringResource(R.string.reset_game), color = AppColors.Danger, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.reset_game_description), color = Color.LightGray, fontSize = 11.sp)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            SettingsCard {
+                SettingsRow(
+                    stringResource(R.string.version),
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+                )
                 SettingsRow(stringResource(R.string.developer), "Alexei Fitlin")
                 Row(
                     modifier = Modifier
@@ -213,7 +167,7 @@ fun SettingsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(R.drawable.ic_telegram),
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.telegram),
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(Modifier.width(10.dp))
@@ -222,6 +176,16 @@ fun SettingsScreen(
                     Text("@AlexFitlin", color = AppColors.Primary, fontWeight = FontWeight.SemiBold)
                 }
             }
+
+            Spacer(Modifier.height(12.dp))
+
+            SettingsCard(modifier = Modifier.clickable { showResetDialog = true }) {
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    Text(stringResource(R.string.reset_game), color = AppColors.Danger, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.reset_game_description), color = Color.LightGray, fontSize = 11.sp)
+                }
+            }
+
         }
     }
 
@@ -252,47 +216,6 @@ fun SettingsScreen(
         )
     }
 
-    if (showGameGuideDialog) {
-        val guideSections = listOf(
-            R.string.guide_basics_title to R.string.guide_basics_body,
-            R.string.guide_drones_title to R.string.guide_drones_body,
-            R.string.guide_cases_title to R.string.guide_cases_body,
-            R.string.guide_events_title to R.string.guide_events_body,
-            R.string.guide_progress_title to R.string.guide_progress_body,
-            R.string.guide_performance_title to R.string.guide_performance_body
-        )
-        SpaceDialog(
-            title = stringResource(R.string.how_to_play),
-            onDismiss = { showGameGuideDialog = false },
-            content = {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 460.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(guideSections, key = { it.first }) { (title, body) ->
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.05f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-                        ) {
-                            Column(Modifier.padding(14.dp)) {
-                                Text(stringResource(title), color = AppColors.Primary, fontWeight = FontWeight.Bold)
-                                Spacer(Modifier.height(5.dp))
-                                Text(stringResource(body), color = Color.White.copy(alpha = 0.82f), lineHeight = 19.sp)
-                            }
-                        }
-                    }
-                }
-            },
-            actions = {
-                Button(onClick = { showGameGuideDialog = false }) {
-                    Text(stringResource(R.string.close))
-                }
-            }
-        )
-    }
-
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
@@ -309,6 +232,7 @@ fun SettingsScreen(
             }
         )
     }
+
 }
 
 @Composable

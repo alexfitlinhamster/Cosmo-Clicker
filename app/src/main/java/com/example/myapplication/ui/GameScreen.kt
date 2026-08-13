@@ -3,12 +3,14 @@ package com.example.myapplication.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -41,6 +45,7 @@ import com.example.myapplication.GameEvent
 import com.example.myapplication.GameEventType
 import com.example.myapplication.GameViewModel
 import com.example.myapplication.DistressChoice
+import com.example.myapplication.EconomyBalance
 import com.example.myapplication.StationChoice
 import com.example.myapplication.TradeOffer
 import com.example.myapplication.R
@@ -56,8 +61,6 @@ import java.util.concurrent.atomic.AtomicLong
 fun GameScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
-    backgroundMusicEnabled: Boolean,
-    onBackgroundMusicChanged: (Boolean) -> Unit,
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -67,19 +70,20 @@ fun GameScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val soundManager = remember(context) { SoundManager(context) }
-    LaunchedEffect(backgroundMusicEnabled) {
-        if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic() else soundManager.pauseBackgroundMusic()
-    }
+    LaunchedEffect(soundManager) { soundManager.resumeBackgroundMusic() }
     val floatingTextId = remember { AtomicLong(0L) }
     var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
+    var lastFloatingTextMillis by remember { mutableLongStateOf(0L) }
     var isShopOpen by remember { mutableStateOf(false) }
     var isHangarOpen by remember { mutableStateOf(false) }
     var isAchievementsOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
     var isPrestigeShopOpen by remember { mutableStateOf(false) }
+    var isGalaxyRouteOpen by rememberSaveable { mutableStateOf(false) }
     // Settings must survive Activity recreation when the app locale changes.
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
+    var unlockedPlanetId by remember { mutableStateOf<String?>(null) }
 
     // Состояние стартового экрана
     var showStartScreen by rememberSaveable { mutableStateOf(true) }
@@ -95,6 +99,7 @@ fun GameScreen(
             isHangarOpen ||
             isAchievementsOpen ||
             isPrestigeShopOpen ||
+            isGalaxyRouteOpen ||
             isQuestOpen
     ) {
         when {
@@ -106,6 +111,7 @@ fun GameScreen(
             isHangarOpen -> isHangarOpen = false
             isAchievementsOpen -> isAchievementsOpen = false
             isPrestigeShopOpen -> isPrestigeShopOpen = false
+            isGalaxyRouteOpen -> isGalaxyRouteOpen = false
             isQuestOpen -> isQuestOpen = false
         }
     }
@@ -128,8 +134,17 @@ fun GameScreen(
     LaunchedEffect(state.ownedPlanets) {
         if (state.ownedPlanets.size > previousOwnedPlanets.size) {
             soundManager.playPlanetUnlock()
+            unlockedPlanetId = (state.ownedPlanets - previousOwnedPlanets)
+                .maxByOrNull(EconomyBalance::planetIndex)
         }
         previousOwnedPlanets = state.ownedPlanets
+    }
+
+    LaunchedEffect(unlockedPlanetId) {
+        if (unlockedPlanetId != null) {
+            delay(3_500L)
+            unlockedPlanetId = null
+        }
     }
 
     var previousClaimedAchievements by remember { mutableStateOf(state.claimedAchievementIds) }
@@ -140,12 +155,12 @@ fun GameScreen(
         previousClaimedAchievements = state.claimedAchievementIds
     }
 
-    DisposableEffect(lifecycleOwner, viewModel, backgroundMusicEnabled) {
+    DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
                     viewModel.resumeSimulation()
-                    if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic()
+                    soundManager.resumeBackgroundMusic()
                 }
                 Lifecycle.Event.ON_STOP -> {
                     viewModel.pauseSimulation()
@@ -157,7 +172,7 @@ fun GameScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             viewModel.resumeSimulation()
-            if (backgroundMusicEnabled) soundManager.resumeBackgroundMusic()
+            soundManager.resumeBackgroundMusic()
         }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -167,6 +182,9 @@ fun GameScreen(
     }
 
     val fleetMap = viewModel.fleetById
+    val nextPlanetIndex = EconomyBalance.nextPlanetIndex(state.ownedPlanets)
+    val nextPlanetPrice = nextPlanetIndex?.let { viewModel.planets["p$it"]?.price }
+    val nextPlanetImageRes = nextPlanetIndex?.let { viewModel.planets["p$it"]?.imageRes }
 
     // Логика выбора фона в зависимости от активного ивента
     val backgroundRes = R.drawable.background_cosmic_game
@@ -179,6 +197,9 @@ fun GameScreen(
     }
 
     fun addFloatingText(text: String, x: Float, y: Float) {
+        val now = System.currentTimeMillis()
+        if (now - lastFloatingTextMillis < FLOATING_TEXT_THROTTLE_MS) return
+        lastFloatingTextMillis = now
         val id = floatingTextId.incrementAndGet()
         floatingTexts = floatingTexts
             .takeLast(MAX_FLOATING_TEXTS - 1) + FloatingTextData(id, text, x, y)
@@ -188,6 +209,37 @@ fun GameScreen(
         }
     }
 
+    val spaceMotion = rememberInfiniteTransition(label = "space_background")
+    val starTwinklePhase by spaceMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = (Math.PI * 2.0).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(4_800, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "star_twinkle_phase"
+    )
+    val cosmicParticlePhase by spaceMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(7_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "cosmic_particle_phase"
+    )
+    // A single clock drives every rotor. Previously each drone owned an infinite
+    // transition, multiplying animation work as the active fleet grew.
+    val sharedRotorPhase by spaceMotion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(320, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shared_drone_rotor_phase"
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         // ДИНАМИЧЕСКИЙ ФОН
         Image(
@@ -196,6 +248,8 @@ fun GameScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
+
+        CosmicParticleTrails(cosmicParticlePhase)
 
         // Затемнение для читаемости элементов
         Box(
@@ -207,22 +261,33 @@ fun GameScreen(
 
         // Звезды
         repeat(GameConstants.StarCount) { index ->
-            Star(index = index, twinklePhase = 0f)
+            Star(index = index, twinklePhase = starTwinklePhase)
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
             Header(
                 state = state,
                 dps = viewModel.calculateDPS(),
+                nextPlanetIndex = nextPlanetIndex,
+                nextPlanetPrice = nextPlanetPrice,
+                nextPlanetImageRes = nextPlanetImageRes,
                 onAchievementsClick = { isAchievementsOpen = true },
                 onPrestigeShopClick = { isPrestigeShopOpen = true },
+                onRouteClick = { isGalaxyRouteOpen = true },
                 onSettingsClick = { showSettings = true }
             )
             
             BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 state.scavengeTargets.forEach { target ->
                     key(target.id) {
-                        DebrisTarget(target, maxWidth, maxHeight)
+                        DebrisTarget(
+                            target,
+                            maxWidth,
+                            maxHeight,
+                            onClick = if (target.isGoldenShard) {
+                                { viewModel.collectGoldenShard(target.id) }
+                            } else null
+                        )
                     }
                 }
 
@@ -265,7 +330,7 @@ fun GameScreen(
 
                 state.drones.forEachIndexed { index, drone ->
                     key(drone.id) {
-                        ScavengingDrone(drone, fleetMap, maxWidth, maxHeight) {
+                        ScavengingDrone(drone, fleetMap, maxWidth, maxHeight, sharedRotorPhase) {
                             val cyberEvent = state.activeEvent?.takeIf { active ->
                                 active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
                             }
@@ -277,7 +342,7 @@ fun GameScreen(
                 state.activeEvent?.let { event ->
                     when (event.type) {
                         GameEventType.ASTEROID -> {
-                            Asteroid(event, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
+                            Asteroid(event, state.eventTapsLeft, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
                         }
                         GameEventType.BLACK_HOLE -> {
                             BlackHoleComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
@@ -289,10 +354,11 @@ fun GameScreen(
                                 viewModel.onPirateRaidClick()
                             }
                         }
-                        GameEventType.STORM, GameEventType.SOLAR_FLARE -> {
-                            EventChallengeComponent(event, maxWidth, maxHeight) {
-                                viewModel.onEventChallengeClick()
-                            }
+                        GameEventType.STORM -> {
+                            StormNodeChallenge(event, state.stormSequence, state.stormProgress, state.stormRound, maxWidth, maxHeight, viewModel::onStormNodeClick)
+                        }
+                        GameEventType.SOLAR_FLARE -> {
+                            SolarFlareProtocol(event, state.stormSequence, state.stormProgress, state.stormRound, maxWidth, maxHeight, viewModel::onSolarChannelClick)
                         }
                         GameEventType.METEOR_SHOWER -> Unit
                         GameEventType.DISTRESS_SIGNAL -> Unit
@@ -400,6 +466,18 @@ fun GameScreen(
             }
         }
 
+        unlockedPlanetId?.let { planetId ->
+            val planet = viewModel.planets[planetId]
+            if (planet != null) {
+                PlanetUnlockBanner(
+                    planetIndex = EconomyBalance.planetIndex(planetId),
+                    planetName = planet.name,
+                    incomeBonusPercent = ((EconomyBalance.planetIncomeMultiplier(planetId) - 1.0) * 100).toInt(),
+                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 112.dp, start = 20.dp, end = 20.dp)
+                )
+            }
+        }
+
         // ОВЕРЛЕЙ ОТКРЫТИЯ КЕЙСА
         CaseOpeningOverlay(
             isOpening = state.isOpeningCase,
@@ -419,8 +497,6 @@ fun GameScreen(
             SettingsScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = onLanguageSelected,
-                backgroundMusicEnabled = backgroundMusicEnabled,
-                onBackgroundMusicChanged = onBackgroundMusicChanged,
                 onResetGame = {
                     viewModel.resetGame()
                     showSettings = false
@@ -527,6 +603,10 @@ fun GameScreen(
             )
         }
 
+        if (isGalaxyRouteOpen) {
+            GalaxyRouteDialog(viewModel, state) { isGalaxyRouteOpen = false }
+        }
+
         if (showStartScreen) {
             val promptTransition = rememberInfiniteTransition(label = "start_prompt")
             val animatedPromptOffset by promptTransition.animateFloat(
@@ -589,6 +669,12 @@ fun GameScreen(
                         .background(Color.Black),
                     contentScale = ContentScale.Crop
                 )
+
+                CosmicParticleTrails(cosmicParticlePhase)
+
+                repeat(18) { index ->
+                    Star(index = index + 100, twinklePhase = starTwinklePhase)
+                }
 
                 Column(
                     modifier = Modifier
@@ -670,7 +756,40 @@ private fun GameNavigationButton(
     }
 }
 
-private const val MAX_FLOATING_TEXTS = 24
+private const val MAX_FLOATING_TEXTS = 6
+private const val FLOATING_TEXT_THROTTLE_MS = 120L
+
+@Composable
+private fun CosmicParticleTrails(phase: Float, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val trails = listOf(
+            Triple(0.00f, 0.12f, Color(0xFF8DEBFF)),
+            Triple(0.38f, 0.46f, Color(0xFFD8B5FF)),
+            Triple(0.73f, 0.72f, Color(0xFFFFE8A3))
+        )
+        trails.forEachIndexed { index, (delay, startY, color) ->
+            val progress = ((phase - delay + 1f) % 1f) * 3f
+            if (progress in 0f..1f) {
+                val x = size.width * (-0.15f + progress * 1.30f)
+                val y = size.height * (startY + progress * 0.18f)
+                val length = size.minDimension * (0.10f + index * 0.018f)
+                val alpha = (1f - kotlin.math.abs(progress - 0.5f) * 2f).coerceIn(0f, 1f)
+                drawLine(
+                    color = color.copy(alpha = alpha * 0.52f),
+                    start = Offset(x - length, y - length * 0.28f),
+                    end = Offset(x, y),
+                    strokeWidth = 2.2f + index,
+                    cap = StrokeCap.Round
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = alpha * 0.9f),
+                    radius = 2.5f + index * 0.5f,
+                    center = Offset(x, y)
+                )
+            }
+        }
+    }
+}
 
 private fun formatOfflineDuration(seconds: Long): String {
     val safe = seconds.coerceAtLeast(0L)

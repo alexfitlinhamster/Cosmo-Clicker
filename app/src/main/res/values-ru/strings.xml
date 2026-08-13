@@ -19,12 +19,15 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Разработчик</string>
     <string name="telegram">Telegram</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="open_policy">Просмотреть</string>
+    <string name="privacy_policy_body">ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ DRONA SALVAGE\n\nДата вступления в силу: 12 августа 2026 года\nПоследнее обновление: 12 августа 2026 года\n\nНастоящая Политика конфиденциальности описывает порядок обработки информации разработчиком игры Drona Salvage («Игра»). Устанавливая или используя Игру, пользователь подтверждает ознакомление с настоящей Политикой.\n\n1. ОПЕРАТОР ДАННЫХ\nРазработчиком и издателем Игры является Алексей Фитлин («Разработчик», «мы»). Обращения по вопросам конфиденциальности можно направить через контакт разработчика, указанный в разделе «Настройки» Игры.\n\n2. СОБИРАЕМАЯ ИНФОРМАЦИЯ\nИгра не собирает, не передаёт, не продаёт, не сдаёт в аренду и не раскрывает персональные данные. Регистрация и создание учётной записи не требуются. Игра не запрашивает имя, адрес электронной почты, номер телефона, точное местоположение, контакты, фотографии, рекламный идентификатор, платёжные сведения и иные персональные данные.\n\n3. ЛОКАЛЬНЫЕ ИГРОВЫЕ ДАННЫЕ\nИгровой прогресс, выбранный язык, настройки звука, достижения и другие параметры игрового процесса сохраняются локально на устройстве. Эти сведения используются исключительно для работы Игры и не передаются Разработчику. В зависимости от настроек резервного копирования Android операционная система может включать локальные данные приложения в резервную копию устройства или облачную копию, управляемую поставщиком платформы.\n\n4. РАЗРЕШЕНИЯ УСТРОЙСТВА\nИгра может использовать вибрацию устройства для обратной связи во время игрового процесса. Доступ к Интернету, камере, микрофону, геолокации, контактам, хранилищу и рекламному идентификатору не требуется.\n\n5. РЕКЛАМА, АНАЛИТИКА И ПОКУПКИ\nТекущая версия Игры не содержит сторонней рекламы, аналитических и отслеживающих SDK, учётных записей пользователей и встроенных покупок. Если такие функции появятся в будущем, настоящая Политика и декларация безопасности данных Google Play будут обновлены до выпуска соответствующей версии.\n\n6. ПЕРЕДАЧА И ПРОДАЖА ДАННЫХ\nПоскольку Игра не собирает персональные данные, Разработчик не продаёт и не передаёт их рекламодателям, брокерам данных, аналитическим сервисам и иным третьим лицам.\n\n7. СРОК ХРАНЕНИЯ И УДАЛЕНИЕ\nЛокальные игровые данные хранятся на устройстве до сброса прогресса в настройках Игры, очистки данных приложения в настройках Android или удаления Игры. Разработчик не имеет доступа к этим данным и не может их восстановить.\n\n8. КОНФИДЕНЦИАЛЬНОСТЬ ДЕТЕЙ\nИгра предназначена для широкой аудитории и сознательно не собирает персональные данные детей. При изменении порядка обработки данных будут введены необходимые возрастные меры защиты и соответствующие уведомления.\n\n9. БЕЗОПАСНОСТЬ\nРиск для конфиденциальности минимизируется хранением игровой информации на устройстве и отсутствием удалённого сервиса сбора данных. Ни один способ электронного хранения не обеспечивает абсолютной безопасности; пользователь самостоятельно отвечает за безопасность своего устройства.\n\n10. ПРАВА ПОЛЬЗОВАТЕЛЯ\nПоскольку Разработчик не собирает персональные данные, удалённая запись персональных данных, которую можно запросить, исправить, экспортировать или удалить, обычно отсутствует. Пользователь управляет локальными данными способами, указанными выше, и вправе обратиться к Разработчику с любым вопросом о конфиденциальности.\n\n11. ИЗМЕНЕНИЯ ПОЛИТИКИ\nПолитика может обновляться при изменении функций Игры, требований законодательства или порядка обработки данных. Новая редакция и дата обновления будут опубликованы в Игре и, когда применимо, на странице Игры в Google Play.\n\n12. КОНТАКТЫ\nРазработчик: Алексей Фитлин\nИгра: Drona Salvage\nКонтакт: Telegram @AlexFitlin\n\nНастоящая Политика применяется только к Drona Salvage и не регулирует сервисы, самостоятельно предоставляемые Google, Android, Telegram, производителями устройств и иными третьими лицами.</string>
     <string name="how_to_play">Как играть</string>
     <string name="open_guide">Открыть справку</string>
     <string name="reduce_motion">Уменьшить анимации и вспышки</string>
     <string name="reduce_motion_desc">Отключает мерцание и сокращает переходы</string>
     <string name="background_particles">Фоновые частицы</string>
-    <string name="background_particles_desc">Показывать уменьшенное количество декоративных звёзд</string>
+    <string name="background_particles_desc">Показывать анимированные звёзды на фоне</string>
     <string name="guide_basics_title">Начало игры</string>
     <string name="guide_basics_body">Нажимайте на планету, чтобы получать обломки. Тратьте их на улучшения клика и новые планеты: каждая планета меняет доход и даёт уникальный бонус.</string>
     <string name="guide_drones_title">Дроны и ангар</string>
@@ -58,6 +61,10 @@
     <string name="open_achievements">Открыть достижения</string>
     <string name="case_shop_title">Космо-магазин</string>
     <string name="case_shop_subtitle">Кейсы, планеты, улучшения и системы корабля</string>
+    <string name="shop_tab_upgrades">Улучшения</string>
+    <string name="shop_tab_cases">Кейсы</string>
+    <string name="shop_tab_planets">Планеты</string>
+    <string name="shop_tab_systems">Системы</string>
     <string name="shop_balance">Доступные обломки</string>
     <string name="hangar_overview">Вместимость ангара</string>
     <string name="drones_in_flight">В полёте</string>
@@ -142,7 +149,7 @@
     <string name="rarity_legendary">Легендарный</string>
     <string name="rarity_void">Пустота</string>
     <string name="event_space_storm">Космическая буря!</string>
-    <string name="event_gold_asteroid">Золотой астероид!</string>
+    <string name="event_gold_asteroid">Золотое ядро обломка!</string>
     <string name="event_debris_shower">Метеоритный дождь!</string>
     <string name="event_black_hole">Чёрная дыра!</string>
     <string name="event_solar_flare">Солнечная вспышка!</string>
@@ -157,7 +164,7 @@
     <string name="event_distress_signal">Сигнал бедствия!</string>
     <string name="event_abandoned_station">Заброшенная станция!</string>
     <string name="event_pirate_raid">Пиратский рейд!</string>
-    <string name="event_desc_pirate_raid">Пираты крадут обломки каждую секунду. Попадите по кораблю 15 раз до его побега, чтобы получить награду.</string>
+    <string name="event_desc_pirate_raid">Отключите гарпун, двигатели и реактор рейдера. Каждые два попадания уничтожают один модуль и уменьшают кражу обломков.</string>
     <string name="event_desc_abandoned_station">Древняя станция всё ещё получает энергию. Выберите безопасный грузовой маршрут или рискните войти в нестабильный реактор.</string>
     <string name="event_choose_route">Выберите маршрут исследования</string>
     <string name="event_station_choice">Безопасный путь: 90%% шанс получить %1$s. Реактор: 50%% шанс получить %2$s, провал заберёт 2%% обломков.</string>
@@ -181,13 +188,16 @@
     <string name="event_taps_left">Нажмите ещё %1$d раз</string>
     <string name="event_reward_preview">Награда: +%1$s обломков</string>
     <string name="event_how_to_play">КАК ИГРАТЬ</string>
-    <string name="event_desc_storm">Нажимайте на энергетический узел, пока счётчик не станет равен нулю. Успейте до конца времени, чтобы получить награду.</string>
-    <string name="event_desc_asteroid">Астероид меняет позицию после каждого попадания. Разбейте его за 7 точных нажатий.</string>
+    <string name="event_desc_storm">Активируйте энергоузлы в указанном порядке и стабилизируйте все три этапа бури.</string>
+    <string name="event_storm_round">Стабилизация бури %1$d/%2$d</string>
+    <string name="event_desc_asteroid">Расколите бронированное ядро 5 точными нажатиями. Соберите все 5 фрагментов и получите форсаж утилизации на 15 секунд: сила нажатия ×3, скорость дронов ×2 и больше редких обломков.</string>
     <string name="event_desc_debris_shower">Собирайте падающие обломки. Опасные раскалённые метеоры временно выводят дронов из строя.</string>
     <string name="event_desc_black_hole">Черная дыра! Она засасывает всё вокруг! Нажимайте, чтобы закрыть её.</string>
-    <string name="event_black_hole_danger">ОПАСНОСТЬ: пока аномалия открыта, она поглощает 0,5% мусора каждую секунду.</string>
+    <string name="event_black_hole_danger" formatted="false">ОПАСНОСТЬ: пока аномалия открыта, она поглощает 0,5% мусора каждую секунду.</string>
     <string name="event_black_hole_engage">СТАБИЛИЗИРОВАТЬ АНОМАЛИЮ</string>
-    <string name="event_desc_solar_flare">Стабилизируйте три контура охлаждения до перегрева системы.</string>
+    <string name="event_desc_solar_flare">Пройдите четыре усложняющиеся последовательности плазменных каналов. Ошибка сбрасывает фазу, отнимает ресурсы и снижает награду. Победа ускоряет флот на 30 секунд.</string>
+    <string name="solar_protocol_phase">ПРОТОКОЛ «ГЕЛИОС» · ФАЗА %1$d/%2$d</string>
+    <string name="solar_protocol_heat">Стабильность каналов: %1$d%%</string>
     <string name="event_desc_cyber_virus">Запомните код заражённых узлов и восстановите последовательность. Три ошибки завершат попытку.</string>
     <string name="repairing_meta">В ремонте: %1$d (%2$d сек)</string>
     <string name="upgrade_plasma_magnet">Плазменный магнит</string>
@@ -352,6 +362,16 @@
     <string name="collection_milestone">Обнаружьте %1$d дронов</string>
     <string name="collection_reward_amount">Награда: %1$s обломков</string>
     <string name="collection_claim">Получить</string>
+    <string name="collection_sets_title">Наборы дронов</string>
+    <string name="collection_sets_total_bonus">Общий бонус: +%1$d%%</string>
+    <string name="collection_set_bonus_active">Набор собран · постоянный доход +%1$d%%</string>
+    <string name="collection_set_bonus_locked">Соберите набор: доход +%1$d%%</string>
+    <string name="collection_set_first_expedition">Первая экспедиция</string>
+    <string name="collection_set_emerald_squadron">Изумрудная эскадрилья</string>
+    <string name="collection_set_crimson_corps">Багровый корпус</string>
+    <string name="collection_set_cyber_swarm">Киберрой</string>
+    <string name="collection_set_stellar_guard">Звёздная гвардия</string>
+    <string name="collection_set_quantum_edge">Квантовый предел</string>
     <string name="hangar_status">В полёте: %1$d/3 • На складе: %2$d/10</string>
     <string name="drone_storage_meta">На складе %1$d • активно %2$d • мастерство %3$d • детали %4$d</string>
     <string name="send_to_flight">В полёт</string>
@@ -414,6 +434,17 @@
     <string name="prestige_explained_title">Для чего нужны очки престижа</string>
     <string name="prestige_explained_body">Престиж сбрасывает планеты, дронов, обломки и обычные улучшения. Очки и купленные технологии сохраняются навсегда и усиливают каждое новое прохождение.</string>
     <string name="prestige_preview">Награда за этот престиж: +%1$d очков</string>
+    <string name="prestige_confirm_title">Начать новую экспедицию?</string>
+    <string name="prestige_confirm_message">Вы получите +%1$d очков престижа. Планеты, дроны, обломки и обычные улучшения будут сброшены. Постоянные технологии, достижения и общая статистика сохранятся.</string>
+    <string name="prestige_confirm">Выполнить престиж</string>
+    <string name="next_goal_planet">Следующая цель · Планета %1$d / %2$d</string>
+    <string name="next_goal_fleet">Активный флот: %1$d / %2$d дронов</string>
+    <string name="next_goal_drone">Выбейте дрона №%1$s из кейса</string>
+    <string name="next_goal_prestige">Выполните престиж: %1$d / %2$d</string>
+    <string name="route_objective">ЦЕЛЬ МАРШРУТА</string>
+    <string name="next_goal_remaining">Осталось %1$s</string>
+    <string name="planet_unlocked_title">ПЛАНЕТА %1$d ОТКРЫТА</string>
+    <string name="planet_unlocked_bonus">Постоянный планетарный бонус дохода: +%1$d%%</string>
     <string name="achievement_click_250k">Сделать 250 000 нажатий</string><string name="achievement_click_1m">Сделать 1 миллион нажатий</string><string name="achievement_click_5m">Сделать 5 миллионов нажатий</string>
     <string name="achievement_debris_10m">Собрать 10 миллионов обломков</string><string name="achievement_debris_100m">Собрать 100 миллионов обломков</string><string name="achievement_debris_1b">Собрать 1 миллиард обломков</string><string name="achievement_debris_10b">Собрать 10 миллиардов обломков</string>
     <string name="achievement_cases_250">Открыть 250 кейсов</string><string name="achievement_cases_500">Открыть 500 кейсов</string><string name="achievement_cases_1000">Открыть 1 000 кейсов</string>
@@ -432,6 +463,20 @@
     <string name="event_station_reactor_explained">Высокий риск: 50%% шанс получить %1$s обломков. При провале потеряете 2%% текущих обломков.</string>
     <string name="background_music">Фоновая музыка</string>
     <string name="background_music_desc">Воспроизводить музыку во время игры</string>
+    <string name="sound_effects">Звуковые эффекты</string>
+    <string name="sound_effects_desc">Звуки нажатий, событий и наград</string>
+    <string name="vibration">Вибрация</string>
+    <string name="vibration_desc">Тактильный отклик при нажатиях и событиях</string>
+    <string name="reduced_motion">Уменьшение анимаций</string>
+    <string name="reduced_motion_desc">Уменьшить мерцание, тряску и анимации кейсов</string>
     <string name="late_galaxy_preview">Дальняя галактика · планеты 21–24</string>
     <string name="late_galaxy_preview_desc">Новые миры в конце маршрута планет</string>
+    <string name="combo">Комбо</string>
+    <string name="combo_great">Молодец!</string>
+    <string name="combo_master">Мастер утилизации!</string>
+    <string name="combo_impossible">Невозможно!</string>
+    <string name="galaxy_route">Маршрут галактики</string><string name="galaxy_route_hint">Купленные миры открыты. Далёкие секторы засекречены.</string><string name="unknown_sector">Засекреченный сектор</string><string name="current_world">Текущий мир</string>
+    <string name="planet_emberglass">Углестекло</string><string name="planet_verdant_halo">Зелёный Ореол</string><string name="planet_iron_tempest">Железная Буря</string><string name="planet_frozen_reliquary">Ледяной Реликварий</string><string name="planet_celestial_bloom">Небесный Цветок</string><string name="planet_binary_grave">Двойная Могила</string><string name="planet_mirage_engine">Двигатель Миражей</string><string name="planet_leviathan_deep">Бездна Левиафана</string><string name="planet_solar_archive">Солнечный Архив</string><string name="planet_shattered_meridian">Расколотый Меридиан</string><string name="planet_clockwork_eden">Заводной Эдем</string><string name="planet_phantom_orchard">Призрачный Сад</string><string name="planet_cinder_cathedral">Собор Пепла</string><string name="planet_null_beacon">Нулевой Маяк</string><string name="planet_origin_vault">Хранилище Истока</string>
+    <string name="planet_desc_emberglass">Рубеж расплавленного стекла</string><string name="planet_desc_verdant_halo">Кольцевой мир-сад</string><string name="planet_desc_iron_tempest">Мир машинных бурь</string><string name="planet_desc_frozen_reliquary">Руины под древним льдом</string><string name="planet_desc_celestial_bloom">Мир живых кристаллов</string><string name="planet_desc_binary_grave">Сросшиеся мёртвые миры</string><string name="planet_desc_mirage_engine">Невозможный орбитальный механизм</string><string name="planet_desc_leviathan_deep">Планета бездонных течений</string><string name="planet_desc_solar_archive">Хранилище памяти звёзд</string><string name="planet_desc_shattered_meridian">Мир вокруг открытого ядра</string><string name="planet_desc_clockwork_eden">Механический заповедник</string><string name="planet_desc_phantom_orchard">Лес призрачных семян</string><string name="planet_desc_cinder_cathedral">Мир вулканических шпилей</string><string name="planet_desc_null_beacon">Безмолвный сигнал на краю</string><string name="planet_desc_origin_vault">Запечатанное сердце маршрута</string>
+    <string name="planet_bonus_emberglass">Сила нажатия +25%</string><string name="planet_bonus_verdant_halo">Доход флота +30%</string><string name="planet_bonus_iron_tempest">Награды событий +40%</string><string name="planet_bonus_frozen_reliquary">Офлайн-доход +45%</string><string name="planet_bonus_celestial_bloom">Вся добыча +35%</string><string name="planet_bonus_binary_grave">Доход флота +55%</string><string name="planet_bonus_mirage_engine">Сила нажатия +60%</string><string name="planet_bonus_leviathan_deep">Вся добыча +50%</string><string name="planet_bonus_solar_archive">Доход флота +80%</string><string name="planet_bonus_shattered_meridian">Сила нажатия +90%</string><string name="planet_bonus_clockwork_eden">Вся добыча +70%</string><string name="planet_bonus_phantom_orchard">Доход флота +110%</string><string name="planet_bonus_cinder_cathedral">Сила нажатия +125%</string><string name="planet_bonus_null_beacon">Вся добыча +100%</string><string name="planet_bonus_origin_vault">Сила нажатия и флота ×3</string>
 </resources>

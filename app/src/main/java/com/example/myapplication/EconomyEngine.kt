@@ -10,7 +10,7 @@ object EconomyEngine {
         val total = when (currentState.activeEvent?.type) {
             GameEventType.BLACK_HOLE -> currentState.totalDebris * 0.995 + income
             GameEventType.PIRATE_RAID ->
-                (currentState.totalDebris - EventEngine.pirateRaidTheft(currentState.totalDebris))
+                (currentState.totalDebris - EventEngine.pirateRaidTheft(currentState.totalDebris, currentState.eventTapsLeft))
                     .coerceAtLeast(0.0) + income
             else -> currentState.totalDebris + income
         }
@@ -42,6 +42,9 @@ object EconomyEngine {
                 if (state.activeEvent != null) value *= 1.5
             }
         }
-        return value * state.eventMultiplier
+        val rushMultiplier = if (
+            (state.activeEffects[SkillType.SALVAGE_RUSH.id] ?: 0L) > System.currentTimeMillis()
+        ) 3.0 else 1.0
+        return value * state.eventMultiplier * rushMultiplier * EconomyBalance.planetClickSpecial(state.currentPlanetId)
     }
 }

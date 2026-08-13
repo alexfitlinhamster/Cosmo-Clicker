@@ -19,12 +19,15 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Developer</string>
     <string name="telegram">Telegram</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="open_policy">View</string>
+    <string name="privacy_policy_body">PRIVACY POLICY FOR DRONA SALVAGE\n\nEffective date: August 12, 2026\nLast updated: August 12, 2026\n\nThis Privacy Policy explains how the developer of Drona Salvage (the “Game”) handles information when you use the Game. By installing or using the Game, you acknowledge this Policy.\n\n1. DATA CONTROLLER\nThe Game is developed and published by Alexei Fitlin (“Developer”, “we”, “us”). Privacy inquiries may be sent through the developer contact provided in the Game’s Settings section.\n\n2. INFORMATION WE COLLECT\nThe Game does not collect, transmit, sell, rent, or share personal information. No registration or user account is required. The Game does not request your name, email address, telephone number, precise location, contacts, photos, advertising identifier, payment information, or other personal data.\n\n3. LOCAL GAME DATA\nGame progress, language, audio preferences, achievements, and other gameplay settings are stored locally on your device. This information is used only to provide game functionality and is not transmitted to the Developer. Depending on your Android backup settings, the operating system may include local application data in a device or cloud backup managed by your platform provider.\n\n4. PERMISSIONS\nThe Game may use the device vibration feature to provide gameplay feedback. It does not require Internet access, camera, microphone, location, contacts, storage, or advertising permissions.\n\n5. ADVERTISING, ANALYTICS AND PURCHASES\nThe current version of the Game contains no third-party advertising, analytics, tracking SDKs, user accounts, or in-app purchases. If these features are introduced later, this Policy and the Google Play Data safety declaration will be updated before the relevant release.\n\n6. SHARING AND SALE OF DATA\nBecause the Game does not collect personal data, the Developer does not sell or share personal data with advertisers, data brokers, analytics providers, or other third parties.\n\n7. DATA RETENTION AND DELETION\nLocal game data remains on your device until you reset progress in the Game settings, clear the application data in Android settings, or uninstall the Game. The Developer cannot access or restore this local data.\n\n8. CHILDREN’S PRIVACY\nThe Game is designed for a general audience and does not knowingly collect personal information from children. If the Game’s data practices change, appropriate age-related safeguards and disclosures will be introduced.\n\n9. SECURITY\nThe Game minimizes privacy risk by keeping gameplay information on the device and not operating a remote data-collection service. No method of electronic storage can be guaranteed to be completely secure, and you are responsible for maintaining the security of your device.\n\n10. YOUR RIGHTS\nAs no personal data is collected by the Developer, there is normally no remote personal-data record to access, correct, export, or delete. You retain control of locally stored data through the deletion methods described above. You may contact the Developer with any privacy question.\n\n11. CHANGES TO THIS POLICY\nThis Policy may be updated when the Game’s functions, legal obligations, or data practices change. The revised text and its updated date will be made available in the Game and, where applicable, on the Google Play store listing.\n\n12. CONTACT\nDeveloper: Alexei Fitlin\nGame: Drona Salvage\nContact: Telegram @AlexFitlin\n\nThis Policy applies only to Drona Salvage and not to services independently provided by Google, Android, Telegram, device manufacturers, or other third parties.</string>
     <string name="how_to_play">How to play</string>
     <string name="open_guide">Open guide</string>
     <string name="reduce_motion">Reduce motion and flashes</string>
     <string name="reduce_motion_desc">Disables blinking effects and shortens transitions</string>
     <string name="background_particles">Background particles</string>
-    <string name="background_particles_desc">Show a reduced number of decorative stars</string>
+    <string name="background_particles_desc">Show animated stars in the game background</string>
     <string name="guide_basics_title">Getting started</string>
     <string name="guide_basics_body">Tap the planet to earn debris. Spend it on click upgrades and new planets; each planet changes income and adds a unique bonus.</string>
     <string name="guide_drones_title">Drones and hangar</string>
@@ -58,6 +61,10 @@
     <string name="open_achievements">Open achievements</string>
     <string name="case_shop_title">Cosmic Shop</string>
     <string name="case_shop_subtitle">Cases, planets, upgrades and ship systems</string>
+    <string name="shop_tab_upgrades">Upgrades</string>
+    <string name="shop_tab_cases">Cases</string>
+    <string name="shop_tab_planets">Planets</string>
+    <string name="shop_tab_systems">Systems</string>
     <string name="shop_balance">Available debris</string>
     <string name="hangar_overview">Hangar capacity</string>
     <string name="drones_in_flight">In flight</string>
@@ -142,7 +149,7 @@
     <string name="rarity_legendary">Legendary</string>
     <string name="rarity_void">Void</string>
     <string name="event_space_storm">Space Storm!</string>
-    <string name="event_gold_asteroid">Gold Asteroid!</string>
+    <string name="event_gold_asteroid">Golden Salvage Core!</string>
     <string name="event_debris_shower">Debris Shower!</string>
     <string name="event_black_hole">Black Hole!</string>
     <string name="event_solar_flare">Solar Flare!</string>
@@ -157,7 +164,7 @@
     <string name="event_distress_signal">Distress Signal!</string>
     <string name="event_abandoned_station">Abandoned Station!</string>
     <string name="event_pirate_raid">Pirate Raid!</string>
-    <string name="event_desc_pirate_raid">Pirates steal debris every second. Hit their ship 15 times before it escapes to recover a reward.</string>
+    <string name="event_desc_pirate_raid">Disable the raider’s harpoon, engines and reactor. Every two hits destroys a module and reduces the amount of debris being stolen.</string>
     <string name="event_desc_abandoned_station">An ancient station still has power. Choose a safe cargo route or risk entering its unstable reactor.</string>
     <string name="event_choose_route">Choose an exploration route</string>
     <string name="event_station_choice">Safe route: 90%% chance for %1$s. Reactor: 50%% chance for %2$s, failure costs 2%% of your debris.</string>
@@ -181,13 +188,16 @@
     <string name="event_taps_left">Tap %1$d more times</string>
     <string name="event_reward_preview">Reward: +%1$s debris</string>
     <string name="event_how_to_play">HOW TO PLAY</string>
-    <string name="event_desc_storm">Tap the energy node until the counter reaches zero. Finish before time expires to receive the reward.</string>
-    <string name="event_desc_asteroid">The asteroid changes position after every hit. Break it with 7 accurate taps.</string>
+    <string name="event_desc_storm">Activate the energy nodes in the displayed order and stabilize all three storm phases.</string>
+    <string name="event_storm_round">Storm stabilization %1$d/%2$d</string>
+    <string name="event_desc_asteroid">Crack the armored core with 5 accurate taps. Collect all 5 fragments to trigger a 15-second salvage rush: triple tap power, double drone speed and improved rare-debris odds.</string>
     <string name="event_desc_debris_shower">Collect falling debris. Dangerous molten meteors temporarily disable drones.</string>
     <string name="event_desc_black_hole">Black Hole! It\'s sucking everything in! Tap it to close it.</string>
-    <string name="event_black_hole_danger">DANGER: the anomaly drains 0.5% of your debris every second while it remains open.</string>
+    <string name="event_black_hole_danger" formatted="false">DANGER: the anomaly drains 0.5% of your debris every second while it remains open.</string>
     <string name="event_black_hole_engage">STABILIZE ANOMALY</string>
-    <string name="event_desc_solar_flare">Stabilize all three cooling circuits before the system overheats.</string>
+    <string name="event_desc_solar_flare">Complete four escalating plasma-channel sequences. A wrong channel resets the phase, drains debris and lowers the reward. Victory grants a 30-second fleet overdrive.</string>
+    <string name="solar_protocol_phase">HELIOS PROTOCOL · PHASE %1$d/%2$d</string>
+    <string name="solar_protocol_heat">Channel stability: %1$d%%</string>
     <string name="event_desc_cyber_virus">Memorize the infected-node code and restore the sequence. Three errors end the attempt.</string>
     <string name="repairing_meta">Repairing: %1$d (%2$d sec)</string>
     <string name="upgrade_plasma_magnet">Plasma Magnet</string>
@@ -352,6 +362,16 @@
     <string name="collection_milestone">Discover %1$d drones</string>
     <string name="collection_reward_amount">Reward: %1$s debris</string>
     <string name="collection_claim">Claim</string>
+    <string name="collection_sets_title">Drone sets</string>
+    <string name="collection_sets_total_bonus">Total bonus: +%1$d%%</string>
+    <string name="collection_set_bonus_active">Set complete · permanent income +%1$d%%</string>
+    <string name="collection_set_bonus_locked">Complete the set to gain +%1$d%% income</string>
+    <string name="collection_set_first_expedition">First Expedition</string>
+    <string name="collection_set_emerald_squadron">Emerald Squadron</string>
+    <string name="collection_set_crimson_corps">Crimson Corps</string>
+    <string name="collection_set_cyber_swarm">Cyber Swarm</string>
+    <string name="collection_set_stellar_guard">Stellar Guard</string>
+    <string name="collection_set_quantum_edge">Quantum Edge</string>
     <string name="hangar_status">In flight: %1$d/3 • Warehouse: %2$d/10</string>
     <string name="drone_storage_meta">Warehouse %1$d • active %2$d • mastery %3$d • parts %4$d</string>
     <string name="send_to_flight">Deploy</string>
@@ -414,6 +434,17 @@
     <string name="prestige_explained_title">What prestige points do</string>
     <string name="prestige_explained_body">Prestige resets planets, drones, debris and ordinary upgrades. Points and purchased technologies remain permanently and make every new run stronger.</string>
     <string name="prestige_preview">Reward for this prestige: +%1$d points</string>
+    <string name="prestige_confirm_title">Start a new expedition?</string>
+    <string name="prestige_confirm_message">You will receive +%1$d prestige points. Planets, drones, debris and ordinary upgrades will be reset. Permanent technologies, achievements and lifetime statistics will remain.</string>
+    <string name="prestige_confirm">Prestige</string>
+    <string name="next_goal_planet">Next objective · Planet %1$d / %2$d</string>
+    <string name="next_goal_fleet">Active fleet: %1$d / %2$d drones</string>
+    <string name="next_goal_drone">Find Drone #%1$s in a case</string>
+    <string name="next_goal_prestige">Complete prestige: %1$d / %2$d</string>
+    <string name="route_objective">ROUTE OBJECTIVE</string>
+    <string name="next_goal_remaining">%1$s remaining</string>
+    <string name="planet_unlocked_title">PLANET %1$d UNLOCKED</string>
+    <string name="planet_unlocked_bonus">Permanent planetary income bonus: +%1$d%%</string>
     <string name="achievement_click_250k">Make 250,000 taps</string><string name="achievement_click_1m">Make 1 million taps</string><string name="achievement_click_5m">Make 5 million taps</string>
     <string name="achievement_debris_10m">Collect 10 million debris</string><string name="achievement_debris_100m">Collect 100 million debris</string><string name="achievement_debris_1b">Collect 1 billion debris</string><string name="achievement_debris_10b">Collect 10 billion debris</string>
     <string name="achievement_cases_250">Open 250 cases</string><string name="achievement_cases_500">Open 500 cases</string><string name="achievement_cases_1000">Open 1,000 cases</string>
@@ -432,6 +463,20 @@
     <string name="event_station_reactor_explained">High risk: 50%% chance to receive %1$s debris. Failure removes 2%% of your current debris.</string>
     <string name="background_music">Background music</string>
     <string name="background_music_desc">Play the looping soundtrack during the game</string>
+    <string name="sound_effects">Sound effects</string>
+    <string name="sound_effects_desc">Play clicks, event cues and reward sounds</string>
+    <string name="vibration">Vibration</string>
+    <string name="vibration_desc">Use haptic feedback for taps and events</string>
+    <string name="reduced_motion">Reduced motion</string>
+    <string name="reduced_motion_desc">Reduce flashing, shaking and opening animations</string>
     <string name="late_galaxy_preview">Distant galaxy · planets 21–24</string>
     <string name="late_galaxy_preview_desc">New worlds waiting at the end of the planet route</string>
+    <string name="combo">Combo</string>
+    <string name="combo_great">Great!</string>
+    <string name="combo_master">Salvage master!</string>
+    <string name="combo_impossible">Impossible!</string>
+    <string name="galaxy_route">Galaxy route</string><string name="galaxy_route_hint">Purchased worlds are visible. Distant sectors remain classified.</string><string name="unknown_sector">Classified sector</string><string name="current_world">Current world</string>
+    <string name="planet_emberglass">Emberglass</string><string name="planet_verdant_halo">Verdant Halo</string><string name="planet_iron_tempest">Iron Tempest</string><string name="planet_frozen_reliquary">Frozen Reliquary</string><string name="planet_celestial_bloom">Celestial Bloom</string><string name="planet_binary_grave">Binary Grave</string><string name="planet_mirage_engine">Mirage Engine</string><string name="planet_leviathan_deep">Leviathan Deep</string><string name="planet_solar_archive">Solar Archive</string><string name="planet_shattered_meridian">Shattered Meridian</string><string name="planet_clockwork_eden">Clockwork Eden</string><string name="planet_phantom_orchard">Phantom Orchard</string><string name="planet_cinder_cathedral">Cinder Cathedral</string><string name="planet_null_beacon">Null Beacon</string><string name="planet_origin_vault">Origin Vault</string>
+    <string name="planet_desc_emberglass">Molten glass frontier</string><string name="planet_desc_verdant_halo">Ringed garden world</string><string name="planet_desc_iron_tempest">Machine storm world</string><string name="planet_desc_frozen_reliquary">Ruins below ancient ice</string><string name="planet_desc_celestial_bloom">Living crystal world</string><string name="planet_desc_binary_grave">Fused dead worlds</string><string name="planet_desc_mirage_engine">Impossible orbital machinery</string><string name="planet_desc_leviathan_deep">Abyssal current planet</string><string name="planet_desc_solar_archive">Repository of stellar memory</string><string name="planet_desc_shattered_meridian">World around an exposed core</string><string name="planet_desc_clockwork_eden">Mechanical garden sanctuary</string><string name="planet_desc_phantom_orchard">Forest of spectral seeds</string><string name="planet_desc_cinder_cathedral">Volcanic spire world</string><string name="planet_desc_null_beacon">Silent signal at the rim</string><string name="planet_desc_origin_vault">The sealed heart of the route</string>
+    <string name="planet_bonus_emberglass">Tap power +25%</string><string name="planet_bonus_verdant_halo">Fleet income +30%</string><string name="planet_bonus_iron_tempest">Event rewards +40%</string><string name="planet_bonus_frozen_reliquary">Offline income +45%</string><string name="planet_bonus_celestial_bloom">All salvage +35%</string><string name="planet_bonus_binary_grave">Fleet income +55%</string><string name="planet_bonus_mirage_engine">Tap power +60%</string><string name="planet_bonus_leviathan_deep">All salvage +50%</string><string name="planet_bonus_solar_archive">Fleet income +80%</string><string name="planet_bonus_shattered_meridian">Tap power +90%</string><string name="planet_bonus_clockwork_eden">All salvage +70%</string><string name="planet_bonus_phantom_orchard">Fleet income +110%</string><string name="planet_bonus_cinder_cathedral">Tap power +125%</string><string name="planet_bonus_null_beacon">All salvage +100%</string><string name="planet_bonus_origin_vault">Tap and fleet power ×3</string>
 </resources>

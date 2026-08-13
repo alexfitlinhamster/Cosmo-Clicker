@@ -46,12 +46,12 @@ class AutoClickDetector {
     fun remainingBlockMillis(nowMillis: Long): Long = (blockedUntil - nowMillis).coerceAtLeast(0L)
 
     private companion object {
-        const val ANALYSIS_WINDOW_MILLIS = 4_000L
-        const val MIN_SAMPLE_SIZE = 24
-        const val IMPOSSIBLE_AVERAGE_INTERVAL_MILLIS = 60.0
+        const val ANALYSIS_WINDOW_MILLIS = 2_500L
+        const val MIN_SAMPLE_SIZE = 12
+        const val IMPOSSIBLE_AVERAGE_INTERVAL_MILLIS = 75.0
         const val REGULAR_MAX_INTERVAL_MILLIS = 130.0
         const val MAX_RELATIVE_DEVIATION = 0.055
-        const val BASE_BLOCK_MILLIS = 10_000L
-        const val MAX_BLOCK_MILLIS = 60_000L
+        const val BASE_BLOCK_MILLIS = 15_000L
+        const val MAX_BLOCK_MILLIS = 120_000L
     }
 }

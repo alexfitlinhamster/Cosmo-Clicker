@@ -19,12 +19,15 @@
     <string name="language_spanish">Español</string>
     <string name="developer">Desarrollador</string>
     <string name="telegram">Telegram</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="open_policy">Ver</string>
+    <string name="privacy_policy_body">POLÍTICA DE PRIVACIDAD DE DRONA SALVAGE\n\nFecha de entrada en vigor: 12 de agosto de 2026\nÚltima actualización: 12 de agosto de 2026\n\nEsta Política de privacidad explica cómo el desarrollador de Drona Salvage (el «Juego») trata la información cuando utilizas el Juego. Al instalarlo o utilizarlo, reconoces esta Política.\n\n1. RESPONSABLE DE LOS DATOS\nEl Juego está desarrollado y publicado por Alexei Fitlin («Desarrollador», «nosotros»). Las consultas sobre privacidad pueden enviarse mediante el contacto del desarrollador disponible en Ajustes.\n\n2. INFORMACIÓN QUE RECOPILAMOS\nEl Juego no recopila, transmite, vende, alquila ni comparte información personal. No requiere registro ni cuenta de usuario. No solicita nombre, correo electrónico, teléfono, ubicación precisa, contactos, fotografías, identificador publicitario, datos de pago ni otros datos personales.\n\n3. DATOS LOCALES DEL JUEGO\nEl progreso, idioma, preferencias de audio, logros y otros ajustes se guardan localmente en el dispositivo. Se utilizan únicamente para proporcionar las funciones del Juego y no se transmiten al Desarrollador. Según los ajustes de copia de seguridad de Android, el sistema operativo puede incluir datos locales en una copia del dispositivo o en la nube administrada por el proveedor de la plataforma.\n\n4. PERMISOS\nEl Juego puede utilizar la vibración del dispositivo como respuesta durante la partida. No necesita acceso a Internet, cámara, micrófono, ubicación, contactos, almacenamiento ni permisos publicitarios.\n\n5. PUBLICIDAD, ANÁLISIS Y COMPRAS\nLa versión actual no contiene publicidad de terceros, herramientas de análisis, SDK de seguimiento, cuentas de usuario ni compras integradas. Si estas funciones se incorporan posteriormente, esta Política y la declaración de Seguridad de los datos de Google Play se actualizarán antes del lanzamiento correspondiente.\n\n6. CESIÓN Y VENTA DE DATOS\nComo el Juego no recopila datos personales, el Desarrollador no vende ni comparte dichos datos con anunciantes, intermediarios de datos, proveedores de análisis u otros terceros.\n\n7. CONSERVACIÓN Y ELIMINACIÓN\nLos datos locales permanecen en el dispositivo hasta que restableces el progreso, borras los datos de la aplicación en Android o desinstalas el Juego. El Desarrollador no puede acceder a estos datos ni restaurarlos.\n\n8. PRIVACIDAD DE LOS MENORES\nEl Juego está destinado a un público general y no recopila conscientemente información personal de menores. Si cambian las prácticas de datos, se incorporarán las garantías y comunicaciones apropiadas para cada edad.\n\n9. SEGURIDAD\nEl Juego reduce los riesgos al mantener la información en el dispositivo y no operar un servicio remoto de recopilación. Ningún sistema de almacenamiento electrónico puede garantizar una seguridad absoluta; el usuario es responsable de proteger su dispositivo.\n\n10. TUS DERECHOS\nComo el Desarrollador no recopila datos personales, normalmente no existe un registro remoto que pueda consultarse, corregirse, exportarse o eliminarse. Conservas el control sobre los datos locales mediante los métodos descritos anteriormente y puedes contactar con el Desarrollador para cualquier consulta.\n\n11. CAMBIOS EN ESTA POLÍTICA\nEsta Política puede actualizarse cuando cambien las funciones, obligaciones legales o prácticas de datos. El texto revisado y su fecha se publicarán en el Juego y, cuando corresponda, en la ficha de Google Play.\n\n12. CONTACTO\nDesarrollador: Alexei Fitlin\nJuego: Drona Salvage\nContacto: Telegram @AlexFitlin\n\nEsta Política se aplica únicamente a Drona Salvage y no a servicios ofrecidos de forma independiente por Google, Android, Telegram, fabricantes de dispositivos u otros terceros.</string>
     <string name="how_to_play">Cómo jugar</string>
     <string name="open_guide">Abrir guía</string>
     <string name="reduce_motion">Reducir movimiento y destellos</string>
     <string name="reduce_motion_desc">Desactiva parpadeos y acorta las transiciones</string>
     <string name="background_particles">Partículas de fondo</string>
-    <string name="background_particles_desc">Mostrar una cantidad reducida de estrellas decorativas</string>
+    <string name="background_particles_desc">Mostrar estrellas animadas en el fondo</string>
     <string name="guide_basics_title">Primeros pasos</string>
     <string name="guide_basics_body">Toca el planeta para obtener escombros. Gástalos en mejoras de toque y nuevos planetas; cada planeta cambia los ingresos y añade una bonificación.</string>
     <string name="guide_drones_title">Drones y hangar</string>
@@ -58,6 +61,10 @@
     <string name="open_achievements">Abrir logros</string>
     <string name="case_shop_title">Tienda cósmica</string>
     <string name="case_shop_subtitle">Cajas, planetas, mejoras y sistemas de la nave</string>
+    <string name="shop_tab_upgrades">Mejoras</string>
+    <string name="shop_tab_cases">Cajas</string>
+    <string name="shop_tab_planets">Planetas</string>
+    <string name="shop_tab_systems">Sistemas</string>
     <string name="shop_balance">Restos disponibles</string>
     <string name="hangar_overview">Capacidad del hangar</string>
     <string name="drones_in_flight">En vuelo</string>
@@ -142,7 +149,7 @@
     <string name="rarity_legendary">Legendario</string>
     <string name="rarity_void">Vacío</string>
     <string name="event_space_storm">¡Tormenta espacial!</string>
-    <string name="event_gold_asteroid">¡Asteroide dorado!</string>
+    <string name="event_gold_asteroid">¡Núcleo dorado de chatarra!</string>
     <string name="event_debris_shower">¡Lluvia de basura espacial!</string>
     <string name="event_black_hole">¡Agujero negro!</string>
     <string name="event_solar_flare">¡Llamarada solar!</string>
@@ -157,7 +164,7 @@
     <string name="event_distress_signal">¡Señal de socorro!</string>
     <string name="event_abandoned_station">¡Estación abandonada!</string>
     <string name="event_pirate_raid">¡Incursión pirata!</string>
-    <string name="event_desc_pirate_raid">Los piratas roban escombros cada segundo. Golpea su nave 15 veces antes de que escape para obtener una recompensa.</string>
+    <string name="event_desc_pirate_raid">Desactiva el arpón, los motores y el reactor. Cada dos impactos destruyen un módulo y reducen el robo de escombros.</string>
     <string name="event_desc_abandoned_station">Una estación antigua aún tiene energía. Elige una ruta segura o arriesga entrar en su reactor inestable.</string>
     <string name="event_choose_route">Elige una ruta de exploración</string>
     <string name="event_station_choice">Ruta segura: 90%% para obtener %1$s. Reactor: 50%% para obtener %2$s; fallar cuesta 2%% de tus escombros.</string>
@@ -182,13 +189,16 @@
     <string name="event_taps_left">Toca %1$d veces más</string>
     <string name="event_reward_preview">Recompensa: +%1$s escombros</string>
     <string name="event_how_to_play">CÓMO JUGAR</string>
-    <string name="event_desc_storm">Toca el nodo de energía hasta que el contador llegue a cero. Termina antes de que se agote el tiempo para recibir la recompensa.</string>
-    <string name="event_desc_asteroid">¡Asteroide de oro! ¡Haz clic rápido para obtener un gran bono de restos!</string>
+    <string name="event_desc_storm">Activa los nodos de energía en el orden indicado y estabiliza las tres fases de la tormenta.</string>
+    <string name="event_storm_round">Estabilización de tormenta %1$d/%2$d</string>
+    <string name="event_desc_asteroid">Rompe el núcleo blindado con 5 toques precisos. Recoge los 5 fragmentos para activar 15 segundos de impulso: potencia de toque ×3, drones ×2 y más restos raros.</string>
     <string name="event_desc_debris_shower">¡Lluvia de restos! ¡Muchos restos cayendo! Cuidado con los meteoros, pueden romper drones.</string>
     <string name="event_desc_black_hole">¡Agujero negro! ¡Está succionando todo! Tócalo para cerrarlo.</string>
-    <string name="event_black_hole_danger">PELIGRO: la anomalía absorbe el 0,5% de tus escombros cada segundo mientras siga abierta.</string>
+    <string name="event_black_hole_danger" formatted="false">PELIGRO: la anomalía absorbe el 0,5% de tus escombros cada segundo mientras siga abierta.</string>
     <string name="event_black_hole_engage">ESTABILIZAR ANOMALÍA</string>
-    <string name="event_desc_solar_flare">¡Llamarada solar! Los toques son 3 veces más efectivos, pero los drones están bloqueados.</string>
+    <string name="event_desc_solar_flare">Completa cuatro secuencias crecientes de canales de plasma. Un error reinicia la fase, consume recursos y reduce la recompensa. La victoria acelera la flota durante 30 segundos.</string>
+    <string name="solar_protocol_phase">PROTOCOLO HELIOS · FASE %1$d/%2$d</string>
+    <string name="solar_protocol_heat">Estabilidad de canales: %1$d%%</string>
     <string name="event_desc_cyber_virus">¡Cibervirus! ¡Uno de tus drones está infectado! Tócalo para repararlo.</string>
     <string name="upgrade_plasma_magnet">Imán de plasma</string>
     <string name="upgrade_weld_torch">Soplete de soldadura</string>
@@ -352,6 +362,16 @@
     <string name="collection_milestone">Descubre %1$d drones</string>
     <string name="collection_reward_amount">Recompensa: %1$s restos</string>
     <string name="collection_claim">Recoger</string>
+    <string name="collection_sets_title">Conjuntos de drones</string>
+    <string name="collection_sets_total_bonus">Bonificación total: +%1$d%%</string>
+    <string name="collection_set_bonus_active">Conjunto completo · ingresos permanentes +%1$d%%</string>
+    <string name="collection_set_bonus_locked">Completa el conjunto: ingresos +%1$d%%</string>
+    <string name="collection_set_first_expedition">Primera expedición</string>
+    <string name="collection_set_emerald_squadron">Escuadrón Esmeralda</string>
+    <string name="collection_set_crimson_corps">Cuerpo Carmesí</string>
+    <string name="collection_set_cyber_swarm">Enjambre Cibernético</string>
+    <string name="collection_set_stellar_guard">Guardia Estelar</string>
+    <string name="collection_set_quantum_edge">Límite Cuántico</string>
     <string name="hangar_status">En vuelo: %1$d/3 • Almacén: %2$d/10</string>
     <string name="drone_storage_meta">Almacén %1$d • activo %2$d • maestría %3$d • piezas %4$d</string>
     <string name="send_to_flight">Desplegar</string>
@@ -414,6 +434,17 @@
     <string name="prestige_explained_title">Para qué sirven los puntos de prestigio</string>
     <string name="prestige_explained_body">El prestigio reinicia planetas, drones, escombros y mejoras normales. Los puntos y tecnologías compradas permanecen para siempre.</string>
     <string name="prestige_preview">Recompensa de este prestigio: +%1$d puntos</string>
+    <string name="prestige_confirm_title">¿Iniciar una nueva expedición?</string>
+    <string name="prestige_confirm_message">Recibirás +%1$d puntos de prestigio. Se restablecerán planetas, drones, restos y mejoras normales. Las tecnologías permanentes, logros y estadísticas totales se conservarán.</string>
+    <string name="prestige_confirm">Prestigio</string>
+    <string name="next_goal_planet">Siguiente objetivo · Planeta %1$d / %2$d</string>
+    <string name="next_goal_fleet">Flota activa: %1$d / %2$d drones</string>
+    <string name="next_goal_drone">Consigue el dron n.º %1$s en una caja</string>
+    <string name="next_goal_prestige">Completa prestigio: %1$d / %2$d</string>
+    <string name="route_objective">OBJETIVO DE RUTA</string>
+    <string name="next_goal_remaining">Faltan %1$s</string>
+    <string name="planet_unlocked_title">PLANETA %1$d DESBLOQUEADO</string>
+    <string name="planet_unlocked_bonus">Bonificación planetaria permanente: +%1$d%%</string>
     <string name="achievement_click_250k">Haz 250.000 toques</string><string name="achievement_click_1m">Haz 1 millón de toques</string><string name="achievement_click_5m">Haz 5 millones de toques</string>
     <string name="achievement_debris_10m">Recoge 10 millones de escombros</string><string name="achievement_debris_100m">Recoge 100 millones de escombros</string><string name="achievement_debris_1b">Recoge 1.000 millones de escombros</string><string name="achievement_debris_10b">Recoge 10.000 millones de escombros</string>
     <string name="achievement_cases_250">Abre 250 cajas</string><string name="achievement_cases_500">Abre 500 cajas</string><string name="achievement_cases_1000">Abre 1.000 cajas</string>
@@ -432,6 +463,20 @@
     <string name="event_station_reactor_explained">Riesgo alto: 50%% de probabilidad de recibir %1$s escombros. Fallar elimina el 2%% de tus escombros.</string>
     <string name="background_music">Música de fondo</string>
     <string name="background_music_desc">Reproducir la música durante la partida</string>
+    <string name="sound_effects">Efectos de sonido</string>
+    <string name="sound_effects_desc">Sonidos de toques, eventos y recompensas</string>
+    <string name="vibration">Vibración</string>
+    <string name="vibration_desc">Respuesta háptica para toques y eventos</string>
+    <string name="reduced_motion">Movimiento reducido</string>
+    <string name="reduced_motion_desc">Reducir destellos, sacudidas y animaciones de cajas</string>
     <string name="late_galaxy_preview">Galaxia lejana · planetas 21–24</string>
     <string name="late_galaxy_preview_desc">Nuevos mundos al final de la ruta planetaria</string>
+    <string name="combo">Combo</string>
+    <string name="combo_great">¡Muy bien!</string>
+    <string name="combo_master">¡Maestro del salvamento!</string>
+    <string name="combo_impossible">¡Imposible!</string>
+    <string name="galaxy_route">Ruta galáctica</string><string name="galaxy_route_hint">Los mundos comprados son visibles. Los sectores lejanos están clasificados.</string><string name="unknown_sector">Sector clasificado</string><string name="current_world">Mundo actual</string>
+    <string name="planet_emberglass">Vidrio Ardiente</string><string name="planet_verdant_halo">Halo Verde</string><string name="planet_iron_tempest">Tempestad de Hierro</string><string name="planet_frozen_reliquary">Relicario Helado</string><string name="planet_celestial_bloom">Flor Celestial</string><string name="planet_binary_grave">Tumba Binaria</string><string name="planet_mirage_engine">Motor de Espejismos</string><string name="planet_leviathan_deep">Abismo Leviatán</string><string name="planet_solar_archive">Archivo Solar</string><string name="planet_shattered_meridian">Meridiano Quebrado</string><string name="planet_clockwork_eden">Edén Mecánico</string><string name="planet_phantom_orchard">Huerto Fantasma</string><string name="planet_cinder_cathedral">Catedral de Ceniza</string><string name="planet_null_beacon">Faro Nulo</string><string name="planet_origin_vault">Bóveda del Origen</string>
+    <string name="planet_desc_emberglass">Frontera de vidrio fundido</string><string name="planet_desc_verdant_halo">Mundo jardín anillado</string><string name="planet_desc_iron_tempest">Mundo de tormentas mecánicas</string><string name="planet_desc_frozen_reliquary">Ruinas bajo hielo antiguo</string><string name="planet_desc_celestial_bloom">Mundo de cristales vivos</string><string name="planet_desc_binary_grave">Mundos muertos fusionados</string><string name="planet_desc_mirage_engine">Maquinaria orbital imposible</string><string name="planet_desc_leviathan_deep">Planeta de corrientes abisales</string><string name="planet_desc_solar_archive">Archivo de memoria estelar</string><string name="planet_desc_shattered_meridian">Mundo alrededor de un núcleo abierto</string><string name="planet_desc_clockwork_eden">Santuario de jardín mecánico</string><string name="planet_desc_phantom_orchard">Bosque de semillas espectrales</string><string name="planet_desc_cinder_cathedral">Mundo de agujas volcánicas</string><string name="planet_desc_null_beacon">Señal silenciosa del confín</string><string name="planet_desc_origin_vault">Corazón sellado de la ruta</string>
+    <string name="planet_bonus_emberglass">Potencia de toque +25%</string><string name="planet_bonus_verdant_halo">Ingresos de flota +30%</string><string name="planet_bonus_iron_tempest">Recompensas de eventos +40%</string><string name="planet_bonus_frozen_reliquary">Ingresos offline +45%</string><string name="planet_bonus_celestial_bloom">Todo el salvamento +35%</string><string name="planet_bonus_binary_grave">Ingresos de flota +55%</string><string name="planet_bonus_mirage_engine">Potencia de toque +60%</string><string name="planet_bonus_leviathan_deep">Todo el salvamento +50%</string><string name="planet_bonus_solar_archive">Ingresos de flota +80%</string><string name="planet_bonus_shattered_meridian">Potencia de toque +90%</string><string name="planet_bonus_clockwork_eden">Todo el salvamento +70%</string><string name="planet_bonus_phantom_orchard">Ingresos de flota +110%</string><string name="planet_bonus_cinder_cathedral">Potencia de toque +125%</string><string name="planet_bonus_null_beacon">Todo el salvamento +100%</string><string name="planet_bonus_origin_vault">Potencia de toque y flota ×3</string>
 </resources>
