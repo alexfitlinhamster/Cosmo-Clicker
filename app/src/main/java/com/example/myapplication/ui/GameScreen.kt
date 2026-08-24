@@ -12,18 +12,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import com.example.myapplication.ui.components.Button
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -82,7 +86,6 @@ fun GameScreen(
     var isGalaxyRouteOpen by rememberSaveable { mutableStateOf(false) }
     // Settings must survive Activity recreation when the app locale changes.
     var showSettings by rememberSaveable { mutableStateOf(false) }
-    var showEventInfo by remember { mutableStateOf<GameEvent?>(null) }
     var unlockedPlanetId by remember { mutableStateOf<String?>(null) }
 
     // Состояние стартового экрана
@@ -92,8 +95,6 @@ fun GameScreen(
 
     BackHandler(
         enabled = showSettings ||
-            showEventInfo != null ||
-            state.eventChainResult != null ||
             (!showStartScreen && state.lastOfflineReward > 0.0) ||
             isShopOpen ||
             isHangarOpen ||
@@ -104,8 +105,6 @@ fun GameScreen(
     ) {
         when {
             showSettings -> showSettings = false
-            showEventInfo != null -> showEventInfo = null
-            state.eventChainResult != null -> viewModel.clearEventChainResult()
             !showStartScreen && state.lastOfflineReward > 0.0 -> viewModel.clearOfflineReward()
             isShopOpen -> isShopOpen = false
             isHangarOpen -> isHangarOpen = false
@@ -127,6 +126,8 @@ fun GameScreen(
     LaunchedEffect(state.eventChainResult) {
         state.eventChainResult?.let {
             if (it.success) soundManager.playEventSuccess() else soundManager.playEventFailure()
+            delay(1_200L)
+            viewModel.clearEventChainResult()
         }
     }
 
@@ -190,7 +191,6 @@ fun GameScreen(
     val backgroundRes = R.drawable.background_cosmic_game
     val eventTint = when (state.activeEvent?.type) {
         GameEventType.STORM, GameEventType.BLACK_HOLE -> Color(0xFF5A3D8F)
-        GameEventType.ASTEROID -> Color(0xFF6D5848)
         GameEventType.SOLAR_FLARE -> Color(0xFF9A512F)
         GameEventType.CYBER_VIRUS, GameEventType.PIRATE_RAID -> Color(0xFF71384C)
         else -> Color.Transparent
@@ -284,17 +284,13 @@ fun GameScreen(
                             target,
                             maxWidth,
                             maxHeight,
-                            onClick = if (target.isGoldenShard) {
-                                { viewModel.collectGoldenShard(target.id) }
-                            } else null
+                            onClick = null
                         )
                     }
                 }
 
                 state.activeEvent?.let { event ->
-                    EventBanner(event, state.eventTapsLeft) {
-                        showEventInfo = event
-                    }
+                    EventBanner(event, state.eventTapsLeft)
                 }
                 state.pendingEventChain?.let { pending ->
                     EventChainPendingBanner(
@@ -331,28 +327,33 @@ fun GameScreen(
                 state.drones.forEachIndexed { index, drone ->
                     key(drone.id) {
                         ScavengingDrone(drone, fleetMap, maxWidth, maxHeight, sharedRotorPhase) {
-                            val cyberEvent = state.activeEvent?.takeIf { active ->
-                                active.type == GameEventType.CYBER_VIRUS && state.infectedDroneId == it
-                            }
-                            if (cyberEvent != null) showEventInfo = cyberEvent else viewModel.onDroneClick(it)
+                            viewModel.onDroneClick(it)
                         }
                     }
                 }
 
                 state.activeEvent?.let { event ->
+                    Image(
+                        painter = painterResource(R.drawable.bg_events_minimal_v2),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().zIndex(-1f),
+                        contentScale = ContentScale.Crop
+                    )
                     when (event.type) {
-                        GameEventType.ASTEROID -> {
-                            Asteroid(event, state.eventTapsLeft, maxWidth, maxHeight) { viewModel.onAsteroidClick() }
-                        }
                         GameEventType.BLACK_HOLE -> {
-                            BlackHoleComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
-                                viewModel.onBlackHoleClick()
-                            }
+                            BlackHoleComponent(
+                                event,
+                                state.eventTapsLeft,
+                                state.stormSequence,
+                                state.stormProgress,
+                                state.stormRound,
+                                maxWidth,
+                                maxHeight,
+                                viewModel::onBlackHoleNodeClick
+                            )
                         }
                         GameEventType.PIRATE_RAID -> {
-                            PirateRaidComponent(event, state.eventTapsLeft, maxWidth, maxHeight) {
-                                viewModel.onPirateRaidClick()
-                            }
+                            PirateAmbushComponent(event, state.stormSequence, state.stormProgress, state.stormRound, maxWidth, maxHeight, viewModel::onPirateTargetClick, viewModel::resolvePirateRaid)
                         }
                         GameEventType.STORM -> {
                             StormNodeChallenge(event, state.stormSequence, state.stormProgress, state.stormRound, maxWidth, maxHeight, viewModel::onStormNodeClick)
@@ -360,13 +361,45 @@ fun GameScreen(
                         GameEventType.SOLAR_FLARE -> {
                             SolarFlareProtocol(event, state.stormSequence, state.stormProgress, state.stormRound, maxWidth, maxHeight, viewModel::onSolarChannelClick)
                         }
+                        // The meteor shower is represented only by falling debris.
+                        // There is no separate four-target interception mini-game.
                         GameEventType.METEOR_SHOWER -> Unit
-                        GameEventType.DISTRESS_SIGNAL -> Unit
-                        GameEventType.ABANDONED_STATION -> Unit
-                        GameEventType.TRADING_SHIP -> TradingShipComponent(event, maxWidth, maxHeight) {
-                            showEventInfo = event
-                        }
-                        else -> {}
+                        GameEventType.DISTRESS_SIGNAL -> DistressSignalScanner(
+                            event = event,
+                            sequence = state.stormSequence,
+                            progress = state.stormProgress,
+                            phase = state.stormRound,
+                            gameAreaWidth = maxWidth,
+                            gameAreaHeight = maxHeight,
+                            onNodeClick = viewModel::onDistressSignalNode,
+                            onSalvage = { viewModel.respondToDistressSignal(DistressChoice.SALVAGE) },
+                            onRescue = { viewModel.respondToDistressSignal(DistressChoice.RESCUE) }
+                        )
+                        GameEventType.ABANDONED_STATION -> AbandonedStationAccess(
+                            event = event,
+                            sequence = state.stormSequence,
+                            progress = state.stormProgress,
+                            phase = state.stormRound,
+                            gameAreaWidth = maxWidth,
+                            gameAreaHeight = maxHeight,
+                            onRelayClick = viewModel::onStationRelayClick,
+                            onSafeRoute = { viewModel.respondToAbandonedStation(StationChoice.SAFE_ROUTE) },
+                            onReactorCore = { viewModel.respondToAbandonedStation(StationChoice.REACTOR_CORE) }
+                        )
+                        GameEventType.TRADING_SHIP -> TradingShipComponent(
+                            event = event,
+                            hullLeft = state.eventTapsLeft,
+                            gameAreaWidth = maxWidth,
+                            gameAreaHeight = maxHeight
+                        )
+                        GameEventType.CYBER_VIRUS -> CyberVirusField(
+                            event = event,
+                            target = state.stormSequence.firstOrNull() ?: 0,
+                            remaining = state.eventTapsLeft,
+                            gameAreaWidth = maxWidth,
+                            gameAreaHeight = maxHeight,
+                            onNodeClick = viewModel::onCyberNodeClick
+                        )
                     }
                 }
 
@@ -418,28 +451,29 @@ fun GameScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .widthIn(max = 560.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .background(AppColors.CardBackground.copy(alpha = .94f), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .border(1.dp, AppColors.Outline.copy(alpha = .45f), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_quest_v3,
+                    icon = R.drawable.ic_nav_quests_minimal,
                     label = R.string.quests,
                     description = R.string.quests,
                     onClick = { isQuestOpen = true },
                     modifier = Modifier.weight(1f)
                 )
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_shop_v3,
+                    icon = R.drawable.ic_nav_shop_minimal,
                     label = R.string.navigation_shop,
                     description = R.string.open_shop,
                     onClick = { isShopOpen = true },
                     modifier = Modifier.weight(1f)
                 )
                 GameNavigationButton(
-                    icon = R.drawable.ui_button_hangar_v2,
+                    icon = R.drawable.ic_nav_hangar_minimal,
                     label = R.string.navigation_hangar,
                     description = R.string.open_hangar,
                     onClick = { isHangarOpen = true },
@@ -503,67 +537,6 @@ fun GameScreen(
                 },
                 onBack = { showSettings = false }
             )
-        }
-
-        showEventInfo?.let { event ->
-            if (event.type == GameEventType.DISTRESS_SIGNAL) {
-                DistressSignalDialog(
-                    reward = event.reward,
-                    onSalvage = {
-                        viewModel.respondToDistressSignal(DistressChoice.SALVAGE)
-                        showEventInfo = null
-                    },
-                    onRescue = {
-                        viewModel.respondToDistressSignal(DistressChoice.RESCUE)
-                        showEventInfo = null
-                    },
-                    onDismiss = { showEventInfo = null }
-                )
-            } else if (event.type == GameEventType.BLACK_HOLE) {
-                BlackHoleEventDialog(
-                    event = event,
-                    tapsLeft = state.eventTapsLeft,
-                    onDismiss = { showEventInfo = null }
-                )
-            } else if (event.type == GameEventType.CYBER_VIRUS) {
-                CyberVirusDialog(
-                    event = event,
-                    onResolved = {
-                        viewModel.resolveCyberVirus(it)
-                        showEventInfo = null
-                    },
-                    onDismiss = { showEventInfo = null }
-                )
-            } else if (event.type == GameEventType.ABANDONED_STATION) {
-                AbandonedStationDialog(
-                    reward = event.reward,
-                    onSafeRoute = {
-                        viewModel.respondToAbandonedStation(StationChoice.SAFE_ROUTE)
-                        showEventInfo = null
-                    },
-                    onReactorCore = {
-                        viewModel.respondToAbandonedStation(StationChoice.REACTOR_CORE)
-                        showEventInfo = null
-                    },
-                    onDismiss = { showEventInfo = null }
-                )
-            } else if (event.type == GameEventType.TRADING_SHIP) {
-                TradingShipMarket(
-                    event = event,
-                    totalDebris = state.totalDebris,
-                    onBuy = {
-                        viewModel.buyTradeOffer(it)
-                        showEventInfo = null
-                    },
-                    onDismiss = { showEventInfo = null }
-                )
-            } else {
-                EventInfoDialog(event = event, onDismiss = { showEventInfo = null })
-            }
-        }
-
-        state.eventChainResult?.let { result ->
-            EventChainResultDialog(result, viewModel::clearEventChainResult)
         }
 
         // СТАРТОВЫЙ ЭКРАН
@@ -713,15 +686,21 @@ fun GameScreen(
 
 @Composable
 fun QuestLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(R.drawable.ui_button_quest_v3),
-        contentDescription = stringResource(R.string.quests),
+    Surface(
         modifier = modifier
-            .size(60.dp)
-            .clip(RoundedCornerShape(11.dp))
+            .size(52.dp)
             .clickable(onClick = onClick),
-        contentScale = ContentScale.Fit
-    )
+        shape = CircleShape,
+        color = AppColors.SurfaceRaised,
+        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .24f))
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_nav_quests_minimal),
+            contentDescription = stringResource(R.string.quests),
+            modifier = Modifier.padding(13.dp),
+            tint = Color.Unspecified
+        )
+    }
 }
 
 @Composable
@@ -733,22 +712,35 @@ private fun GameNavigationButton(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.height(80.dp).clickable(onClick = onClick),
+        modifier = modifier
+            .height(66.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = painterResource(icon),
-            contentDescription = stringResource(description),
-            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(11.dp)),
-            contentScale = ContentScale.Fit
-        )
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = AppColors.SurfaceRaised,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                AppColors.Primary.copy(alpha = .24f)
+            )
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = stringResource(description),
+                modifier = Modifier.padding(9.dp),
+                tint = Color.Unspecified
+            )
+        }
         Spacer(Modifier.height(3.dp))
         Text(
             text = stringResource(label),
             color = Color.White.copy(alpha = 0.88f),
             fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

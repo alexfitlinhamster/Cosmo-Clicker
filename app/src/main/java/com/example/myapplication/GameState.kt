@@ -122,7 +122,6 @@ data class GameState(
     val eventLog: List<EventLogEntry> = emptyList(),
     val weeklyGalaxy: WeeklyGalaxy = WeeklyGalaxy(),
     val stationLevels: Map<StationModule, Int> = emptyMap(),
-    val goldenShardsRemaining: Int = 0,
     val stormSequence: List<Int> = emptyList(),
     val stormProgress: Int = 0,
     val stormRound: Int = 1
@@ -157,11 +156,10 @@ data class ScavengeTarget(
     val velocityY: Float = 0f,
     val isMeteor: Boolean = false,
     val reward: Double = 0.0,
-    val isGoldenShard: Boolean = false
 )
 
 enum class GameEventType {
-    STORM, ASTEROID, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS,
+    STORM, METEOR_SHOWER, BLACK_HOLE, SOLAR_FLARE, CYBER_VIRUS,
     DISTRESS_SIGNAL, ABANDONED_STATION, PIRATE_RAID, TRADING_SHIP
 }
 
@@ -209,7 +207,8 @@ data class GameEvent(
     val x: Float = 0.5f,
     val y: Float = 0.5f,
     val startedAt: Long = 0L,
-    val reward: Double = 0.0
+    val reward: Double = 0.0,
+    val isElite: Boolean = false
 )
 
 data class FloatingTextData(

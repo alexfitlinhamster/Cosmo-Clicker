@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.em
@@ -51,10 +52,12 @@ fun FloatingText(data: FloatingTextData, gameAreaWidth: Dp, gameAreaHeight: Dp) 
         fontSize = 19.sp,
         letterSpacing = 0.02.em,
         modifier = Modifier
-            .offset(
-                x = gameAreaWidth * data.x,
-                y = gameAreaHeight * data.y + rise.dp - 22.dp
-            )
+            .offset {
+                IntOffset(
+                    x = (gameAreaWidth * data.x).roundToPx(),
+                    y = (gameAreaHeight * data.y + rise.dp - 22.dp).roundToPx()
+                )
+            }
             .graphicsLayer { translationX = -size.width / 2f }
             .alpha(alpha)
             .shadow(8.dp, RoundedCornerShape(12.dp), ambientColor = data.color, spotColor = data.color)

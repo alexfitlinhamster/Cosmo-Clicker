@@ -15,10 +15,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ScavengeTarget
 import com.example.myapplication.R
@@ -34,12 +35,10 @@ fun Star(index: Int, twinklePhase: Float, reduceMotion: Boolean = false) {
     // a separate infinite transition for every star.
     val twinkle = ((sin(twinklePhase + index * 1.73f) + 1f) * .5f)
     val alpha = if (reduceMotion) 0.55f else 0.2f + twinkle * 0.8f
+    val windowSize = LocalWindowInfo.current.containerSize
     Box(
         modifier = Modifier
-            .offset(
-                x = (x * LocalConfiguration.current.screenWidthDp).dp,
-                y = (y * LocalConfiguration.current.screenHeightDp).dp
-            )
+            .offset { IntOffset((x * windowSize.width).toInt(), (y * windowSize.height).toInt()) }
             .size(size.dp)
             .background(Color.White.copy(alpha = alpha), CircleShape)
     )
@@ -47,7 +46,7 @@ fun Star(index: Int, twinklePhase: Float, reduceMotion: Boolean = false) {
 
 @Composable
 fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp, onClick: (() -> Unit)? = null) {
-    val targetSize = if (target.isMeteor) 38.dp else if (target.isGoldenShard) 44.dp else (30 + target.rarity.ordinal * 2).dp
+    val targetSize = if (target.isMeteor) 38.dp else (30 + target.rarity.ordinal * 2).dp
 
     Box(
         modifier = Modifier
@@ -56,13 +55,13 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp, 
                 y = gameAreaHeight * target.y - (targetSize / 2)
             )
             .size(targetSize)
-            .alpha(if (target.isGoldenShard) 1f else 0.88f)
+            .alpha(0.88f)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center
     ) {
         if (target.isMeteor) {
             Image(
-                painter = painterResource(R.drawable.event_meteor_hazard_v2),
+                painter = painterResource(R.drawable.event_meteor_minimal_v2),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -72,7 +71,7 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp, 
         } else {
             Image(
                 painter = painterResource(debrisDrawable(target.imageIndex)),
-                contentDescription = if (target.isGoldenShard) stringResource(R.string.event_gold_asteroid) else null,
+                contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(targetSize - 4.dp)

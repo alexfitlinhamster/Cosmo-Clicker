@@ -50,7 +50,7 @@ fun FleetIcon(item: FleetConfig, iconSize: Dp) {
             val rows = 5
             val row = item.spriteIndex / columns
             val col = item.spriteIndex % columns
-            
+
             Box(modifier = Modifier.size(iconSize)) {
                 Image(
                     painter = painterResource(id = item.iconRes),

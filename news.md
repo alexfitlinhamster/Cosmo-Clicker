@@ -1,7 +1,33 @@
 # News
 
+## 1.18.0 — Deep Space Encounters Update - 2026-08-24
+
+- Reworked the remaining field encounters into clearer multi-stage interactions:
+  signal triangulation, station relay restoration, black-hole stabilization, meteor
+  interception, cyber-virus purging, trade-channel negotiation, and pirate pursuit.
+- Added elite event variants with harder objectives, adjusted penalties, and larger
+  rewards, while retaining old event identifiers for save compatibility.
+- Let active drones attack a moving hostile trading ship and either destroy it for
+  debris or scatter collectible cargo across the play field.
+- Added an event history presentation and a cohesive minimal cosmic visual pass for
+  event dialogs, goals, the hangar, achievements, prestige, shop actions, and settings.
+- Extracted debris rewards and rarity selection, timed quest creation, save fleet
+  normalization, localized quest descriptions, and simulation job ownership into
+  focused components to reduce ViewModel responsibilities.
+- Hardened older and malformed saves by clamping owned and active drone counts, and
+  prevented duplicate simulation loops from surviving lifecycle restarts.
+- Improved large-number formatting at suffix boundaries and for negative, infinite,
+  and otherwise invalid floating-point values.
+- Updated Android, Kotlin, Compose, lifecycle, activity, and test dependencies and
+  raised the project toolchain to Java 17.
+- Added regression coverage for debris generation, fleet-save normalization, timed
+  quests, number formatting, and basic Compose launch/settings/language/reset flows.
+
 ## 1.17.0 — Helios Protocol Update - 2026-08-13
 
+- Rebuilt Pirate Raid as a three-phase ambush: identify the real raider, crack its shield sequence, then choose destruction or cargo capture for different rewards.
+- Removed the repetitive three-node Space Storm from random event rotation; its save identifier remains supported so existing saves stay compatible.
+- Redistributed its event chance toward Helios, Golden Salvage, Meteor Shower, Distress Signal, Abandoned Station and Trading Ship encounters.
 - Rebuilt Solar Flare as the four-phase Helios Protocol instead of a three-tap challenge.
 - Added four plasma channels with symbols, increasingly long sequences, phase progress and escalating rewards.
 - Wrong channel inputs now reset the current phase, drain a small amount of debris and reduce the reward multiplier.
@@ -83,7 +109,6 @@
   minification, resource shrinking, signing, and release APK packaging.
 
 ## 1.12.0 - 2026-08-08
-1    
 - Prepared the first store-ready release: added release signing, code and resource
   shrinking, and the permanent `com.orbitsalvagers.droneclicker` application ID.
 - Rebalanced all four Command Center bosses with a smoother difficulty curve,

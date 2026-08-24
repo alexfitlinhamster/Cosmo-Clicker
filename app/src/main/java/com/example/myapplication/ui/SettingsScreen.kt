@@ -22,8 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
+import com.example.myapplication.ui.components.Button
+import com.example.myapplication.ui.components.CosmicButtonStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -97,34 +97,29 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(top = 40.dp, start = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.settings_header),
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(112.dp).clip(RoundedCornerShape(20.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(Modifier.height(14.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("←", color = AppColors.Primary, fontSize = 24.sp, lineHeight = 24.sp)
-                    }
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = AppColors.CardBackground.copy(alpha = .96f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .28f))
+            ) {
+            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    Modifier.size(42.dp).clickable(onClick = onBack),
+                    RoundedCornerShape(13.dp),
+                    color = AppColors.Surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .25f))
+                ) {
+                    Box(contentAlignment = Alignment.Center) { Text("‹", color = AppColors.Primary, fontSize = 30.sp) }
                 }
-                Spacer(Modifier.width(8.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.icon_game),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
+                Image(painterResource(R.drawable.ic_nav_settings_minimal), null, Modifier.size(34.dp))
+                Spacer(Modifier.width(10.dp))
                 Column {
                     Text(
                         text = stringResource(R.string.settings),
                         color = Color.White,
-                        fontSize = 26.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -134,28 +129,34 @@ fun SettingsScreen(
                             BuildConfig.VERSION_NAME,
                             BuildConfig.VERSION_CODE
                         ),
-                        color = Color.LightGray,
-                        fontSize = 11.sp
+                        color = AppColors.TextMuted,
+                        fontSize = 10.sp
                     )
                 }
-            }
+            } }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(18.dp))
+            SettingsSectionTitle(stringResource(R.string.settings_preferences_section), "01")
+            Spacer(Modifier.height(8.dp))
 
             SettingsCard(
-                modifier = Modifier.clickable { showLanguageDialog = true }
+                modifier = Modifier.clickable { showLanguageDialog = true },
+                accent = AppColors.Primary
             ) {
-                SettingsRow(stringResource(R.string.language), stringResource(languageLabel))
+                SettingsRow(stringResource(R.string.language), stringResource(languageLabel), "文", true)
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(18.dp))
+            SettingsSectionTitle(stringResource(R.string.settings_about_section), "02", AppColors.Secondary)
+            Spacer(Modifier.height(8.dp))
 
-            SettingsCard {
+            SettingsCard(accent = AppColors.Secondary) {
                 SettingsRow(
                     stringResource(R.string.version),
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    "V"
                 )
-                SettingsRow(stringResource(R.string.developer), "Alexei Fitlin")
+                SettingsRow(stringResource(R.string.developer), "Alexei Fitlin", "A")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -173,16 +174,23 @@ fun SettingsScreen(
                         Spacer(Modifier.width(10.dp))
                         Text(stringResource(R.string.telegram), color = Color.White)
                     }
-                    Text("@AlexFitlin", color = AppColors.Primary, fontWeight = FontWeight.SemiBold)
+                    Text("@AlexFitlin  ›", color = AppColors.Primary, fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(18.dp))
+            SettingsSectionTitle(stringResource(R.string.settings_danger_section), "03", AppColors.Danger)
+            Spacer(Modifier.height(8.dp))
 
-            SettingsCard(modifier = Modifier.clickable { showResetDialog = true }) {
-                Column(Modifier.padding(vertical = 8.dp)) {
-                    Text(stringResource(R.string.reset_game), color = AppColors.Danger, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.reset_game_description), color = Color.LightGray, fontSize = 11.sp)
+            SettingsCard(modifier = Modifier.clickable { showResetDialog = true }, accent = AppColors.Danger) {
+                Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SettingsBadge("!", AppColors.Danger)
+                    Spacer(Modifier.width(11.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.reset_game), color = AppColors.Danger, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.reset_game_description), color = AppColors.TextMuted, fontSize = 10.sp, lineHeight = 14.sp)
+                    }
+                    Text("›", color = AppColors.Danger, fontSize = 22.sp)
                 }
             }
 
@@ -225,10 +233,10 @@ fun SettingsScreen(
                 Button(onClick = {
                     showResetDialog = false
                     onResetGame()
-                }) { Text(stringResource(R.string.reset_game_confirm)) }
+                }, style = CosmicButtonStyle.Danger) { Text(stringResource(R.string.reset_game_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { Text(stringResource(R.string.cancel)) }
+                Button(onClick = { showResetDialog = false }, style = CosmicButtonStyle.Secondary) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -238,31 +246,61 @@ fun SettingsScreen(
 @Composable
 private fun SettingsCard(
     modifier: Modifier = Modifier,
+    accent: Color = AppColors.Primary,
     content: @Composable () -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF11223A),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.09f)),
-        shadowElevation = 4.dp
+        shape = RoundedCornerShape(14.dp),
+        color = AppColors.Surface.copy(alpha = .86f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = .24f)),
+        shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
             content()
         }
     }
 }
 
 @Composable
-private fun SettingsRow(label: String, value: String) {
+private fun SettingsRow(label: String, value: String, badge: String, showChevron: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.White)
-        Text(value, color = Color.LightGray)
+        SettingsBadge(badge, AppColors.Primary)
+        Spacer(Modifier.width(11.dp))
+        Text(label, modifier = Modifier.weight(1f), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(value, color = AppColors.TextMuted, fontSize = 11.sp)
+        if (showChevron) {
+            Spacer(Modifier.width(7.dp))
+            Text("›", color = AppColors.Primary, fontSize = 20.sp)
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionTitle(title: String, number: String, color: Color = AppColors.Primary) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(number, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(8.dp))
+        Text(title.uppercase(), color = AppColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
+    }
+}
+
+@Composable
+private fun SettingsBadge(text: String, color: Color) {
+    Surface(
+        modifier = Modifier.size(32.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = color.copy(alpha = .11f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = .24f))
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

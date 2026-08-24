@@ -20,9 +20,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val storeActionLock = Any()
     private val lastStoreActionNanos = mutableMapOf<String, Long>()
     private val debrisId = AtomicLong(System.currentTimeMillis())
-    private val simulationJobs = mutableListOf<Job>()
+    private val simulationJobs = SimulationJobRegistry(viewModelScope + Dispatchers.Default)
     private var autoClickDetector = AutoClickDetector()
     internal var randomProvider: RandomProvider = KotlinRandomProvider
+    private val questDescriptionProvider = QuestDescriptionProvider(application)
+    private val timedQuestFactory = TimedQuestFactory(questDescriptionProvider::describe)
 
     private var lastClickMillis = 0L
     private val _combo = MutableStateFlow(0)
@@ -121,54 +123,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshTimedQuests()
     }
 
-    private fun createDailyQuests(key: Long, planetId: String): List<Quest> = listOf(
-        timedQuest("d4_collect_25_$key", QuestType.COLLECT_DEBRIS, 25, 8_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
-        timedQuest("d4_click_100_$key", QuestType.CLICK_PLANET, 100, 10_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
-        timedQuest("d4_collect_100_$key", QuestType.COLLECT_DEBRIS, 100, 30_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
-        timedQuest("d4_click_500_$key", QuestType.CLICK_PLANET, 500, 40_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
-        timedQuest("d4_events_2_$key", QuestType.COMPLETE_EVENT, 2, 50_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM)
-    )
+    private fun createDailyQuests(key: Long, planetId: String): List<Quest> =
+        timedQuestFactory.daily(key, planetId)
 
-    private fun createWeeklyQuests(key: Long, planetId: String): List<Quest> {
-        return listOf(
-            timedQuest("w4_click_5000_$key", QuestType.CLICK_PLANET, 5_000, 750_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
-            timedQuest("w4_rare_drone_$key", QuestType.OBTAIN_RARE_DRONE, 1, 1_000_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
-            timedQuest("w4_debris_$key", QuestType.COLLECT_DEBRIS, 2_000_000, 1_500_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD)
-        )
-    }
-
-    private fun timedQuest(
-        id: String,
-        type: QuestType,
-        target: Int,
-        baseReward: Double,
-        planetId: String,
-        cadence: QuestCadence,
-        difficulty: QuestDifficulty
-    ) = Quest(
-        id = id,
-        type = type,
-        description = questDescription(type, target),
-        target = target.toDouble(),
-        progress = 0.0,
-        rewardDebris = EconomyBalance.scaledReward(baseReward, planetId),
-        cadence = cadence,
-        difficulty = difficulty
-    )
-
-    private fun questDescription(type: QuestType, target: Int): String =
-        getApplication<Application>().getString(
-            when (type) {
-                QuestType.COLLECT_DEBRIS -> R.string.quest_collect_debris
-                QuestType.CLICK_PLANET -> R.string.quest_click_planet
-                QuestType.BUY_UPGRADE -> R.string.quest_buy_upgrade
-                QuestType.OPEN_CASE -> R.string.quest_open_case
-                QuestType.COMPLETE_EVENT -> R.string.quest_complete_event
-                QuestType.OBTAIN_DRONE -> R.string.quest_obtain_any_drone
-                QuestType.OBTAIN_RARE_DRONE -> R.string.quest_obtain_rare_drone
-            },
-            target
-        )
+    private fun createWeeklyQuests(key: Long, planetId: String): List<Quest> =
+        timedQuestFactory.weekly(key, planetId)
 
     private fun loadGameState(): GameState {
         val clickLevels = mutableMapOf<String, Int>()
@@ -183,14 +142,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         
         val rawFleetCounts = mutableMapOf<String, Int>()
         fleetItems.forEach { rawFleetCounts[it.id] = prefs.getInt("fleet_${it.id}", 0).coerceAtLeast(0) }
-        val fleetCounts = rawFleetCounts.limitOwnedFleet()
+        val fleetCounts = FleetSaveNormalizer.owned(rawFleetCounts)
         val activeFleetCounts = if (prefs.contains("activeFleetInitialized")) {
             fleetItems.associate { item ->
                 item.id to prefs.getInt("activeFleet_${item.id}", 0)
                     .coerceIn(0, fleetCounts[item.id] ?: 0)
-            }.limitActiveFleet(loadedActiveCapacity)
+            }.let { FleetSaveNormalizer.active(it, loadedActiveCapacity) }
         } else {
-            fleetCounts.limitActiveFleet(loadedActiveCapacity)
+            FleetSaveNormalizer.active(fleetCounts, loadedActiveCapacity)
         }
         val migratedDiscoveries = fleetCounts.filterValues { it > 0 }.keys
         val discoveredDroneIds = prefs.getStringSet("discoveredDroneIds", migratedDiscoveries)
@@ -403,8 +362,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resumeSimulation() {
-        if (simulationJobs.any { it.isActive }) return
-        simulationJobs.clear()
+        if (simulationJobs.isRunning()) return
         val now = System.currentTimeMillis()
         _gameState.update { EventEngine.expireEventIfNeeded(it, now) }
         startGameLoop()
@@ -416,13 +374,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun pauseSimulation() {
-        simulationJobs.forEach(Job::cancel)
-        simulationJobs.clear()
+        simulationJobs.cancelAll()
         saveGameState()
     }
 
     private fun launchSimulationLoop(block: suspend CoroutineScope.() -> Unit) {
-        simulationJobs += viewModelScope.launch(Dispatchers.Default, block = block)
+        simulationJobs.launch(block)
     }
 
     private fun Double.finiteOr(fallback: Double): Double = if (isFinite()) this else fallback
@@ -458,9 +415,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _gameState.update { currentState ->
                     if (currentState.scavengeTargets.size < 8) {
                         val rarity = if (currentState.activeEvent?.type == GameEventType.BLACK_HOLE) {
-                            if (randomProvider.nextInt(100) < 40) Rarity.VOID else rollTrashRarity(currentState.currentPlanetId)
+                            if (randomProvider.nextInt(100) < 40) Rarity.VOID else rollTrashRarity(currentState)
                         } else {
-                            rollTrashRarity(currentState.currentPlanetId)
+                            rollTrashRarity(currentState)
                         }
                         
                         val newTarget = ScavengeTarget(
@@ -469,8 +426,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             y = if (rarity == Rarity.VOID) currentState.activeEvent?.y ?: (randomProvider.nextFloat() * 0.6f + 0.1f) else randomProvider.nextFloat() * 0.6f + 0.1f,
                             rarity = rarity,
                             expiresAt = System.currentTimeMillis() + 60000,
-                            imageIndex = debrisImageIndex(rarity),
-                            reward = rollDebrisReward(rarity, currentState.currentPlanetId)
+                            imageIndex = DebrisEngine.imageIndex(rarity, randomProvider),
+                            reward = DebrisEngine.reward(rarity, currentState.currentPlanetId, randomProvider)
                         )
                         currentState.copy(scavengeTargets = currentState.scavengeTargets + newTarget)
                     } else currentState
@@ -501,7 +458,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     val isMeteor = randomProvider.nextInt(100) < METEOR_SPAWN_CHANCE_PERCENT
-                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity(state.currentPlanetId)
+                    val rarity = if (isMeteor) Rarity.COMMON else rollTrashRarity(state)
                     state.copy(
                         scavengeTargets = state.scavengeTargets + ScavengeTarget(
                             id = debrisId.incrementAndGet(),
@@ -509,14 +466,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             y = -0.08f,
                             rarity = rarity,
                             expiresAt = state.activeEvent.expiresAt,
-                            imageIndex = debrisImageIndex(rarity),
+                            imageIndex = DebrisEngine.imageIndex(rarity, randomProvider),
                             isFalling = true,
                             velocityX = randomProvider.nextFloat() * 0.008f - 0.004f,
                             velocityY = randomProvider.nextFloat() * 0.0045f + 0.006f,
                             isMeteor = isMeteor,
-                            reward = rollDebrisReward(
+                            reward = DebrisEngine.reward(
                                 if (isMeteor) Rarity.LEGENDARY else rarity,
-                                state.currentPlanetId
+                                state.currentPlanetId,
+                                randomProvider
                             ) * 0.5
                         )
                     )
@@ -525,74 +483,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun debrisImageIndex(rarity: Rarity): Int = when (rarity) {
-        Rarity.COMMON -> {
-            val pool = listOf(1, 2, 7, 8)
-            randomProvider.choose(pool)
-        }
-        Rarity.UNCOMMON -> {
-            val pool = listOf(3, 9, 10)
-            randomProvider.choose(pool)
-        }
-        Rarity.RARE -> {
-            val pool = listOf(4, 11, 12)
-            randomProvider.choose(pool)
-        }
-        Rarity.EPIC -> {
-            val pool = listOf(5, 13)
-            randomProvider.choose(pool)
-        }
-        Rarity.LEGENDARY -> {
-            val pool = listOf(6, 14)
-            randomProvider.choose(pool)
-        }
-        Rarity.VOID -> 6 // Use legendary icon but with different behavior
-    }
-
-    private fun rollDebrisReward(rarity: Rarity, planetId: String): Double {
-        var reward = if (rarity == Rarity.VOID) {
-            randomProvider.nextLong(Rarity.VOID.minReward, Rarity.VOID.maxReward + 1).toDouble()
-        } else {
-            randomProvider.nextLong(rarity.minReward, rarity.maxReward + 1).toDouble()
-        }
-        // Crystal Hearth (p4) or Sky Haven (p15): 50% chance to get +100% (x2) reward for debris
-        if ((planetId == "p4" || planetId == "p15") && rarity != Rarity.LEGENDARY) {
-            if (randomProvider.nextInt(100) < 50) {
-                reward *= 2.0
-            }
-        }
-        // Pink Nebula (p17): +50% reward from all sources
-        if (planetId == "p17") {
-            reward *= 1.5
-        }
-        return EconomyBalance.scaledReward(reward, planetId)
-    }
-
-    private fun rollTrashRarity(planetId: String): Rarity {
-        // Red Dust (p10) or Sky Haven (p15): Epic/Legendary weight x2
-        val weights = Rarity.entries.map { r ->
-            val planetMultiplier = if ((planetId == "p10" || planetId == "p15") && (r == Rarity.EPIC || r == Rarity.LEGENDARY)) 2 else 1
-            val technologyBonus = Technology.LUCK_MATRIX in _gameState.value.technologies && (r == Rarity.EPIC || r == Rarity.LEGENDARY)
-                val tradeMultiplier = if (
-                    (_gameState.value.activeEffects[SkillType.TRADE_LUCK.id] ?: 0L) > System.currentTimeMillis() &&
-                    (r == Rarity.RARE || r == Rarity.EPIC || r == Rarity.LEGENDARY)
-                ) 2 else 1
-            val rushMultiplier = if (
-                (_gameState.value.activeEffects[SkillType.SALVAGE_RUSH.id] ?: 0L) > System.currentTimeMillis() &&
-                (r == Rarity.RARE || r == Rarity.EPIC || r == Rarity.LEGENDARY)
-            ) 2 else 1
-            val baseWeight = r.spawnWeight * planetMultiplier * tradeMultiplier * rushMultiplier
-            if (technologyBonus) baseWeight * 3 / 2 else baseWeight
-        }
-        val totalWeight = weights.sum()
-        val roll = randomProvider.nextInt(totalWeight)
-        var cumulative = 0
-        for (i in Rarity.entries.indices) {
-            cumulative += weights[i]
-            if (roll < cumulative) return Rarity.entries[i]
-        }
-        return Rarity.COMMON
-    }
+    private fun rollTrashRarity(state: GameState): Rarity = DebrisEngine.rarity(
+        planetId = state.currentPlanetId,
+        technologies = state.technologies,
+        activeEffects = state.activeEffects,
+        nowMillis = System.currentTimeMillis(),
+        random = randomProvider
+    )
 
     private fun startEventLoop() {
         launchSimulationLoop {
@@ -604,8 +501,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (state.activeEvent != null || state.pendingEventChain != null) continue
                 val selectedType = EventEngine.selectType(state.currentPlanetId, randomProvider) ?: continue
                 val duration = EventEngine.nextDurationMillis(state.currentPlanetId, randomProvider)
+                val isElite = EventEngine.rollElite(selectedType, state.currentPlanetId, randomProvider)
                 val clickValue = if (
-                    selectedType == GameEventType.ASTEROID ||
                     selectedType == GameEventType.DISTRESS_SIGNAL ||
                     selectedType == GameEventType.ABANDONED_STATION ||
                     selectedType == GameEventType.PIRATE_RAID ||
@@ -616,23 +513,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val now = System.currentTimeMillis()
                 _gameState.update {
                     if (it.activeEvent == null) {
-                        EventEngine.startEvent(it, selectedType, duration, now, randomProvider, clickValue)
+                        EventEngine.startEvent(it, selectedType, duration, now, randomProvider, clickValue, isElite)
                     } else {
                         it
                     }
                 }
             }
         }
-    }
-
-    fun onAsteroidClick() {
-        val now = System.currentTimeMillis()
-        _gameState.update { EventEngine.onAsteroidClick(it, now, randomProvider) }
-    }
-
-    fun collectGoldenShard(targetId: Long) {
-        val now = System.currentTimeMillis()
-        _gameState.update { EventEngine.collectGoldenShard(it, targetId, now) }
     }
 
     fun onEventChallengeClick() {
@@ -645,31 +532,36 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _gameState.update { EventEngine.onStormNodeClick(it, node, now, randomProvider) }
     }
 
+    fun onMeteorTargetClick(target: Int) {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.onMeteorTargetClick(it, target, now, randomProvider) }
+    }
+
+    fun onCyberNodeClick(node: Int) {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.onCyberNodeClick(it, node, now, randomProvider) }
+    }
+
     fun onSolarChannelClick(channel: Int) {
         val now = System.currentTimeMillis()
         _gameState.update { EventEngine.onSolarChannelClick(it, channel, now, randomProvider) }
     }
     
-    fun onBlackHoleClick() {
+    fun onBlackHoleNodeClick(node: Int) {
         val now = System.currentTimeMillis()
         _gameState.update { state ->
-            EventEngine.onBlackHoleClick(state, now, randomProvider) { x, y, expiresAt ->
+            EventEngine.onBlackHoleNodeClick(state, node, now, randomProvider) { x, y, expiresAt ->
                 ScavengeTarget(
                     id = debrisId.incrementAndGet(),
                     x = x,
                     y = y,
                     rarity = Rarity.RARE,
                     expiresAt = expiresAt,
-                    imageIndex = debrisImageIndex(Rarity.RARE),
-                    reward = rollDebrisReward(Rarity.RARE, state.currentPlanetId)
+                    imageIndex = DebrisEngine.imageIndex(Rarity.RARE, randomProvider),
+                    reward = DebrisEngine.reward(Rarity.RARE, state.currentPlanetId, randomProvider)
                 )
             }
         }
-    }
-
-    fun onPirateRaidClick() {
-        val now = System.currentTimeMillis()
-        _gameState.update { EventEngine.onPirateRaidClick(it, now) }
     }
 
     fun onDroneClick(droneId: Long) {
@@ -776,30 +668,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }.toMutableList()
             var debrisGained = 0.0
             var debrisCollectedCount = 0
-            var goldenShardsRemaining = state.goldenShardsRemaining
-            var activeEffects = state.activeEffects
             val magnetLevel = (state.clickLevels["utility_magnet"] ?: 0).coerceIn(0, 5)
             if (magnetLevel > 0) {
                 val radius = 0.06f + magnetLevel * 0.035f
                 val attracted = targets.filter { distanceSquared(it.x, it.y, DRONE_HOME_POSITION, DRONE_HOME_POSITION) <= radius * radius }
                 debrisGained += attracted.sumOf { it.reward }
                 debrisCollectedCount += attracted.size
-                val attractedGoldenShards = attracted.count { it.isGoldenShard }
-                if (attractedGoldenShards > 0) {
-                    goldenShardsRemaining = (goldenShardsRemaining - attractedGoldenShards).coerceAtLeast(0)
-                    if (goldenShardsRemaining == 0) {
-                        activeEffects = activeEffects + (
-                            SkillType.SALVAGE_RUSH.id to now + EventEngine.SALVAGE_RUSH_DURATION_MS
-                        )
-                    }
-                }
                 targets.removeAll(attracted.toSet())
             }
             if (drones.isEmpty()) return@update state.copy(
                 scavengeTargets = targets,
                 totalDebris = state.totalDebris + debrisGained,
-                goldenShardsRemaining = goldenShardsRemaining,
-                activeEffects = activeEffects
+                activeEffects = state.activeEffects
             )
 
             val claimedTargetIds = drones.filter { it.state != DroneState.BROKEN }.mapNotNullTo(mutableSetOf()) { it.targetId }
@@ -900,8 +780,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                 val moved = movePatrolDrone(
                                     nx,
                                     ny,
-                                    nPatrolTargetX ?: nx,
-                                    nPatrolTargetY ?: ny,
+                                    nPatrolTargetX,
+                                    nPatrolTargetY,
                                     drone.id,
                                     moveStep
                                 )
@@ -949,14 +829,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                                         nHasCargo = true
                                         nCargoRarity = target.rarity
                                         nCargoReward = target.reward
-                                    }
-                                    if (target.isGoldenShard) {
-                                        goldenShardsRemaining = (goldenShardsRemaining - 1).coerceAtLeast(0)
-                                        if (goldenShardsRemaining == 0) {
-                                            activeEffects = activeEffects + (
-                                                SkillType.SALVAGE_RUSH.id to now + EventEngine.SALVAGE_RUSH_DURATION_MS
-                                            )
-                                        }
                                     }
                                     targets.removeAll { it.id == target.id }
                                     nTargetId = null
@@ -1028,8 +900,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 lifetimeStats = state.lifetimeStats.copy(
                     debrisCollected = state.lifetimeStats.debrisCollected + debrisCollectedCount
                 ),
-                goldenShardsRemaining = goldenShardsRemaining,
-                activeEffects = activeEffects
+                activeEffects = state.activeEffects
             )
         }
     }
@@ -1043,6 +914,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         return 0.82f to 0.72f
+    }
+
+    fun onTradeChannelClick(channel: Int) {
+        _gameState.update { EventEngine.onTradeChannelClick(it, channel, randomProvider) }
+    }
+
+    fun onStationRelayClick(relay: Int) {
+        _gameState.update { EventEngine.onStationRelayClick(it, relay, randomProvider) }
+    }
+
+    fun onDistressSignalNode(node: Int) {
+        _gameState.update { EventEngine.onDistressSignalNode(it, node, randomProvider) }
+    }
+
+    fun onPirateTargetClick(target: Int) {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.onPirateTargetClick(it, target, now, randomProvider) }
+    }
+
+    fun resolvePirateRaid(captureCargo: Boolean) {
+        val now = System.currentTimeMillis()
+        _gameState.update { EventEngine.resolvePirateRaid(it, captureCargo, now) }
+        saveGameState()
     }
 
     private fun movePatrolDrone(
@@ -1093,6 +987,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 next = next.copy(weeklyGalaxy = next.weeklyGalaxy.copy(
                     progress = (next.weeklyGalaxy.progress + passiveIncome).coerceAtMost(next.weeklyGalaxy.target)
                 ))
+            }
+            next = EventEngine.tickTradingShipCombat(next, now, randomProvider) { x, y, reward ->
+                ScavengeTarget(
+                    id = debrisId.incrementAndGet(),
+                    x = x,
+                    y = y,
+                    rarity = Rarity.RARE,
+                    expiresAt = now + 45_000L,
+                    imageIndex = DebrisEngine.imageIndex(Rarity.RARE, randomProvider),
+                    reward = reward
+                )
             }
             markCompletedQuestCycles(
                 AchievementEngine.evaluate(next),
@@ -1604,28 +1509,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-    }
-}
-
-data class ItemConfig(val id: String, val name: String, val base: Double, val value: Double, val iconRes: Int)
-data class FleetConfig(val id: String, val name: String, val base: Double, val iconRes: Int, val spriteIndex: Int = -1, val rarity: Rarity = Rarity.COMMON)
-data class PlanetConfig(val name: String, val price: Double, val desc: String, val color: Color, val imageRes: Int, val spriteIndex: Int = -1)
-
-private fun Map<String, Int>.limitActiveFleet(capacity: Int = DroneTraitEngine.MAX_ACTIVE_DRONES): Map<String, Int> {
-    var slotsLeft = capacity
-    return entries.associate { (id, rawCount) ->
-        val active = rawCount.coerceIn(0, 1).coerceAtMost(slotsLeft)
-        slotsLeft -= active
-        id to active
-    }
-}
-
-private fun Map<String, Int>.limitOwnedFleet(): Map<String, Int> {
-    var slotsLeft = EconomyBalance.MAX_DRONES
-    return entries.associate { (id, rawCount) ->
-        val owned = rawCount.coerceAtLeast(0).coerceAtMost(slotsLeft)
-        slotsLeft -= owned
-        id to owned
     }
 }
 

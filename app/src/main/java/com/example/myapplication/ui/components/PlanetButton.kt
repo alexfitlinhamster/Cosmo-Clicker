@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifier, onClick: (Float, Float) -> Unit) {
-    var scaleVal by remember { mutableStateOf(1f) }
+    var scaleVal by remember { mutableFloatStateOf(1f) }
     val animatedScale by animateFloatAsState(
         targetValue = scaleVal,
         animationSpec = tween(120, easing = FastOutSlowInEasing),
@@ -76,7 +76,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
                 val rows = 4
                 val row = planetConfig.spriteIndex / columns
                 val col = planetConfig.spriteIndex % columns
-                
+
                 Image(
                     painter = painterResource(id = planetConfig.imageRes),
                     contentDescription = null,

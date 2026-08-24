@@ -7,6 +7,7 @@ import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.content.edit
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -67,11 +68,9 @@ class MainActivity : ComponentActivity() {
 
     private fun saveSelectedLanguage(language: String?) {
         getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            .edit()
-            .apply {
+            .edit {
                 if (language == null) remove(LANGUAGE_KEY) else putString(LANGUAGE_KEY, language)
             }
-            .apply()
     }
 
     private companion object {

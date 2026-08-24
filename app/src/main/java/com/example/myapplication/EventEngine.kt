@@ -8,14 +8,11 @@ object EventEngine {
     private const val MIN_DURATION_MS = 20_000L
     private const val MAX_DURATION_MS = 60_000L
     private const val EVENT_CLICK_MULTIPLIER = 2.0
-    private const val BLACK_HOLE_TAPS = 10
-    private const val ASTEROID_TAPS = 5
-    private const val GOLDEN_SHARD_COUNT = 5
+    private const val BLACK_HOLE_TAPS = 6
     const val SALVAGE_RUSH_DURATION_MS = 15_000L
     private const val STORM_TAPS = 3
     private const val SOLAR_FLARE_TAPS = 4
-    private const val PIRATE_RAID_TAPS = 6
-    private const val ASTEROID_REWARD = 250.0
+    private const val PIRATE_RAID_TAPS = 5
     private const val VOID_ENERGY_DURATION_MS = 30_000L
     private const val RARE_TARGET_DURATION_MS = 30_000L
     private const val DISTRESS_RESCUE_DURATION_MS = 10_000L
@@ -25,17 +22,21 @@ object EventEngine {
     private const val TRADE_LUCK_DURATION_MS = 90_000L
     private const val TRADE_CLICK_DURATION_MS = 45_000L
     private const val TRADE_FLEET_DURATION_MS = 60_000L
+    private const val ELITE_DURATION_MULTIPLIER = 1.2
+
+    private val eliteTypes = setOf(
+        GameEventType.SOLAR_FLARE,
+        GameEventType.CYBER_VIRUS,
+        GameEventType.PIRATE_RAID
+    )
 
     private val eventWeights = linkedMapOf(
-        GameEventType.STORM to 20,
-        GameEventType.ASTEROID to 25,
-        GameEventType.METEOR_SHOWER to 20,
-        GameEventType.BLACK_HOLE to 8,
-        GameEventType.SOLAR_FLARE to 15,
+        // Other enum values stay readable for old saves and event-log entries.
+        // Only events played directly on the game field are generated.
+        GameEventType.METEOR_SHOWER to 32,
+        GameEventType.SOLAR_FLARE to 20,
         GameEventType.CYBER_VIRUS to 12,
-        GameEventType.DISTRESS_SIGNAL to 10,
-        GameEventType.ABANDONED_STATION to 8,
-        GameEventType.PIRATE_RAID to 8,
+        GameEventType.PIRATE_RAID to 12,
         GameEventType.TRADING_SHIP to 10
     )
 
@@ -47,7 +48,7 @@ object EventEngine {
     )
 
     fun category(type: GameEventType): Category = when (type) {
-        GameEventType.ASTEROID, GameEventType.TRADING_SHIP -> Category.POSITIVE
+        GameEventType.TRADING_SHIP -> Category.POSITIVE
         GameEventType.CYBER_VIRUS -> Category.NEGATIVE
         GameEventType.STORM,
         GameEventType.METEOR_SHOWER,
@@ -89,11 +90,27 @@ object EventEngine {
             random.nextInt(100) < resistancePercent
         ) {
             return when (modifiers.resistanceOutcome) {
-                NegativeEventResistanceOutcome.REDIRECT_TO_POSITIVE -> GameEventType.ASTEROID
+                NegativeEventResistanceOutcome.REDIRECT_TO_POSITIVE -> GameEventType.TRADING_SHIP
                 NegativeEventResistanceOutcome.CANCEL -> null
             }
         }
         return selectedType
+    }
+
+    fun eliteChancePercent(planetId: String): Int =
+        (3 + EconomyBalance.planetIndex(planetId) / 6).coerceAtMost(9)
+
+    fun rollElite(type: GameEventType, planetId: String, random: RandomProvider): Boolean =
+        type in eliteTypes && random.nextInt(100) < eliteChancePercent(planetId)
+
+    private fun eliteRewardMultiplier(type: GameEventType): Double = when (type) {
+        GameEventType.BLACK_HOLE -> 1.75
+        GameEventType.SOLAR_FLARE -> 2.8
+        GameEventType.CYBER_VIRUS -> 2.35
+        GameEventType.DISTRESS_SIGNAL -> 1.9
+        GameEventType.ABANDONED_STATION -> 2.55
+        GameEventType.PIRATE_RAID -> 3.2
+        else -> 1.0
     }
 
     fun startEvent(
@@ -102,41 +119,48 @@ object EventEngine {
         durationMillis: Long,
         nowMillis: Long,
         random: RandomProvider,
-        clickValue: Double = 1.0
+        clickValue: Double = 1.0,
+        isElite: Boolean = false
     ): GameState {
         val workingDrones = state.drones.filter { it.state != DroneState.BROKEN }
-        val actualType = if (type == GameEventType.CYBER_VIRUS && workingDrones.isEmpty()) {
-            GameEventType.ASTEROID
-        } else type
+        val actualType = when {
+            type == GameEventType.CYBER_VIRUS && workingDrones.isEmpty() -> GameEventType.METEOR_SHOWER
+            else -> type
+        }
         val infectedDroneId = if (actualType == GameEventType.CYBER_VIRUS) {
             random.choose(workingDrones).id
         } else null
 
+        val baseReward = if (actualType == GameEventType.DISTRESS_SIGNAL) {
+            eventReward(state, clickValue, 500.0, 40.0, 0.006)
+        } else if (actualType == GameEventType.ABANDONED_STATION) {
+            eventReward(state, clickValue, 1_500.0, 60.0, 0.010)
+        } else if (actualType == GameEventType.PIRATE_RAID) {
+            eventReward(state, clickValue, 1_500.0, 50.0, 0.012)
+        } else if (actualType == GameEventType.TRADING_SHIP) {
+            eventReward(state, clickValue, 500.0, 25.0, 0.004)
+        } else if (actualType == GameEventType.CYBER_VIRUS) {
+            eventReward(state, clickValue, 1_000.0, 50.0, 0.008)
+        } else if (actualType == GameEventType.STORM) {
+            eventReward(state, clickValue, 750.0, 35.0, 0.007)
+        } else if (actualType == GameEventType.SOLAR_FLARE) {
+            eventReward(state, clickValue, 1_000.0, 45.0, 0.008)
+        } else if (actualType == GameEventType.BLACK_HOLE && isElite) {
+            eventReward(state, clickValue, 1_500.0, 55.0, 0.009)
+        } else {
+            0.0
+        }
+        val eliteDuration = if (isElite) {
+            (durationMillis * ELITE_DURATION_MULTIPLIER).toLong()
+        } else durationMillis
         val event = GameEvent(
                 type = actualType,
-                expiresAt = nowMillis + durationMillis,
+                expiresAt = nowMillis + eliteDuration,
                 x = random.nextFloat(),
                 y = random.nextFloat() * 0.6f + 0.1f,
                 startedAt = nowMillis,
-                reward = if (actualType == GameEventType.ASTEROID) {
-                    calculateAsteroidReward(clickValue, random)
-                } else if (actualType == GameEventType.DISTRESS_SIGNAL) {
-                    eventReward(state, clickValue, 500.0, 40.0, 0.006)
-                } else if (actualType == GameEventType.ABANDONED_STATION) {
-                    eventReward(state, clickValue, 1_500.0, 60.0, 0.010)
-                } else if (actualType == GameEventType.PIRATE_RAID) {
-                    eventReward(state, clickValue, 1_500.0, 50.0, 0.012)
-                } else if (actualType == GameEventType.TRADING_SHIP) {
-                    eventReward(state, clickValue, 500.0, 25.0, 0.004)
-                } else if (actualType == GameEventType.CYBER_VIRUS) {
-                    eventReward(state, clickValue, 1_000.0, 50.0, 0.008)
-                } else if (actualType == GameEventType.STORM) {
-                    eventReward(state, clickValue, 750.0, 35.0, 0.007)
-                } else if (actualType == GameEventType.SOLAR_FLARE) {
-                    eventReward(state, clickValue, 1_000.0, 45.0, 0.008)
-                } else {
-                    0.0
-                }
+                reward = baseReward * if (isElite) eliteRewardMultiplier(actualType) else 1.0,
+                isElite = isElite
             )
         return appendLog(state, event.type, EventLogOutcome.STARTED, nowMillis).copy(
             activeEvent = event,
@@ -146,85 +170,68 @@ object EventEngine {
                 1.0
             },
             eventTapsLeft = when (actualType) {
-                GameEventType.BLACK_HOLE -> BLACK_HOLE_TAPS
-                GameEventType.ASTEROID -> ASTEROID_TAPS
+                GameEventType.BLACK_HOLE -> if (isElite) 8 else BLACK_HOLE_TAPS
+                GameEventType.DISTRESS_SIGNAL -> if (isElite) 4 else 3
+                GameEventType.ABANDONED_STATION -> if (isElite) 4 else 3
+                GameEventType.TRADING_SHIP -> 18
                 GameEventType.STORM -> STORM_TAPS
                 GameEventType.SOLAR_FLARE -> SOLAR_FLARE_TAPS
-                GameEventType.PIRATE_RAID -> PIRATE_RAID_TAPS
-                else -> 0
+                GameEventType.PIRATE_RAID -> if (isElite) 7 else PIRATE_RAID_TAPS
+                GameEventType.METEOR_SHOWER -> if (isElite) 7 else 5
+                GameEventType.CYBER_VIRUS -> if (isElite) 8 else 6
             },
             infectedDroneId = infectedDroneId,
             stormSequence = when (actualType) {
                 GameEventType.STORM -> List(3) { random.nextInt(3) }
-                GameEventType.SOLAR_FLARE -> List(3) { random.nextInt(4) }
-                else -> emptyList()
+                GameEventType.BLACK_HOLE -> listOf(random.nextInt(4))
+                GameEventType.DISTRESS_SIGNAL -> listOf(random.nextInt(4))
+                GameEventType.ABANDONED_STATION -> listOf(random.nextInt(3))
+                GameEventType.TRADING_SHIP -> emptyList()
+                GameEventType.SOLAR_FLARE -> List(if (isElite) 4 else 3) { random.nextInt(4) }
+                GameEventType.PIRATE_RAID -> listOf(random.nextInt(3))
+                GameEventType.METEOR_SHOWER -> listOf(random.nextInt(4))
+                GameEventType.CYBER_VIRUS -> listOf(random.nextInt(4))
             },
             stormProgress = 0,
-            stormRound = 1
+            stormRound = if (actualType == GameEventType.BLACK_HOLE) 0 else 1
         )
     }
 
     fun expireEventIfNeeded(state: GameState, nowMillis: Long): GameState {
         val event = state.activeEvent ?: return state
         return if (event.expiresAt <= nowMillis) {
-            finishEvent(state, EventLogOutcome.EXPIRED, nowMillis)
+            if (event.type == GameEventType.CYBER_VIRUS) {
+                val burnedIncome = (event.reward * 1.2).coerceAtMost(state.totalDebris)
+                finishEvent(
+                    state.copy(totalDebris = (state.totalDebris - burnedIncome).coerceAtLeast(0.0)),
+                    EventLogOutcome.EXPIRED,
+                    nowMillis
+                )
+            } else finishEvent(state, EventLogOutcome.EXPIRED, nowMillis)
         } else state
     }
 
-    fun onAsteroidClick(
-        state: GameState,
-        nowMillis: Long,
-        random: RandomProvider = KotlinRandomProvider
-    ): GameState {
+    fun onCyberNodeClick(state: GameState, node: Int, nowMillis: Long, random: RandomProvider): GameState {
         val event = state.activeEvent
-        if (event?.type != GameEventType.ASTEROID) return state
-        val reward = event.reward.takeIf { it > 0.0 }
-            ?: (ASTEROID_REWARD * state.eventMultiplier)
-        val tapsLeft = state.eventTapsLeft - 1
-        val hitNumber = (ASTEROID_TAPS - state.eventTapsLeft + 1).coerceIn(1, ASTEROID_TAPS)
-        val hitReward = reward * hitNumber / 15.0
-        if (tapsLeft > 0) return state.copy(
-            totalDebris = state.totalDebris + hitReward,
-            eventTapsLeft = tapsLeft,
-            activeEvent = event.copy(
-                x = 0.12f + random.nextFloat() * 0.76f,
-                y = 0.12f + random.nextFloat() * 0.52f
-            )
-        )
-        val fragments = List(GOLDEN_SHARD_COUNT) { index ->
-            val angle = Math.PI * 2.0 * index / GOLDEN_SHARD_COUNT
-            ScavengeTarget(
-                id = Long.MIN_VALUE + event.startedAt + index,
-                x = GameRules.clampDebrisSpawnCoordinate(event.x + kotlin.math.cos(angle).toFloat() * 0.12f),
-                y = GameRules.clampDebrisSpawnCoordinate(event.y + kotlin.math.sin(angle).toFloat() * 0.12f),
-                rarity = Rarity.LEGENDARY,
-                expiresAt = nowMillis + 20_000L,
-                imageIndex = 6,
-                reward = reward * 0.12,
-                isGoldenShard = true
+        if (event?.type != GameEventType.CYBER_VIRUS) return state
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (node != expected) {
+            return state.copy(
+                eventTapsLeft = (state.eventTapsLeft + 1).coerceAtMost(if (event.isElite) 8 else 6),
+                stormSequence = listOf(random.nextInt(4))
             )
         }
+        val left = state.eventTapsLeft - 1
+        if (left > 0) return state.copy(
+            eventTapsLeft = left,
+            stormProgress = state.stormProgress + 1,
+            stormSequence = listOf(random.nextInt(4))
+        )
         return finishEvent(
-            state.copy(totalDebris = state.totalDebris + hitReward),
+            state.copy(totalDebris = state.totalDebris + event.reward),
             EventLogOutcome.COMPLETED,
             nowMillis,
-            reward
-        ).copy(
-            scavengeTargets = state.scavengeTargets + fragments,
-            goldenShardsRemaining = GOLDEN_SHARD_COUNT
-        )
-    }
-
-    fun collectGoldenShard(state: GameState, targetId: Long, nowMillis: Long): GameState {
-        val shard = state.scavengeTargets.firstOrNull { it.id == targetId && it.isGoldenShard } ?: return state
-        val remaining = (state.goldenShardsRemaining - 1).coerceAtLeast(0)
-        return state.copy(
-            totalDebris = state.totalDebris + shard.reward,
-            scavengeTargets = state.scavengeTargets.filterNot { it.id == targetId },
-            goldenShardsRemaining = remaining,
-            activeEffects = if (remaining == 0) {
-                state.activeEffects + (SkillType.SALVAGE_RUSH.id to nowMillis + SALVAGE_RUSH_DURATION_MS)
-            } else state.activeEffects
+            event.reward
         )
     }
 
@@ -276,6 +283,73 @@ object EventEngine {
         )
     }
 
+    fun onMeteorTargetClick(state: GameState, target: Int, nowMillis: Long, random: RandomProvider): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.METEOR_SHOWER) return state
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (target != expected) {
+            val penalty = (event.reward * 0.04).coerceAtMost(state.totalDebris * 0.005)
+            return state.copy(
+                totalDebris = (state.totalDebris - penalty).coerceAtLeast(0.0),
+                eventMultiplier = (state.eventMultiplier - 0.15).coerceAtLeast(1.0),
+                stormSequence = listOf(random.nextInt(4))
+            )
+        }
+        val remaining = state.eventTapsLeft - 1
+        val hitReward = event.reward / (if (event.isElite) 7.0 else 5.0)
+        if (remaining > 0) return state.copy(
+            totalDebris = state.totalDebris + hitReward * state.eventMultiplier,
+            eventTapsLeft = remaining,
+            stormProgress = state.stormProgress + 1,
+            eventMultiplier = (state.eventMultiplier + 0.1).coerceAtMost(2.0),
+            stormSequence = listOf(random.nextInt(4))
+        )
+        val rewarded = state.copy(totalDebris = state.totalDebris + hitReward * state.eventMultiplier)
+        return finishEvent(rewarded, EventLogOutcome.COMPLETED, nowMillis, event.reward * state.eventMultiplier)
+    }
+
+    fun tickTradingShipCombat(
+        state: GameState,
+        nowMillis: Long,
+        random: RandomProvider,
+        createLoot: (Float, Float, Double) -> ScavengeTarget
+    ): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.TRADING_SHIP) return state
+
+        val attackers = state.drones.count { it.state != DroneState.BROKEN && it.disabledUntil <= nowMillis }
+        val damage = (attackers / 2).coerceAtLeast(if (attackers > 0) 1 else 0)
+        val hullLeft = (state.eventTapsLeft - damage).coerceAtLeast(0)
+        val movedEvent = event.copy(
+            x = (event.x + (random.nextFloat() - 0.35f) * 0.12f).coerceIn(0.14f, 0.86f),
+            y = (event.y + (random.nextFloat() - 0.5f) * 0.08f).coerceIn(0.16f, 0.62f)
+        )
+        if (hullLeft > 0 || attackers == 0) {
+            return state.copy(activeEvent = movedEvent, eventTapsLeft = hullLeft)
+        }
+
+        return if (random.nextInt(100) < 50) {
+            val rewarded = state.copy(
+                activeEvent = movedEvent,
+                totalDebris = state.totalDebris + event.reward * 2.0
+            )
+            finishEvent(rewarded, EventLogOutcome.COMPLETED, nowMillis, event.reward * 2.0)
+        } else {
+            val loot = List(6) {
+                createLoot(
+                    (movedEvent.x + (random.nextFloat() - 0.5f) * 0.22f).coerceIn(0.08f, 0.92f),
+                    (movedEvent.y + (random.nextFloat() - 0.5f) * 0.18f).coerceIn(0.10f, 0.78f),
+                    event.reward / 3.0
+                )
+            }
+            finishEvent(
+                state.copy(activeEvent = movedEvent, scavengeTargets = state.scavengeTargets + loot),
+                EventLogOutcome.COMPLETED,
+                nowMillis
+            )
+        }
+    }
+
     fun onSolarChannelClick(state: GameState, channel: Int, nowMillis: Long, random: RandomProvider): GameState {
         val event = state.activeEvent
         if (event?.type != GameEventType.SOLAR_FLARE || state.stormSequence.isEmpty()) return state
@@ -306,11 +380,6 @@ object EventEngine {
         )
     }
 
-    fun calculateAsteroidReward(clickValue: Double, random: RandomProvider): Double {
-        val multiplier = 50 + random.nextInt(101)
-        return (clickValue.coerceAtLeast(0.0) * multiplier).coerceIn(ASTEROID_REWARD, 25_000.0)
-    }
-
     private fun eventReward(
         state: GameState,
         clickValue: Double,
@@ -331,17 +400,48 @@ object EventEngine {
         return (totalDebris.coerceAtLeast(0.0) * 0.002 * pressure).coerceIn(1.0, 5_000_000.0)
     }
 
-    fun onPirateRaidClick(state: GameState, nowMillis: Long): GameState {
+    fun onPirateTargetClick(state: GameState, target: Int, nowMillis: Long, random: RandomProvider): GameState {
         val event = state.activeEvent
-        if (event?.type != GameEventType.PIRATE_RAID) return state
-        val tapsLeft = state.eventTapsLeft - 1
-        if (tapsLeft > 0) return state.copy(eventTapsLeft = tapsLeft)
-        return finishEvent(
-            state.copy(totalDebris = state.totalDebris + event.reward),
-            EventLogOutcome.COMPLETED,
-            nowMillis,
-            event.reward
+        if (event?.type != GameEventType.PIRATE_RAID || state.stormRound != 1 || state.stormSequence.isEmpty()) return state
+        val expected = state.stormSequence.first()
+        if (target != expected) {
+            return state.copy(
+                totalDebris = (state.totalDebris - pirateRaidTheft(state.totalDebris, state.eventTapsLeft)).coerceAtLeast(0.0),
+                eventMultiplier = (state.eventMultiplier - 0.08).coerceAtLeast(0.72),
+                stormSequence = listOf(random.nextInt(3))
+            )
+        }
+        val requiredHits = if (event.isElite) 7 else PIRATE_RAID_TAPS
+        val nextProgress = state.stormProgress + 1
+        if (nextProgress >= requiredHits) {
+            return state.copy(stormRound = 2, stormProgress = requiredHits, eventTapsLeft = 0)
+        }
+        return state.copy(
+            stormProgress = nextProgress,
+            eventTapsLeft = requiredHits - nextProgress,
+            stormSequence = listOf(random.nextInt(3)),
+            activeEvent = event.copy(
+                x = 0.2f + random.nextFloat() * 0.6f,
+                y = 0.16f + random.nextFloat() * 0.36f
+            )
         )
+    }
+
+    fun resolvePirateRaid(state: GameState, captureCargo: Boolean, nowMillis: Long): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.PIRATE_RAID || state.stormRound != 2) return state
+        val multiplier = if (captureCargo) 1.6 else 1.1
+        val reward = event.reward * multiplier * state.eventMultiplier.coerceAtLeast(0.7)
+        val rewarded = state.copy(
+            totalDebris = state.totalDebris + reward,
+            droneParts = if (captureCargo) state.droneParts + (
+                "drone_21" to ((state.droneParts["drone_21"] ?: 0) + if (event.isElite) 5 else 3)
+            ) else state.droneParts,
+            activeEffects = if (!captureCargo) {
+                state.activeEffects + (SkillType.VOID_ENERGY.id to nowMillis + 30_000L)
+            } else state.activeEffects
+        )
+        return finishEvent(rewarded, EventLogOutcome.COMPLETED, nowMillis, reward)
     }
 
     fun onInfectedDroneClick(state: GameState, droneId: Long, nowMillis: Long): GameState {
@@ -381,7 +481,7 @@ object EventEngine {
         random: RandomProvider
     ): GameState {
         val event = state.activeEvent
-        if (event?.type != GameEventType.DISTRESS_SIGNAL) return state
+        if (event?.type != GameEventType.DISTRESS_SIGNAL || state.stormRound != 2) return state
         return when (choice) {
             DistressChoice.SALVAGE -> finishEvent(
                 state,
@@ -403,6 +503,40 @@ object EventEngine {
                 )
             }
         }
+    }
+
+    fun onDistressSignalNode(
+        state: GameState,
+        node: Int,
+        random: RandomProvider
+    ): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.DISTRESS_SIGNAL || state.stormRound != 1) return state
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (node != expected) {
+            val loss = (state.totalDebris * 0.005).coerceAtMost(1_000_000.0)
+            return state.copy(
+                totalDebris = (state.totalDebris - loss).coerceAtLeast(0.0),
+                stormProgress = (state.stormProgress - 1).coerceAtLeast(0),
+                stormSequence = listOf(random.nextInt(4))
+            )
+        }
+
+        val requiredLocks = if (event.isElite) 4 else 3
+        val nextProgress = state.stormProgress + 1
+        if (nextProgress >= requiredLocks) {
+            return state.copy(
+                stormRound = 2,
+                stormProgress = requiredLocks,
+                eventTapsLeft = 0,
+                stormSequence = emptyList()
+            )
+        }
+        return state.copy(
+            stormProgress = nextProgress,
+            eventTapsLeft = requiredLocks - nextProgress,
+            stormSequence = listOf(random.nextInt(4))
+        )
     }
 
     fun resolvePendingChainIfNeeded(state: GameState, nowMillis: Long): GameState {
@@ -434,10 +568,12 @@ object EventEngine {
         random: RandomProvider
     ): GameState {
         val event = state.activeEvent
-        if (event?.type != GameEventType.ABANDONED_STATION) return state
+        if (event?.type != GameEventType.ABANDONED_STATION || state.stormRound != 2) return state
         val safeRoute = choice == StationChoice.SAFE_ROUTE
         val success = random.nextInt(100) < if (safeRoute) 90 else 50
-        val reward = if (success) event.reward * if (safeRoute) 1.5 else 5.0 else 0.0
+        val reward = if (success) {
+            event.reward * (if (safeRoute) 1.5 else 5.0) * state.eventMultiplier.coerceAtLeast(0.76)
+        } else 0.0
         val penalty = if (safeRoute) 0.0 else state.totalDebris * 0.02
         return finishEvent(state, EventLogOutcome.CHOICE, nowMillis).copy(
             pendingEventChain = PendingEventChain(
@@ -450,10 +586,45 @@ object EventEngine {
         )
     }
 
+    fun onStationRelayClick(
+        state: GameState,
+        relay: Int,
+        random: RandomProvider
+    ): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.ABANDONED_STATION || state.stormRound != 1) return state
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (relay != expected) {
+            val loss = (state.totalDebris * 0.0075).coerceAtMost(2_000_000.0)
+            return state.copy(
+                totalDebris = (state.totalDebris - loss).coerceAtLeast(0.0),
+                stormRound = 1,
+                eventMultiplier = (state.eventMultiplier - 0.08).coerceAtLeast(0.76),
+                stormSequence = listOf(random.nextInt(3))
+            )
+        }
+
+        val requiredRelays = if (event.isElite) 4 else 3
+        val nextProgress = state.stormProgress + 1
+        if (nextProgress >= requiredRelays) {
+            return state.copy(
+                stormRound = 2,
+                stormProgress = requiredRelays,
+                eventTapsLeft = 0,
+                stormSequence = emptyList()
+            )
+        }
+        return state.copy(
+            stormProgress = nextProgress,
+            eventTapsLeft = requiredRelays - nextProgress,
+            stormSequence = listOf(random.nextInt(3))
+        )
+    }
+
     fun buyTradeOffer(state: GameState, offer: TradeOffer, nowMillis: Long): GameState {
         val event = state.activeEvent
-        if (event?.type != GameEventType.TRADING_SHIP) return state
-        val cost = tradeOfferCost(event, offer)
+        if (event?.type != GameEventType.TRADING_SHIP || state.stormRound != 2) return state
+        val cost = tradeOfferCost(event, offer, state.eventMultiplier)
         if (state.totalDebris < cost) return state
         val paid = state.copy(totalDebris = state.totalDebris - cost)
         val rewarded = when (offer) {
@@ -491,6 +662,38 @@ object EventEngine {
         TradeOffer.RANDOM_DRONE -> maxOf(25_000.0, event.reward * 6.0)
     }
 
+    fun tradeOfferCost(event: GameEvent, offer: TradeOffer, priceMultiplier: Double): Double =
+        tradeOfferCost(event, offer) * priceMultiplier.coerceIn(0.76, 1.24)
+
+    fun onTradeChannelClick(state: GameState, channel: Int, random: RandomProvider): GameState {
+        val event = state.activeEvent
+        if (event?.type != GameEventType.TRADING_SHIP || state.stormRound != 1) return state
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (channel != expected) {
+            return state.copy(
+                eventMultiplier = (state.eventMultiplier + 0.08).coerceAtMost(1.24),
+                stormSequence = listOf(random.nextInt(3))
+            )
+        }
+        val nextProgress = state.stormProgress + 1
+        return if (nextProgress >= 3) {
+            state.copy(
+                stormRound = 2,
+                stormProgress = 3,
+                eventTapsLeft = 0,
+                eventMultiplier = (state.eventMultiplier - 0.08).coerceAtLeast(0.76),
+                stormSequence = emptyList()
+            )
+        } else {
+            state.copy(
+                stormProgress = nextProgress,
+                eventTapsLeft = 3 - nextProgress,
+                eventMultiplier = (state.eventMultiplier - 0.08).coerceAtLeast(0.76),
+                stormSequence = listOf(random.nextInt(3))
+            )
+        }
+    }
+
     private fun GameState.withTradeEffect(type: SkillType, expiresAt: Long): GameState =
         copy(activeEffects = activeEffects + (type.id to expiresAt))
 
@@ -522,8 +725,9 @@ object EventEngine {
 
     fun clearChainResult(state: GameState): GameState = state.copy(eventChainResult = null)
 
-    fun onBlackHoleClick(
+    fun onBlackHoleNodeClick(
         state: GameState,
+        node: Int,
         nowMillis: Long,
         random: RandomProvider,
         createRareTarget: (x: Float, y: Float, expiresAt: Long) -> ScavengeTarget
@@ -531,12 +735,26 @@ object EventEngine {
         val event = state.activeEvent
         if (event?.type != GameEventType.BLACK_HOLE) return state
 
+        val expected = state.stormSequence.firstOrNull() ?: return state
+        if (node != expected) {
+            val loss = (state.totalDebris * 0.01).coerceAtMost(5_000_000.0)
+            return state.copy(
+                totalDebris = (state.totalDebris - loss).coerceAtLeast(0.0),
+                stormRound = state.stormRound + 1,
+                stormSequence = listOf(random.nextInt(4))
+            )
+        }
+
         val tapsLeft = state.eventTapsLeft - 1
-        if (tapsLeft > 0) return state.copy(eventTapsLeft = tapsLeft)
+        if (tapsLeft > 0) return state.copy(
+            eventTapsLeft = tapsLeft,
+            stormProgress = state.stormProgress + 1,
+            stormSequence = listOf(random.nextInt(4))
+        )
 
         val targets = state.scavengeTargets.toMutableList()
         val rewardCount = PlanetEventModifiers.forPlanet(state.currentPlanetId)
-            .blackHoleRareTargetRewardCount
+            .blackHoleRareTargetRewardCount + if (event.isElite) 2 else 0
         if (rewardCount > 0) {
             repeat(rewardCount) {
                 val x = GameRules.clampDebrisSpawnCoordinate(
@@ -549,7 +767,12 @@ object EventEngine {
             }
         }
 
-        return finishEvent(state, EventLogOutcome.COMPLETED, nowMillis).copy(
+        return finishEvent(
+            state.copy(totalDebris = state.totalDebris + event.reward),
+            EventLogOutcome.COMPLETED,
+            nowMillis,
+            event.reward
+        ).copy(
             scavengeTargets = targets,
             activeEffects = state.activeEffects +
                 (SkillType.VOID_ENERGY.id to nowMillis + VOID_ENERGY_DURATION_MS)

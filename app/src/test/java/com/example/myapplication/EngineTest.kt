@@ -146,54 +146,23 @@ class EngineTest {
         assertEquals(2L, result.infectedDroneId)
     }
 
-    @Test
-    fun asteroidClickAwardsRewardAndResetsEventState() {
-        val state = GameState(
-            totalDebris = 100.0,
-            activeEvent = GameEvent(GameEventType.ASTEROID, 1_000L, reward = 500.0),
-            eventMultiplier = 2.0,
-            eventTapsLeft = 5
-        )
 
-        val afterFirstHit = EventEngine.onAsteroidClick(state, 400L)
-        val result = (2..5).fold(afterFirstHit) { current, hit ->
-            EventEngine.onAsteroidClick(current, 400L + hit)
-        }
 
-        assertEquals(4, afterFirstHit.eventTapsLeft)
-        assertEquals(GameEventType.ASTEROID, afterFirstHit.activeEvent?.type)
-        assertEquals(600.0, result.totalDebris, 0.001)
-        assertEquals(null, result.activeEvent)
-        assertEquals(1.0, result.eventMultiplier, 0.0)
-        assertEquals(5, result.goldenShardsRemaining)
-        assertEquals(5, result.scavengeTargets.count { it.isGoldenShard })
-    }
-
-    @Test
-    fun collectingEveryGoldenFragmentActivatesSalvageRush() {
-        val shards = (1L..2L).map { id ->
-            ScavengeTarget(id = id, x = 0.5f, y = 0.5f, reward = 50.0, isGoldenShard = true)
-        }
-        val state = GameState(totalDebris = 100.0, scavengeTargets = shards, goldenShardsRemaining = 2)
-
-        val first = EventEngine.collectGoldenShard(state, 1L, 1_000L)
-        val result = EventEngine.collectGoldenShard(first, 2L, 2_000L)
-
-        assertEquals(200.0, result.totalDebris, 0.0)
-        assertEquals(0, result.goldenShardsRemaining)
-        assertEquals(17_000L, result.activeEffects[SkillType.SALVAGE_RUSH.id])
-    }
 
     @Test
     fun blackHoleCompletionCreatesPlanetRewardAndSpeedEffect() {
         val state = GameState(
             currentPlanetId = "p13",
             activeEvent = GameEvent(GameEventType.BLACK_HOLE, 2_000L),
-            eventTapsLeft = 1
+            eventTapsLeft = 1,
+            stormSequence = listOf(0),
+            stormProgress = 5,
+            stormRound = 0
         )
 
-        val result = EventEngine.onBlackHoleClick(
+        val result = EventEngine.onBlackHoleNodeClick(
             state = state,
+            node = 0,
             nowMillis = 1_000L,
             random = FixedRandom(0)
         ) { x, y, expiresAt ->
@@ -207,45 +176,86 @@ class EngineTest {
     }
 
     @Test
-    fun asteroidRewardScalesWithClickValueAndHasMinimum() {
-        assertEquals(250.0, EventEngine.calculateAsteroidReward(1.0, FixedRandom(0)), 0.0)
-        assertEquals(3_000.0, EventEngine.calculateAsteroidReward(20.0, FixedRandom(100)), 0.0)
-        assertEquals(25_000.0, EventEngine.calculateAsteroidReward(1_000_000.0, FixedRandom(100)), 0.0)
-    }
-
-    @Test
-    fun asteroidRewardIsFixedWhenEventStarts() {
-        val result = EventEngine.startEvent(
-            state = GameState(),
-            type = GameEventType.ASTEROID,
-            durationMillis = 20_000L,
-            nowMillis = 10_000L,
-            random = FixedRandom(0),
-            clickValue = 20.0
+    fun wrongBlackHoleNodeRaisesInstabilityAndConsumesDebris() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.BLACK_HOLE, 20_000L),
+            eventTapsLeft = 6,
+            stormSequence = listOf(1),
+            stormRound = 0
         )
 
-        assertEquals(10_000L, result.activeEvent?.startedAt)
-        assertEquals(30_000L, result.activeEvent?.expiresAt)
-        assertEquals(1_000.0, result.activeEvent?.reward ?: 0.0, 0.0)
+        val result = EventEngine.onBlackHoleNodeClick(
+            state = state,
+            node = 2,
+            nowMillis = 1_000L,
+            random = FixedRandom(3)
+        ) { x, y, expiresAt ->
+            ScavengeTarget(id = expiresAt, x = x, y = y, expiresAt = expiresAt)
+        }
+
+        assertEquals(9_900.0, result.totalDebris, 0.0)
+        assertEquals(1, result.stormRound)
+        assertEquals(listOf(3), result.stormSequence)
+        assertEquals(6, result.eventTapsLeft)
+    }
+
+
+
+
+    @Test
+    fun rareEventChanceGrowsAcrossGalaxyAndExcludesTradingShip() {
+        assertEquals(3, EventEngine.eliteChancePercent("p1"))
+        assertEquals(9, EventEngine.eliteChancePercent("p39"))
+        assertTrue(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p39", FixedRandom(8)))
+        assertFalse(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p39", FixedRandom(9)))
+        assertFalse(EventEngine.rollElite(GameEventType.TRADING_SHIP, "p39", FixedRandom(0)))
     }
 
     @Test
-    fun eventTypesAreSelectedByConfiguredWeights() {
-        assertEquals(GameEventType.STORM, EventEngine.selectType("p1", FixedRandom(19)))
-        assertEquals(GameEventType.ASTEROID, EventEngine.selectType("p1", FixedRandom(20)))
-        assertEquals(GameEventType.METEOR_SHOWER, EventEngine.selectType("p1", FixedRandom(45)))
-        assertEquals(GameEventType.BLACK_HOLE, EventEngine.selectType("p1", FixedRandom(65)))
-        assertEquals(GameEventType.SOLAR_FLARE, EventEngine.selectType("p1", FixedRandom(73)))
-        assertEquals(GameEventType.CYBER_VIRUS, EventEngine.selectType("p1", FixedRandom(88)))
-        assertEquals(GameEventType.PIRATE_RAID, EventEngine.selectType("p1", FixedRandom(118)))
+    fun randomEventPoolContainsOnlyFieldEvents() {
+        val selected = listOf(0, 31, 32, 51, 52, 63, 64, 75, 76, 85)
+            .mapNotNull { EventEngine.selectType("p1", FixedRandom(it)) }
+            .toSet()
+
+        assertEquals(
+            setOf(
+                GameEventType.METEOR_SHOWER,
+                GameEventType.SOLAR_FLARE,
+                GameEventType.CYBER_VIRUS,
+                GameEventType.PIRATE_RAID,
+                GameEventType.TRADING_SHIP
+            ),
+            selected
+        )
     }
+
+    @Test
+    fun dronesDestroyFlyingShipAndAwardCurrency() {
+        val event = GameEvent(GameEventType.TRADING_SHIP, expiresAt = 20_000L, reward = 500.0)
+        val state = GameState(
+            totalDebris = 100.0,
+            activeEvent = event,
+            eventTapsLeft = 1,
+            drones = listOf(DroneData(1L, .2f, .2f))
+        )
+
+        val result = EventEngine.tickTradingShipCombat(state, 1_000L, FixedRandom(0)) { x, y, reward ->
+            ScavengeTarget(1L, x, y, reward = reward)
+        }
+
+        assertEquals(null, result.activeEvent)
+        assertEquals(1_100.0, result.totalDebris, 0.0)
+        assertEquals(1, result.lifetimeStats.eventsCompleted)
+    }
+
 
     @Test
     fun planetEventModifiersDriveTimingAndProtectionRules() {
         assertEquals(34_615L, EventEngine.nextIntervalMillis("p3", FixedRandom(0)))
         assertEquals(40_000L, EventEngine.nextDurationMillis("p8", FixedRandom(0)))
-        assertEquals(GameEventType.ASTEROID, EventEngine.selectType("p12", FixedRandom(0)))
-        assertEquals(null, EventEngine.selectType("p16", FixedRandom(0)))
+        assertEquals(0.25, PlanetEventModifiers.forPlanet("p12").negativeEventResistance, 0.0)
+        assertEquals(NegativeEventResistanceOutcome.CANCEL, PlanetEventModifiers.forPlanet("p16").resistanceOutcome)
         assertTrue(GameEventType.CYBER_VIRUS in PlanetEventModifiers.forPlanet("p7").blockedEvents)
     }
 
@@ -253,7 +263,8 @@ class EngineTest {
     fun distressSalvageAwardsGuaranteedRewardImmediately() {
         val state = GameState(
             totalDebris = 100.0,
-            activeEvent = GameEvent(GameEventType.DISTRESS_SIGNAL, 5_000L, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.DISTRESS_SIGNAL, 5_000L, reward = 1_000.0),
+            stormRound = 2
         )
 
         val result = EventEngine.respondToDistressSignal(
@@ -269,7 +280,8 @@ class EngineTest {
     fun distressRescueResolvesOnTickAfterDelay() {
         val state = GameState(
             totalDebris = 100.0,
-            activeEvent = GameEvent(GameEventType.DISTRESS_SIGNAL, 5_000L, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.DISTRESS_SIGNAL, 5_000L, reward = 1_000.0),
+            stormRound = 2
         )
         val pending = EventEngine.respondToDistressSignal(
             state, DistressChoice.RESCUE, 1_000L, FixedRandom(0)
@@ -286,19 +298,46 @@ class EngineTest {
     }
 
     @Test
-    fun cyberVirusWithoutWorkingDroneBecomesCollectibleAsteroid() {
-        val state = GameState(
-            drones = listOf(DroneData(1L, 0f, 0f, state = DroneState.BROKEN))
+    fun distressSignalMustBeTriangulatedBeforeChoosingResponse() {
+        val event = GameEvent(GameEventType.DISTRESS_SIGNAL, 20_000L, reward = 1_000.0)
+        val initial = GameState(
+            totalDebris = 100.0,
+            activeEvent = event,
+            eventTapsLeft = 3,
+            stormSequence = listOf(0),
+            stormRound = 1
         )
 
-        val result = EventEngine.startEvent(
-            state, GameEventType.CYBER_VIRUS, 10_000L, 1_000L, FixedRandom(0), clickValue = 20.0
+        val blocked = EventEngine.respondToDistressSignal(
+            initial, DistressChoice.SALVAGE, 1_000L, FixedRandom(0)
         )
+        assertEquals(initial, blocked)
 
-        assertEquals(GameEventType.ASTEROID, result.activeEvent?.type)
-        assertEquals(null, result.infectedDroneId)
-        assertTrue((result.activeEvent?.reward ?: 0.0) >= 250.0)
+        val located = (1..3).fold(initial) { state, _ ->
+            EventEngine.onDistressSignalNode(state, 0, FixedRandom(0))
+        }
+        assertEquals(2, located.stormRound)
+        assertEquals(3, located.stormProgress)
+        assertEquals(0, located.eventTapsLeft)
     }
+
+    @Test
+    fun wrongDistressBeaconLosesProgressAndDebris() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.DISTRESS_SIGNAL, 20_000L),
+            eventTapsLeft = 2,
+            stormSequence = listOf(1),
+            stormProgress = 1,
+            stormRound = 1
+        )
+
+        val result = EventEngine.onDistressSignalNode(state, 2, FixedRandom(3))
+        assertEquals(9_950.0, result.totalDebris, 0.0)
+        assertEquals(0, result.stormProgress)
+        assertEquals(listOf(3), result.stormSequence)
+    }
+
 
     @Test
     fun cyberVirusTheftScalesAndIsBounded() {
@@ -337,7 +376,8 @@ class EngineTest {
     @Test
     fun abandonedStationSafeRouteHasShortDelayAndScaledReward() {
         val state = GameState(
-            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0),
+            stormRound = 2
         )
         val pending = EventEngine.respondToAbandonedStation(
             state, StationChoice.SAFE_ROUTE, 1_000L, FixedRandom(0)
@@ -352,7 +392,8 @@ class EngineTest {
     fun abandonedStationReactorFailureAppliesTwoPercentPenaltyOnResolution() {
         val state = GameState(
             totalDebris = 10_000.0,
-            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0),
+            stormRound = 2
         )
         val pending = EventEngine.respondToAbandonedStation(
             state, StationChoice.REACTOR_CORE, 1_000L, FixedRandom(99)
@@ -364,6 +405,45 @@ class EngineTest {
         assertEquals(9_800.0, resolved.totalDebris, 0.0)
         assertEquals(200.0, resolved.eventChainResult?.loss ?: 0.0, 0.0)
         assertTrue(resolved.eventChainResult?.success == false)
+    }
+
+    @Test
+    fun abandonedStationRouteIsLockedUntilRelaysAreRestored() {
+        val event = GameEvent(GameEventType.ABANDONED_STATION, 20_000L, reward = 1_000.0)
+        val initial = GameState(
+            activeEvent = event,
+            eventTapsLeft = 3,
+            stormSequence = listOf(0),
+            stormRound = 1
+        )
+
+        val blocked = EventEngine.respondToAbandonedStation(
+            initial, StationChoice.SAFE_ROUTE, 1_000L, FixedRandom(0)
+        )
+        assertEquals(initial, blocked)
+
+        val opened = (1..3).fold(initial) { state, _ ->
+            EventEngine.onStationRelayClick(state, 0, FixedRandom(0))
+        }
+        assertEquals(2, opened.stormRound)
+        assertEquals(3, opened.stormProgress)
+        assertEquals(0, opened.eventTapsLeft)
+    }
+
+    @Test
+    fun wrongStationRelayDamagesResourcesAndReducesRewardQuality() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.ABANDONED_STATION, 20_000L),
+            eventTapsLeft = 3,
+            stormSequence = listOf(1),
+            stormRound = 1
+        )
+
+        val result = EventEngine.onStationRelayClick(state, 2, FixedRandom(0))
+        assertEquals(9_925.0, result.totalDebris, 0.0)
+        assertEquals(0.92, result.eventMultiplier, 0.0001)
+        assertEquals(listOf(0), result.stormSequence)
     }
 
     @Test
@@ -380,24 +460,50 @@ class EngineTest {
     }
 
     @Test
-    fun finalPirateHitAwardsRewardAndCompletesEvent() {
+    fun piratePursuitRequiresTrackingBeforeFinalDecision() {
         val state = GameState(
             totalDebris = 100.0,
             activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L, reward = 3_000.0),
-            eventTapsLeft = 1
+            eventTapsLeft = 1,
+            stormSequence = listOf(1),
+            stormProgress = 4,
+            stormRound = 1
         )
-        val result = EventEngine.onPirateRaidClick(state, 1_000L)
-        assertEquals(3_100.0, result.totalDebris, 0.0)
+
+        val disabled = EventEngine.onPirateTargetClick(state, 1, 1_000L, FixedRandom(2))
+        assertEquals(2, disabled.stormRound)
+        assertEquals(5, disabled.stormProgress)
+        assertEquals(0, disabled.eventTapsLeft)
+
+        val result = EventEngine.resolvePirateRaid(disabled, captureCargo = false, nowMillis = 1_100L)
+        assertEquals(3_400.0, result.totalDebris, 0.0001)
         assertEquals(null, result.activeEvent)
         assertEquals(EventLogOutcome.COMPLETED, result.eventLog.last().outcome)
-        assertEquals(3_000.0, result.eventLog.last().reward, 0.0)
+        assertEquals(3_300.0, result.eventLog.last().reward, 0.0001)
+        assertEquals(31_100L, result.activeEffects[SkillType.VOID_ENERGY.id])
+    }
+
+    @Test
+    fun missingPirateSignalCostsDebrisAndMovesTarget() {
+        val state = GameState(
+            totalDebris = 10_000.0,
+            activeEvent = GameEvent(GameEventType.PIRATE_RAID, 20_000L, reward = 1_000.0),
+            eventTapsLeft = 5,
+            stormSequence = listOf(1)
+        )
+
+        val result = EventEngine.onPirateTargetClick(state, 0, 1_000L, FixedRandom(2))
+        assertEquals(9_980.0, result.totalDebris, 0.0)
+        assertEquals(0.92, result.eventMultiplier, 0.0001)
+        assertEquals(listOf(2), result.stormSequence)
     }
 
     @Test
     fun tradingShipPowerCoreCostsDebrisAndActivatesTimedBoost() {
         val state = GameState(
             totalDebris = 5_000.0,
-            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0),
+            stormRound = 2
         )
         val result = EventEngine.buyTradeOffer(state, TradeOffer.POWER_CORE, 2_000L)
 
@@ -430,7 +536,8 @@ class EngineTest {
     fun tradingShipCanSellCasesDebrisAndDrones() {
         fun stateAt(startedAt: Long = 7_000L) = GameState(
             totalDebris = 30_000.0,
-            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, startedAt = startedAt, reward = 1_000.0)
+            activeEvent = GameEvent(GameEventType.TRADING_SHIP, 20_000L, startedAt = startedAt, reward = 1_000.0),
+            stormRound = 2
         )
 
         val caseResult = EventEngine.buyTradeOffer(stateAt(), TradeOffer.RARE_CASE, 2_000L)
@@ -445,24 +552,11 @@ class EngineTest {
         assertEquals(1, droneResult.discoveredDroneIds.size)
     }
 
-    @Test
-    fun expiredEventDoesNotCountAsCompletedQuestOrStatistic() {
-        val quest = Quest("events", QuestType.COMPLETE_EVENT, "", 1.0, 0.0)
-        val state = GameState(
-            activeEvent = GameEvent(GameEventType.ASTEROID, expiresAt = 100L),
-            activeQuests = listOf(quest)
-        )
-
-        val result = EventEngine.expireEventIfNeeded(state, 100L)
-
-        assertEquals(0, result.lifetimeStats.eventsCompleted)
-        assertEquals(0.0, result.activeQuests.single().progress, 0.0)
-    }
 
     @Test
     fun tradingShipHasSeparateTapAndFleetBoosts() {
         val event = GameEvent(GameEventType.TRADING_SHIP, 20_000L, reward = 1_000.0)
-        val state = GameState(totalDebris = 5_000.0, activeEvent = event)
+        val state = GameState(totalDebris = 5_000.0, activeEvent = event, stormRound = 2)
 
         val tap = EventEngine.buyTradeOffer(state, TradeOffer.CLICK_AMPLIFIER, 2_000L)
         val fleet = EventEngine.buyTradeOffer(state, TradeOffer.FLEET_OVERDRIVE, 2_000L)

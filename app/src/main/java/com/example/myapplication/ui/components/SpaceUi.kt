@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +19,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,43 +37,66 @@ fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Uni
             Text(
                 title,
                 color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 22.sp
             )
             if (subtitle != null) Text(
                 subtitle,
-                color = Color.White.copy(alpha = 0.62f),
-                fontSize = 11.sp,
+                color = AppColors.TextMuted,
+                fontSize = 12.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 14.sp
             )
         }
-        Surface(
-            modifier = Modifier.size(38.dp).clickable(onClick = onClose),
-            shape = RoundedCornerShape(9.dp),
-            color = Color.White.copy(alpha = 0.07f),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
-        ) { Box(contentAlignment = Alignment.Center) { Text("×", color = Color.White, fontSize = 24.sp) } }
+        Image(
+            painter = painterResource(R.drawable.ui_close_control_v2),
+            contentDescription = stringResource(R.string.close),
+            modifier = Modifier.size(42.dp).clickable(onClick = onClose),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
 @Composable
-fun SpaceTab(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SpaceTab(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconRes: Int? = null,
+    accent: Color = AppColors.Primary,
+    iconSheetIndex: Int? = null
+) {
     Surface(
         modifier = modifier.height(42.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(9.dp),
-        color = if (selected) AppColors.Primary.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.035f),
-        border = BorderStroke(1.dp, if (selected) AppColors.Primary.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.08f))
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) Color.Transparent else Color.White.copy(alpha = .035f),
+        border = null,
+        shadowElevation = 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
+        if (selected) Image(painterResource(R.drawable.ui_action_frame_v2), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, alpha = .48f)
+        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            if (iconSheetIndex != null) {
+                GeneratedSheetIcon(R.drawable.shop_ui_minimal_sheet_v1, iconSheetIndex, 19.dp, columns = 4, rows = 4)
+                Spacer(Modifier.width(5.dp))
+            } else if (iconRes != null) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(iconRes),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+            }
             Text(
                 text,
                 modifier = Modifier.padding(horizontal = 5.dp),
-                color = if (selected) AppColors.Primary else Color.White.copy(alpha = 0.65f),
+                color = if (selected) accent else Color.White.copy(alpha = 0.65f),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -78,6 +104,7 @@ fun SpaceTab(text: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 11.sp
             )
+        }
         }
     }
 }
@@ -118,7 +145,7 @@ fun SpaceDialog(
 @Composable
 fun ComboIndicator(combo: Int, modifier: Modifier = Modifier) {
     val scale by animateFloatAsState(
-        targetValue = 1f + (combo.toFloat() / 10f).coerceAtMost(0.35f),
+        targetValue = 1f + (combo.toFloat() / 100f).coerceAtMost(0.08f),
         animationSpec = tween(180, easing = FastOutSlowInEasing),
         label = "combo_scale"
     )
@@ -127,22 +154,33 @@ fun ComboIndicator(combo: Int, modifier: Modifier = Modifier) {
         modifier = modifier.scale(scale),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val message = when {
+            combo >= 50 -> R.string.combo_cosmic_legend
+            combo >= 40 -> R.string.combo_unstoppable
+            combo >= 25 -> R.string.combo_overdrive
+            combo >= 15 -> R.string.combo_perfect_chain
+            combo >= 10 -> listOf(R.string.combo_impossible, R.string.combo_master, R.string.combo_signal_locked)[combo % 3]
+            combo >= 5 -> listOf(R.string.combo_great, R.string.combo_clean_hit, R.string.combo_keep_going)[combo % 3]
+            else -> listOf(R.string.combo, R.string.combo_start, R.string.combo_good)[combo % 3]
+        }
+        val accent = when {
+            combo >= 50 -> AppColors.Danger
+            combo >= 25 -> AppColors.Warning
+            combo >= 15 -> Color(0xFFB987FF)
+            combo >= 8 -> Color(0xFF55D9FF)
+            else -> AppColors.Primary
+        }
         Text(
-            text = when {
-                combo >= 10 -> stringResource(R.string.combo_impossible)
-                combo >= 7 -> stringResource(R.string.combo_master)
-                combo >= 4 -> stringResource(R.string.combo_great)
-                else -> stringResource(R.string.combo)
-            },
-            color = AppColors.Primary,
-            fontSize = if (combo >= 7) 20.sp else 15.sp,
-            fontWeight = FontWeight.Black
+            text = stringResource(message),
+            color = accent,
+            fontSize = if (combo >= 15) 17.sp else 14.sp,
+            fontWeight = FontWeight.Bold
         )
         Text(
             text = "x$combo",
             color = Color.White,
-            fontSize = if (combo >= 10) 42.sp else 32.sp,
-            fontWeight = FontWeight.ExtraBold
+            fontSize = if (combo >= 25) 30.sp else 26.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -165,7 +203,7 @@ fun PlanetUnlockBanner(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("✦", color = AppColors.Warning, fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Image(painterResource(R.drawable.ui_new_badge_v2), null, Modifier.size(38.dp), contentScale = ContentScale.Fit)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(

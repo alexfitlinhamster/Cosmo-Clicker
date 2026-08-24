@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Release builds shrink unused resources. Keeping source assets makes it
+         possible to switch artwork without restoring deleted binary files. -->
+    <issue id="UnusedResources" severity="ignore" />
+
+    <!-- These localized counters are compact game HUD labels, not sentences.
+         Several values are formatted decimals, so Android quantity resources
+         would not improve their grammar. -->
+    <issue id="PluralsCandidate" severity="ignore" />
+
+    <!-- Small raster UI artwork is deliberately density-independent. -->
+    <issue id="IconLocation" severity="ignore" />
+
+    <!-- Round launchers use the same source artwork and are clipped by the
+         launcher mask on supported Android versions. -->
+    <issue id="IconDuplicates" severity="ignore" />
+</lint>

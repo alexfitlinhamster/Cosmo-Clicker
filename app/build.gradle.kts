@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.orbitsalvagers.droneclicker"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
 

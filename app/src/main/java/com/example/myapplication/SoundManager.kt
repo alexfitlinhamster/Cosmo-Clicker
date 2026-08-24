@@ -108,7 +108,7 @@ class SoundManager(context: Context) : AutoCloseable {
             effectPlayer?.release()
             effectPlayer = MediaPlayer.create(appContext, resourceId)?.also { player ->
                 player.setVolume(volume, volume)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && playbackSpeed != 1f) {
+                if (playbackSpeed != 1f) {
                     player.playbackParams = player.playbackParams.setSpeed(playbackSpeed)
                 }
                 player.setOnCompletionListener {

@@ -31,7 +31,9 @@ class ImageSlicer {
 
     @Test
     fun allDrawablePngFilesAreDecodable() {
-        val drawableRoot = File(drawableDir).parentFile
+        val drawableRoot = requireNotNull(File(drawableDir).parentFile) {
+            "Drawable directory must have a parent: $drawableDir"
+        }
         val resourceDirs = drawableRoot.listFiles { file ->
             file.isDirectory && file.name.startsWith("drawable")
         }.orEmpty()

@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,7 +49,11 @@ fun QuestPanel(
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(
+            modifier = Modifier
+                .background(Brush.verticalGradient(listOf(Color(0xFF0B1A2C), Color(0xFF07101E))))
+                .padding(18.dp)
+        ) {
             SpaceSheetHeader(
                 title = stringResource(R.string.quests),
                 subtitle = stringResource(R.string.missions_subtitle),
@@ -189,9 +195,17 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-            .border(1.dp, if (quest.isCompleted) AppColors.Primary.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-            .padding(12.dp),
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        (if (quest.isCompleted) AppColors.Primary else Color.White).copy(alpha = .11f),
+                        Color.White.copy(alpha = .035f)
+                    )
+                ),
+                RoundedCornerShape(16.dp)
+            )
+            .border(1.dp, if (quest.isCompleted) AppColors.Primary.copy(alpha = 0.58f) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+            .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -235,11 +249,11 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                         fontSize = 10.sp
                     )
                 } else if (quest.rewardDebris > 0) {
-                    Text(
-                        stringResource(R.string.reward_debris, formatNum(quest.rewardDebris)),
-                        color = AppColors.Primary,
-                        fontSize = 10.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(R.drawable.ic_currency_debris_v2), null, Modifier.size(16.dp), tint = Color.Unspecified)
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.reward_debris, formatNum(quest.rewardDebris)), color = AppColors.Primary, fontSize = 10.sp)
+                    }
                 } else if (quest.rewardCases > 0) {
                     Text(
                         stringResource(R.string.reward_cases, quest.rewardCases),
@@ -255,7 +269,8 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                 onClick = { onClaim(quest.id) },
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp),
+                style = CosmicButtonStyle.Reward
             ) {
                 Text(stringResource(R.string.claim), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
