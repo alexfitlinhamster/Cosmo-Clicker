@@ -18,7 +18,7 @@ object GameRules {
 
     fun calculateCaseCost(casesPurchased: Int, type: CaseType = CaseType.COMMON): Double =
         CASE_BASE_COST * type.priceMultiplier *
-            CASE_COST_MULTIPLIER.pow(casesPurchased.coerceAtLeast(0).toDouble())
+            type.growthMultiplier.pow(casesPurchased.coerceAtLeast(0).toDouble())
 
     fun calculateCaseBundleCost(casesOpened: Int, type: CaseType, count: Int): Double {
         var remaining = count.coerceAtLeast(0)

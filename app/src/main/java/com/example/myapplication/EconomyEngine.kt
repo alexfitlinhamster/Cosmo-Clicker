@@ -9,9 +9,8 @@ object EconomyEngine {
         val income = passiveIncome.coerceAtLeast(0.0)
         val total = when (currentState.activeEvent?.type) {
             GameEventType.BLACK_HOLE -> currentState.totalDebris * 0.995 + income
-            GameEventType.PIRATE_RAID ->
-                (currentState.totalDebris - EventEngine.pirateRaidTheft(currentState.totalDebris, currentState.eventTapsLeft))
-                    .coerceAtLeast(0.0) + income
+            // The ship jams every income source, but does not silently drain the saved balance.
+            GameEventType.PIRATE_RAID -> currentState.totalDebris
             else -> currentState.totalDebris + income
         }
         return currentState.copy(

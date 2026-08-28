@@ -28,10 +28,10 @@ object EconomyController {
         val base = when (id) {
             "flight" -> 5_000_000.0
             "spawn" -> 2_500_000.0
-            "autoclick" -> 25_000.0
+            "autoclick" -> 100_000.0
             else -> 3_500_000.0
         }
-        return base * (if (id == "autoclick") 3.0 else 4.0).pow(level.toDouble())
+        return base * (if (id == "autoclick") 2.75 else 4.0).pow(level.toDouble())
     }
 
     fun utilityUpgradeMaxLevel(id: String): Int = when (id) {

@@ -1,19 +1,33 @@
 package com.example.myapplication
 
 internal class TimedQuestFactory(private val description: (QuestType, Int) -> String) {
-    fun daily(key: Long, planetId: String): List<Quest> = listOf(
-        quest("d4_collect_25_$key", QuestType.COLLECT_DEBRIS, 25, 8_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
-        quest("d4_click_100_$key", QuestType.CLICK_PLANET, 100, 10_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
-        quest("d4_collect_100_$key", QuestType.COLLECT_DEBRIS, 100, 30_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
-        quest("d4_click_500_$key", QuestType.CLICK_PLANET, 500, 40_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
-        quest("d4_events_2_$key", QuestType.COMPLETE_EVENT, 2, 50_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM)
-    )
+    companion object {
+        const val DAILY_ID_PREFIX = "d5_"
+        const val WEEKLY_ID_PREFIX = "w5_"
+    }
 
-    fun weekly(key: Long, planetId: String): List<Quest> = listOf(
-        quest("w4_click_5000_$key", QuestType.CLICK_PLANET, 5_000, 750_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
-        quest("w4_rare_drone_$key", QuestType.OBTAIN_RARE_DRONE, 1, 1_000_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
-        quest("w4_debris_$key", QuestType.COLLECT_DEBRIS, 2_000_000, 1_500_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD)
-    )
+    fun daily(key: Long, planetId: String): List<Quest> {
+        val tier = EconomyBalance.planetIndex(planetId)
+        val collectEasy = 40 + tier * 10
+        val collectMedium = 150 + tier * 30
+        return listOf(
+            quest("${DAILY_ID_PREFIX}collect_easy_$key", QuestType.COLLECT_DEBRIS, collectEasy, 8_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
+            quest("${DAILY_ID_PREFIX}click_100_$key", QuestType.CLICK_PLANET, 100, 10_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.EASY),
+            quest("${DAILY_ID_PREFIX}collect_medium_$key", QuestType.COLLECT_DEBRIS, collectMedium, 30_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
+            quest("${DAILY_ID_PREFIX}case_$key", QuestType.OPEN_CASE, 1, 35_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM),
+            quest("${DAILY_ID_PREFIX}event_$key", QuestType.COMPLETE_EVENT, 1, 50_000.0, planetId, QuestCadence.DAILY, QuestDifficulty.MEDIUM)
+        )
+    }
+
+    fun weekly(key: Long, planetId: String): List<Quest> {
+        val tier = EconomyBalance.planetIndex(planetId)
+        val debrisTarget = (2_000 + tier * 750).coerceAtMost(30_000)
+        return listOf(
+            quest("${WEEKLY_ID_PREFIX}click_2500_$key", QuestType.CLICK_PLANET, 2_500, 500_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
+            quest("${WEEKLY_ID_PREFIX}rare_drone_$key", QuestType.OBTAIN_RARE_DRONE, 1, 750_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD),
+            quest("${WEEKLY_ID_PREFIX}debris_$key", QuestType.COLLECT_DEBRIS, debrisTarget, 900_000.0, planetId, QuestCadence.WEEKLY, QuestDifficulty.HARD)
+        )
+    }
 
     private fun quest(id: String, type: QuestType, target: Int, baseReward: Double, planetId: String, cadence: QuestCadence, difficulty: QuestDifficulty) = Quest(
         id = id,

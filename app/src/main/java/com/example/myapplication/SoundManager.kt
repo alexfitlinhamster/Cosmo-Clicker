@@ -75,6 +75,22 @@ class SoundManager(context: Context) : AutoCloseable {
         playTone(ToneGenerator.TONE_PROP_NACK, 220)
     }
 
+    fun playCaseOpeningPulse(frame: Int, type: CaseType) {
+        val tierBoost = when (type) {
+            CaseType.COMMON -> 0
+            CaseType.RARE -> 30
+            CaseType.LEGENDARY -> 70
+        }
+        val amplitude = (35 + frame * 18 + tierBoost).coerceIn(1, 255)
+        val duration = if (frame >= 8) 90L else 12L + frame * 2L
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(duration, amplitude))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(duration)
+        }
+    }
+
     fun resumeBackgroundMusic() {
         synchronized(lock) {
             try {

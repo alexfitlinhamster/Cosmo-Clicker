@@ -46,6 +46,15 @@
     <string name="shop_tab_planets">Планеты</string>
     <string name="shop_tab_systems">Системы</string>
 <string name="hangar_overview">Вместимость ангара</string>
+<string name="hangar_fleet_ready">Управление флотом и коллекцией</string>
+<string name="hangar_owned">В наличии</string>
+<string name="hangar_discovered">Открыто</string>
+<string name="hangar_filter_all">Все</string>
+<string name="hangar_filter_owned">В наличии</string>
+<string name="hangar_filter_active">В полёте</string>
+<string name="hangar_empty_filter">В этом разделе пока нет дронов</string>
+<string name="hangar_active_badge">АКТИВЕН</string>
+<string name="hangar_drone_count">В наличии: %1$d</string>
     <string name="drones_in_flight">В полёте</string>
 <string name="choose_case_amount">Выберите количество кейсов</string>
     <string name="case_bundle_hint">Выберите любое доступное количество. Цена повышается после каждых 20 открытых кейсов.</string>
@@ -368,7 +377,7 @@
     <string name="planet_bonus_prism_sanctuary" formatted="false">Бонус: 20% шанс на клик x5</string>
     <string name="planet_bonus_eventide_crown" formatted="false">Бонус: x2 ко всему доходу</string>
     <string name="achievement_click_1000">Сделать 1 000 нажатий</string>
-    <string name="achievement_click_100000">Сделать 100 000 нажатий</string>
+    <string name="achievement_click_100000">Сделать 25 000 нажатий</string>
     <string name="achievement_fleet_50">Собрать 50 дронов</string>
     <string name="achievement_collection_15">Открыть 15 типов дронов</string>
     <string name="achievement_collection_29">Собрать всю коллекцию дронов</string>
@@ -398,13 +407,13 @@
     <string name="goal_reward_planet">После этого можно купить планету %1$d</string>
     <string name="planet_unlocked_title">ПЛАНЕТА %1$d ОТКРЫТА</string>
     <string name="planet_unlocked_bonus">Постоянный планетарный бонус дохода: +%1$d%%</string>
-    <string name="achievement_click_250k">Сделать 250 000 нажатий</string><string name="achievement_click_1m">Сделать 1 миллион нажатий</string><string name="achievement_click_5m">Сделать 5 миллионов нажатий</string>
+    <string name="achievement_click_250k">Сделать 50 000 нажатий</string><string name="achievement_click_1m">Сделать 100 000 нажатий</string><string name="achievement_click_5m">Сделать 250 000 нажатий</string>
     <string name="achievement_debris_10m">Собрать 10 миллионов обломков</string><string name="achievement_debris_100m">Собрать 100 миллионов обломков</string><string name="achievement_debris_1b">Собрать 1 миллиард обломков</string><string name="achievement_debris_10b">Собрать 10 миллиардов обломков</string>
-    <string name="achievement_cases_250">Открыть 250 кейсов</string><string name="achievement_cases_500">Открыть 500 кейсов</string><string name="achievement_cases_1000">Открыть 1 000 кейсов</string>
-    <string name="achievement_events_100">Завершить 100 событий</string><string name="achievement_events_250">Завершить 250 событий</string><string name="achievement_events_500">Завершить 500 событий</string>
-    <string name="achievement_prestige_10">Совершить 10 престижей</string><string name="achievement_prestige_25">Совершить 25 престижей</string><string name="achievement_prestige_50">Совершить 50 престижей</string>
-    <string name="achievement_fleet_100">Собрать 100 дронов</string><string name="achievement_fleet_250">Собрать 250 дронов</string><string name="achievement_fleet_500">Собрать 500 дронов</string>
-    <string name="achievement_parts_25">Собрать 25 деталей мастерства</string><string name="achievement_parts_100">Собрать 100 деталей мастерства</string><string name="achievement_parts_300">Собрать 300 деталей мастерства</string>
+    <string name="achievement_cases_250">Открыть 150 кейсов</string><string name="achievement_cases_500">Открыть 250 кейсов</string><string name="achievement_cases_1000">Открыть 400 кейсов</string>
+    <string name="achievement_events_100">Завершить 75 событий</string><string name="achievement_events_250">Завершить 100 событий</string><string name="achievement_events_500">Завершить 150 событий</string>
+    <string name="achievement_prestige_10">Совершить 10 престижей</string><string name="achievement_prestige_25">Совершить 15 престижей</string><string name="achievement_prestige_50">Совершить 25 престижей</string>
+    <string name="achievement_fleet_100">Собрать 75 дронов</string><string name="achievement_fleet_250">Собрать 100 дронов</string><string name="achievement_fleet_500">Собрать 150 дронов</string>
+    <string name="achievement_parts_25">Собрать 25 деталей мастерства</string><string name="achievement_parts_100">Собрать 75 деталей мастерства</string><string name="achievement_parts_300">Собрать 150 деталей мастерства</string>
     <string name="achievement_station_5">Получить 5 суммарных уровней станции</string><string name="achievement_station_10">Получить 10 суммарных уровней станции</string><string name="achievement_station_20">Полностью улучшить станцию</string>
     <string name="achievement_planets_21">Достичь Разлома Хроноса</string><string name="achievement_planets_22">Достичь Кузницы Авроры</string><string name="achievement_planets_23">Достичь Призматического святилища</string>
     <string name="achievement_wealth_1t">Накопить 1 триллион обломков</string><string name="achievement_wealth_1q">Накопить 1 квадриллион обломков</string>
@@ -435,4 +444,6 @@
     <string name="planet_bonus_emberglass">Сила нажатия +25%</string><string name="planet_bonus_verdant_halo">Доход флота +30%</string><string name="planet_bonus_iron_tempest">Награды событий +40%</string><string name="planet_bonus_frozen_reliquary">Офлайн-доход +45%</string><string name="planet_bonus_celestial_bloom">Вся добыча +35%</string><string name="planet_bonus_binary_grave">Доход флота +55%</string><string name="planet_bonus_mirage_engine">Сила нажатия +60%</string><string name="planet_bonus_leviathan_deep">Вся добыча +50%</string><string name="planet_bonus_solar_archive">Доход флота +80%</string><string name="planet_bonus_shattered_meridian">Сила нажатия +90%</string><string name="planet_bonus_clockwork_eden">Вся добыча +70%</string><string name="planet_bonus_phantom_orchard">Доход флота +110%</string><string name="planet_bonus_cinder_cathedral">Сила нажатия +125%</string><string name="planet_bonus_null_beacon">Вся добыча +100%</string><string name="planet_bonus_origin_vault">Сила нажатия и флота ×3</string>
     <string name="meteor_intercept_title">ПЕРЕХВАТ МЕТЕОРОВ</string>
     <string name="meteor_intercept_hint">Найди отмеченную траекторию · осталось %1$d</string>
+    <string name="repair_and_launch">Починить и запустить</string>
+    <string name="drone_repair_cost">Ремонт: %1$s</string>
 </resources>

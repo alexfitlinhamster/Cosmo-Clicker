@@ -7,7 +7,6 @@ import kotlin.math.log10
 object EconomyBalance {
     const val MAX_DRONES = Int.MAX_VALUE
     const val MAX_CLICK_UPGRADE_LEVEL = 1_000
-    const val MAX_CLICK_UPGRADE_COST = 2_500_000.0
     const val PRESTIGE_PLANET_INDEX = 10
     private const val FIRST_PLANET_PRICE = 10_000.0
     const val MAX_PLANET_INDEX = 39
@@ -16,7 +15,25 @@ object EconomyBalance {
         planetId.removePrefix("p").toIntOrNull()?.coerceIn(1, MAX_PLANET_INDEX) ?: 1
 
     fun planetPrice(index: Int): Double =
-        if (index <= 1) 0.0 else FIRST_PLANET_PRICE * 1.9.pow((index - 2).toDouble())
+        if (index <= 1) 0.0 else FIRST_PLANET_PRICE * planetStepMultipliers
+            .take((index - 2).coerceAtLeast(0))
+            .fold(1.0) { price, step -> price * step }
+
+    private val planetStepMultipliers = List(MAX_PLANET_INDEX - 2) { step ->
+        when (step % 6) { 0 -> 1.55; 1 -> 1.68; 2 -> 1.75; 3 -> 1.62; 4 -> 1.82; else -> 1.70 }
+    }
+
+    fun meteorReward(balance: Double): Double {
+        val safeBalance = balance.coerceAtLeast(0.0)
+        return roundReward(4_000_000_000.0 * (safeBalance / (safeBalance + 2_000_000_000.0)))
+            .coerceIn(2_000.0, 4_000_000_000.0)
+    }
+
+    fun droneRepairCost(balance: Double, rarity: Rarity): Double {
+        val rarityFactor = 1.0 + rarity.ordinal * 0.65
+        return roundReward((2_000.0 + balance.coerceAtLeast(0.0) * 0.0025) * rarityFactor)
+            .coerceAtMost(250_000_000.0)
+    }
 
     fun planetIncomeMultiplier(planetId: String): Double =
         1.10.pow((planetIndex(planetId) - 1).toDouble())
@@ -71,9 +88,8 @@ object EconomyBalance {
         if (price <= 0.0) 1f else (balance / price).toFloat().coerceIn(0f, 1f)
 
     fun clickUpgradeCost(base: Double, level: Int, marketMultiplier: Double = 1.0): Double =
-        (base.coerceAtLeast(0.0) * 10.0 * 1.02.pow(level.coerceAtLeast(0).toDouble()) * marketMultiplier.coerceAtLeast(0.0))
-            .coerceAtMost(MAX_CLICK_UPGRADE_COST)
-            .toLong().toDouble()
+        (base.coerceAtLeast(0.0) * 10.0 * 1.065.pow(level.coerceAtLeast(0).toDouble()) * marketMultiplier.coerceAtLeast(0.0))
+            .let { if (it.isFinite()) kotlin.math.round(it) else Double.MAX_VALUE }
 
     fun passiveIncome(
         state: GameState,

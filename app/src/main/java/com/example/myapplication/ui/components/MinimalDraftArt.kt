@@ -69,3 +69,28 @@ fun GeneratedSheetIcon(
         )
     }
 }
+
+@Composable
+fun GeneratedSheetPanel(
+    drawable: Int,
+    index: Int,
+    modifier: Modifier = Modifier,
+    columns: Int = 3,
+    rows: Int = 3
+) {
+    val resources = LocalResources.current
+    val bitmap = remember(drawable) { ImageBitmap.imageResource(resources, drawable) }
+    Canvas(modifier) {
+        val safeIndex = index.coerceIn(0, columns * rows - 1)
+        val cellWidth = bitmap.width / columns
+        val cellHeight = bitmap.height / rows
+        drawImage(
+            image = bitmap,
+            srcOffset = IntOffset((safeIndex % columns) * cellWidth, (safeIndex / columns) * cellHeight),
+            srcSize = IntSize(cellWidth, cellHeight),
+            dstOffset = IntOffset.Zero,
+            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+            filterQuality = FilterQuality.High
+        )
+    }
+}

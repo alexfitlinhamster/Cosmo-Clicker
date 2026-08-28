@@ -11,15 +11,25 @@ object FleetController {
             totalDebris = state.totalDebris + GameRules.droneSaleValue(item.base, count),
             fleetCounts = state.fleetCounts + (item.id to count - 1),
             activeFleetCounts = state.activeFleetCounts +
-                (item.id to (state.activeFleetCounts[item.id] ?: 0).coerceAtMost(count - 1))
+                (item.id to (state.activeFleetCounts[item.id] ?: 0).coerceAtMost(count - 1)),
+            damagedFleetCounts = state.damagedFleetCounts +
+                (item.id to (state.damagedFleetCounts[item.id] ?: 0).coerceAtMost(count - 1))
         )
     }
 
-    fun deploy(state: GameState, id: String): GameState? {
+    fun deploy(state: GameState, item: FleetConfig): GameState? {
+        val id = item.id
         val owned = state.fleetCounts[id] ?: 0
         val active = state.activeFleetCounts[id] ?: 0
-        return if (active > 0 || owned <= 0 || state.activeFleetCounts.values.sum() >= activeCapacity(state)) null
-        else state.copy(activeFleetCounts = state.activeFleetCounts + (id to 1))
+        if (active > 0 || owned <= 0 || state.activeFleetCounts.values.sum() >= activeCapacity(state)) return null
+        val damaged = state.damagedFleetCounts[id] ?: 0
+        val repairCost = if (damaged > 0) EconomyBalance.droneRepairCost(state.totalDebris, item.rarity) else 0.0
+        if (state.totalDebris < repairCost) return null
+        return state.copy(
+            totalDebris = state.totalDebris - repairCost,
+            activeFleetCounts = state.activeFleetCounts + (id to 1),
+            damagedFleetCounts = state.damagedFleetCounts + (id to (damaged - 1).coerceAtLeast(0))
+        )
     }
 
     fun recall(state: GameState, id: String): GameState? {

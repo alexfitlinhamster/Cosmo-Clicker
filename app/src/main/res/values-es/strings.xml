@@ -46,6 +46,15 @@
     <string name="shop_tab_planets">Planetas</string>
     <string name="shop_tab_systems">Sistemas</string>
 <string name="hangar_overview">Capacidad del hangar</string>
+<string name="hangar_fleet_ready">Control de flota y colección</string>
+<string name="hangar_owned">En propiedad</string>
+<string name="hangar_discovered">Descubiertos</string>
+<string name="hangar_filter_all">Todos</string>
+<string name="hangar_filter_owned">En propiedad</string>
+<string name="hangar_filter_active">En vuelo</string>
+<string name="hangar_empty_filter">Aún no hay drones en esta sección</string>
+<string name="hangar_active_badge">ACTIVO</string>
+<string name="hangar_drone_count">En propiedad: %1$d</string>
     <string name="drones_in_flight">En vuelo</string>
 <string name="choose_case_amount">Elige la cantidad de cajas</string>
     <string name="case_bundle_hint">Elige cualquier cantidad disponible. El precio aumenta cada 20 cajas abiertas.</string>
@@ -368,7 +377,7 @@
     <string name="planet_bonus_prism_sanctuary" formatted="false">Bonificación: 20% de probabilidad de toque x5</string>
     <string name="planet_bonus_eventide_crown" formatted="false">Bonificación: x2 a todos los ingresos</string>
     <string name="achievement_click_1000">Haz 1.000 toques</string>
-    <string name="achievement_click_100000">Haz 100.000 toques</string>
+    <string name="achievement_click_100000">Haz 25.000 toques</string>
     <string name="achievement_fleet_50">Consigue 50 drones</string>
     <string name="achievement_collection_15">Descubre 15 tipos de drones</string>
     <string name="achievement_collection_29">Completa la colección de drones</string>
@@ -398,13 +407,13 @@
     <string name="goal_reward_planet">Después podrás comprar el planeta %1$d</string>
     <string name="planet_unlocked_title">PLANETA %1$d DESBLOQUEADO</string>
     <string name="planet_unlocked_bonus">Bonificación planetaria permanente: +%1$d%%</string>
-    <string name="achievement_click_250k">Haz 250.000 toques</string><string name="achievement_click_1m">Haz 1 millón de toques</string><string name="achievement_click_5m">Haz 5 millones de toques</string>
+    <string name="achievement_click_250k">Haz 50.000 toques</string><string name="achievement_click_1m">Haz 100.000 toques</string><string name="achievement_click_5m">Haz 250.000 toques</string>
     <string name="achievement_debris_10m">Recoge 10 millones de escombros</string><string name="achievement_debris_100m">Recoge 100 millones de escombros</string><string name="achievement_debris_1b">Recoge 1.000 millones de escombros</string><string name="achievement_debris_10b">Recoge 10.000 millones de escombros</string>
-    <string name="achievement_cases_250">Abre 250 cajas</string><string name="achievement_cases_500">Abre 500 cajas</string><string name="achievement_cases_1000">Abre 1.000 cajas</string>
-    <string name="achievement_events_100">Completa 100 eventos</string><string name="achievement_events_250">Completa 250 eventos</string><string name="achievement_events_500">Completa 500 eventos</string>
-    <string name="achievement_prestige_10">Completa 10 prestigios</string><string name="achievement_prestige_25">Completa 25 prestigios</string><string name="achievement_prestige_50">Completa 50 prestigios</string>
-    <string name="achievement_fleet_100">Consigue 100 drones</string><string name="achievement_fleet_250">Consigue 250 drones</string><string name="achievement_fleet_500">Consigue 500 drones</string>
-    <string name="achievement_parts_25">Consigue 25 piezas de maestría</string><string name="achievement_parts_100">Consigue 100 piezas de maestría</string><string name="achievement_parts_300">Consigue 300 piezas de maestría</string>
+    <string name="achievement_cases_250">Abre 150 cajas</string><string name="achievement_cases_500">Abre 250 cajas</string><string name="achievement_cases_1000">Abre 400 cajas</string>
+    <string name="achievement_events_100">Completa 75 eventos</string><string name="achievement_events_250">Completa 100 eventos</string><string name="achievement_events_500">Completa 150 eventos</string>
+    <string name="achievement_prestige_10">Completa 10 prestigios</string><string name="achievement_prestige_25">Completa 15 prestigios</string><string name="achievement_prestige_50">Completa 25 prestigios</string>
+    <string name="achievement_fleet_100">Consigue 75 drones</string><string name="achievement_fleet_250">Consigue 100 drones</string><string name="achievement_fleet_500">Consigue 150 drones</string>
+    <string name="achievement_parts_25">Consigue 25 piezas de maestría</string><string name="achievement_parts_100">Consigue 75 piezas de maestría</string><string name="achievement_parts_300">Consigue 150 piezas de maestría</string>
     <string name="achievement_station_5">Alcanza 5 niveles de estación</string><string name="achievement_station_10">Alcanza 10 niveles de estación</string><string name="achievement_station_20">Mejora completamente la estación</string>
     <string name="achievement_planets_21">Llega a la Grieta de Cronos</string><string name="achievement_planets_22">Llega a la Forja Aurora</string><string name="achievement_planets_23">Llega al Santuario Prismático</string>
     <string name="achievement_wealth_1t">Acumula 1 billón de escombros</string><string name="achievement_wealth_1q">Acumula 1.000 billones de escombros</string>
@@ -435,4 +444,6 @@
     <string name="planet_bonus_emberglass">Potencia de toque +25%</string><string name="planet_bonus_verdant_halo">Ingresos de flota +30%</string><string name="planet_bonus_iron_tempest">Recompensas de eventos +40%</string><string name="planet_bonus_frozen_reliquary">Ingresos offline +45%</string><string name="planet_bonus_celestial_bloom">Todo el salvamento +35%</string><string name="planet_bonus_binary_grave">Ingresos de flota +55%</string><string name="planet_bonus_mirage_engine">Potencia de toque +60%</string><string name="planet_bonus_leviathan_deep">Todo el salvamento +50%</string><string name="planet_bonus_solar_archive">Ingresos de flota +80%</string><string name="planet_bonus_shattered_meridian">Potencia de toque +90%</string><string name="planet_bonus_clockwork_eden">Todo el salvamento +70%</string><string name="planet_bonus_phantom_orchard">Ingresos de flota +110%</string><string name="planet_bonus_cinder_cathedral">Potencia de toque +125%</string><string name="planet_bonus_null_beacon">Todo el salvamento +100%</string><string name="planet_bonus_origin_vault">Potencia de toque y flota ×3</string>
     <string name="meteor_intercept_title">INTERCEPCIÓN DE METEOROS</string>
     <string name="meteor_intercept_hint">Encuentra la trayectoria marcada · quedan %1$d</string>
+    <string name="repair_and_launch">Reparar y lanzar</string>
+    <string name="drone_repair_cost">Reparación: %1$s</string>
 </resources>

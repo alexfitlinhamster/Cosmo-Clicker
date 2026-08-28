@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +49,7 @@ fun CaseOpeningOverlay(
     onOpenAll: () -> Unit,
     onClearReward: () -> Unit,
     onClearBundleSummary: () -> Unit,
+    onOpeningPulse: (Int) -> Unit = {},
     reduceMotion: Boolean = false
 ) {
     var hasClickedToOpen by remember { mutableStateOf(false) }
@@ -78,6 +78,7 @@ fun CaseOpeningOverlay(
             // Проигрываем анимацию 1..8 один раз
             for (frame in 1..8) {
                 currentFrame = frame
+                onOpeningPulse(frame)
                 delay(CASE_FRAME_DURATION_MS)
             }
             delay(CASE_REVEAL_HOLD_MS)
@@ -175,7 +176,7 @@ fun CaseOpeningOverlay(
                         Spacer(Modifier.height(18.dp))
                         Button(
                             onClick = onOpenAll,
-                            modifier = Modifier.fillMaxWidth(0.62f).heightIn(min = 46.dp),
+                            modifier = Modifier.fillMaxWidth(0.72f).heightIn(min = 48.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -237,11 +238,19 @@ fun CaseOpeningOverlay(
                         )
                         Spacer(modifier = Modifier.height(36.dp))
                         Button(
-                            onClick = { onClearReward() },
+                            onClick = onClearReward,
                             colors = ButtonDefaults.buttonColors(containerColor = drone.rarity.color),
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                            modifier = Modifier.widthIn(min = 124.dp, max = 176.dp).height(48.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                            compact = true
                         ) {
-                            Text(stringResource(R.string.collect), color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.collect),
+                                color = Color.Black,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
                         }
                     }
                 }

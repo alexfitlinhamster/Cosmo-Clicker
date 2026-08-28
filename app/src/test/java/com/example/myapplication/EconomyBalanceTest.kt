@@ -9,8 +9,8 @@ class EconomyBalanceTest {
     @Test
     fun planetPricesAndIncomeUseSlowerLongTermCurve() {
         assertEquals(10_000.0, EconomyBalance.planetPrice(2), 0.0)
-        assertEquals(19_000.0, EconomyBalance.planetPrice(3), 0.0)
-        assertEquals(36_100.0, EconomyBalance.planetPrice(4), 0.0001)
+        assertEquals(15_500.0, EconomyBalance.planetPrice(3), 0.0)
+        assertEquals(26_040.0, EconomyBalance.planetPrice(4), 0.0001)
         assertTrue(EconomyBalance.planetPrice(20) > EconomyBalance.planetPrice(19))
         assertTrue(EconomyBalance.planetPrice(24) > EconomyBalance.planetPrice(20))
         assertEquals(1.0, EconomyBalance.planetIncomeMultiplier("p1"), 0.0)
@@ -52,7 +52,7 @@ class EconomyBalanceTest {
     fun galaxyProgressionIsStrictlyIncreasingWithoutSuddenPriceSpikes() {
         val prices = (2..EconomyBalance.MAX_PLANET_INDEX).map(EconomyBalance::planetPrice)
         assertTrue(prices.zipWithNext().all { (current, next) -> next > current })
-        assertTrue(prices.zipWithNext().all { (current, next) -> next / current <= 1.900001 })
+        assertTrue(prices.zipWithNext().all { (current, next) -> next / current <= 1.820001 })
 
         val income = (1..EconomyBalance.MAX_PLANET_INDEX)
             .map { EconomyBalance.planetIncomeMultiplier("p$it") }
@@ -76,15 +76,30 @@ class EconomyBalanceTest {
             fleetCounts = mapOf("rare" to 2),
             technologies = setOf(Technology.POWER_CORE)
         )
-        assertEquals(278.3, EconomyBalance.passiveIncome(state, fleet), 0.0001)
+        assertEquals(302.5, EconomyBalance.passiveIncome(state, fleet), 0.0001)
     }
 
     @Test
-    fun clickUpgradeCostGrowsSmoothlyAndNeverExceedsCap() {
+    fun clickUpgradeCostGrowsSmoothlyWithoutLegacyMoneyCap() {
         assertEquals(150.0, EconomyBalance.clickUpgradeCost(15.0, 0), 0.0)
-        assertEquals(1_086.0, EconomyBalance.clickUpgradeCost(15.0, 100), 0.0)
-        assertEquals(2_500_000.0, EconomyBalance.clickUpgradeCost(5_000.0, 1_000), 0.0)
-        assertEquals(2_500_000.0, EconomyBalance.clickUpgradeCost(4_000.0, 1_000, 1.5), 0.0)
+        assertTrue(EconomyBalance.clickUpgradeCost(15.0, 100) > 75_000.0)
+        assertTrue(EconomyBalance.clickUpgradeCost(5_000.0, 1_000) > 2_500_000.0)
+        assertTrue(EconomyBalance.clickUpgradeCost(4_000.0, 1_000, 1.5) > 2_500_000.0)
+    }
+
+    @Test
+    fun meteorRewardTracksEarlyBalanceButHasABillionScaleCap() {
+        assertEquals(200_000.0, EconomyBalance.meteorReward(100_000.0), 10_000.0)
+        assertTrue(EconomyBalance.meteorReward(1_000_000_000_000.0) in 3_000_000_000.0..4_000_000_000.0)
+        assertEquals(4_000_000_000.0, EconomyBalance.meteorReward(Double.MAX_VALUE), 0.0)
+    }
+
+    @Test
+    fun rarerDronesCostMoreToRepairAndCostScalesWithBalance() {
+        val common = EconomyBalance.droneRepairCost(100_000.0, Rarity.COMMON)
+        assertTrue(common >= 2_000.0)
+        assertTrue(EconomyBalance.droneRepairCost(100_000.0, Rarity.LEGENDARY) > common)
+        assertTrue(EconomyBalance.droneRepairCost(1_000_000_000.0, Rarity.COMMON) > common)
     }
 
     @Test

@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
@@ -343,13 +342,17 @@ fun SolarFlareProtocol(event: GameEvent, sequence: List<Int>, progress: Int, pha
 @Composable
 fun CyberVirusField(
     event: GameEvent,
-    target: Int,
     remaining: Int,
     gameAreaWidth: Dp,
     gameAreaHeight: Dp,
-    onNodeClick: (Int) -> Unit
+    onResolved: (Boolean) -> Unit
 ) {
-    val positions = listOf(.22f to .25f, .72f to .29f, .28f to .68f, .74f to .66f)
+    val pin = remember(event.startedAt) {
+        "%04d".format(kotlin.math.abs(((event.startedAt xor (event.startedAt ushr 17)) % 10_000L).toInt()))
+    }
+    var entered by remember(event.startedAt) { mutableStateOf("") }
+    var attempts by remember(event.startedAt) { mutableIntStateOf(0) }
+    var feedback by remember(event.startedAt) { mutableStateOf("PIN LOCK // 4 DIGITS") }
     val glitch = rememberInfiniteTransition(label = "cyber_glitch")
     val alpha by glitch.animateFloat(.10f, .24f, infiniteRepeatable(tween(120), RepeatMode.Reverse), label = "glitch_alpha")
     Canvas(Modifier.size(gameAreaWidth, gameAreaHeight)) {
@@ -365,24 +368,39 @@ fun CyberVirusField(
         fontFamily = FontFamily.Monospace,
         fontSize = 10.sp
     )
-    positions.forEachIndexed { index, (x, y) ->
-        val active = index == target
-        Box(
-            Modifier.offset(x = gameAreaWidth * x - 30.dp, y = gameAreaHeight * y - 30.dp)
-                .size(60.dp).shadow(if (active) 18.dp else 3.dp, CircleShape, spotColor = Color(0xFF36FFD0))
-                .background(if (active) Color(0xFF36FFD0).copy(.82f) else Color(0xCC102536), CircleShape)
-                .border(2.dp, if (active) Color.White else Color(0xFF36FFD0).copy(.38f), CircleShape)
-                .eventClickable { onNodeClick(index) },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(if (active) "</>" else "00", color = if (active) Color(0xFF06161A) else Color(0xFF36FFD0), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black)
+    Column(
+        Modifier.offset(x = (gameAreaWidth - 230.dp) / 2, y = gameAreaHeight * .20f).width(230.dp)
+            .background(Color(0xEE071923), RoundedCornerShape(18.dp))
+            .border(1.dp, Color(0xFF36FFD0), RoundedCornerShape(18.dp)).padding(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(feedback, color = Color(0xFF63FFD8), fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+        Text(entered.padEnd(4, '•'), color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 28.sp, fontWeight = FontWeight.Black)
+        (0..9).chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { digit ->
+                    Box(
+                        Modifier.size(50.dp).background(Color(0xFF102F3A), RoundedCornerShape(10.dp))
+                            .border(1.dp, Color(0xFF36FFD0).copy(.5f), RoundedCornerShape(10.dp))
+                            .eventClickable {
+                                if (entered.length < 4) entered += digit
+                                if (entered.length == 4) {
+                                    if (entered == pin) onResolved(true) else {
+                                        attempts++
+                                        feedback = "DENIED // ${entered.indices.count { entered[it] == pin[it] }} DIGITS MATCH"
+                                        entered = ""
+                                        if (attempts >= 4) onResolved(false)
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) { Text("$digit", color = Color(0xFF63FFD8), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) }
+                }
+            }
         }
+        Text("$remaining TRACE", color = Color(0xFF63FFD8).copy(.7f), fontFamily = FontFamily.Monospace, fontSize = 10.sp)
     }
-    Text(
-        stringResource(R.string.event_taps_left, remaining),
-        modifier = Modifier.offset(x = (gameAreaWidth - 150.dp) / 2, y = gameAreaHeight * .82f).width(150.dp),
-        color = Color(0xFF63FFD8), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
-    )
 }
 
 @Composable
@@ -820,6 +838,13 @@ fun PirateAmbushComponent(
         animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Reverse),
         label = "pirate_drift"
     )
+    val idleFrame by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1.99f,
+        animationSpec = infiniteRepeatable(tween(520, easing = LinearEasing), RepeatMode.Reverse),
+        label = "pirate_engine_frames"
+    )
+    val combatFrame = if (progress <= 0) idleFrame.toInt() else (progress + 1).coerceIn(2, 6)
     val panelWidth = minOf(gameAreaWidth - 32.dp, 360.dp)
 
     Box(
@@ -882,11 +907,12 @@ fun PirateAmbushComponent(
                                 .eventClickable { onTargetClick(index) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Image(
-                                painterResource(R.drawable.event_pirate_minimal_v2),
-                                contentDescription = stringResource(R.string.event_pirate_raid),
-                                modifier = Modifier.fillMaxSize().padding(4.dp).alpha(if (isTarget) 1f else 0.48f),
-                                contentScale = ContentScale.Fit
+                            GeneratedSheetPanel(
+                                drawable = R.drawable.event_pirate_ship_sheet_v1,
+                                index = combatFrame,
+                                columns = 4,
+                                rows = 2,
+                                modifier = Modifier.fillMaxSize().padding(4.dp).alpha(if (isTarget) 1f else 0.48f)
                             )
                             if (isTarget) {
                                 Text(
@@ -912,11 +938,12 @@ fun PirateAmbushComponent(
                     trackColor = Color.White.copy(alpha = 0.09f)
                 )
             } else {
-                Image(
-                    painterResource(R.drawable.event_pirate_minimal_v2),
-                    contentDescription = null,
-                    modifier = Modifier.height(132.dp).fillMaxWidth(),
-                    contentScale = ContentScale.Fit
+                GeneratedSheetPanel(
+                    drawable = R.drawable.event_pirate_ship_sheet_v1,
+                    index = 7,
+                    columns = 4,
+                    rows = 2,
+                    modifier = Modifier.height(132.dp).fillMaxWidth()
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),

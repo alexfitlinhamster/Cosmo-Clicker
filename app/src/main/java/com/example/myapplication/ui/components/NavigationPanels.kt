@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -89,6 +90,8 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                     2 -> items(viewModel.planets.toList(), key = { it.first }) { (id, planet) ->
                         val active = state.currentPlanetId == id
                         val owned = id in state.ownedPlanets
+                        val planetIndex = EconomyBalance.planetIndex(id)
+                        val requirementsMet = owned || EconomyBalance.planetFleetObjectiveMet(state, planetIndex)
                         PlanetRow(
                             name = localizedPlanetName(id),
                             desc = localizedPlanetDescription(id),
@@ -99,7 +102,7 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             price = planet.price.toLong(),
                             active = active,
                             owned = owned,
-                            canBuy = state.totalDebris >= planet.price && !active,
+                            canBuy = !active && (owned || (state.totalDebris >= planet.price && requirementsMet)),
                             iconRes = planet.imageRes,
                             spriteIndex = planet.spriteIndex,
                             showLock = !owned,
@@ -185,12 +188,24 @@ private fun ClickUpgradeRow(
         }
         Spacer(Modifier.width(8.dp))
         Box(
-            modifier = Modifier.width(116.dp).height(42.dp)
+            modifier = Modifier.width(124.dp).height(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(accent.copy(alpha = .28f), Color(0xFF101B2C), accent.copy(alpha = .12f))
+                    )
+                )
+                .border(1.dp, accent.copy(alpha = .68f), RoundedCornerShape(12.dp))
                 .alpha(if (enabled) 1f else .38f)
                 .clickable(enabled = enabled, onClick = onBuy),
             contentAlignment = Alignment.Center
         ) {
-            Image(painterResource(R.drawable.ui_shop_upgrade_button_v3), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+            Image(
+                painterResource(if (enabled) R.drawable.ui_button_primary_v5 else R.drawable.ui_button_locked_v5),
+                null,
+                Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 GeneratedSheetIcon(R.drawable.shop_ui_minimal_sheet_v1, 4, 16.dp, columns = 4, rows = 4)
                 Spacer(Modifier.width(4.dp))
@@ -202,6 +217,17 @@ private fun ClickUpgradeRow(
 
 @Composable
 fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    var filter by rememberSaveable { mutableStateOf(HangarFilter.ALL) }
+    val active = state.activeFleetCounts.values.sum()
+    val owned = state.fleetCounts.values.sum()
+    val discovered = viewModel.fleetItems.count { it.id in state.discoveredDroneIds || (state.fleetCounts[it.id] ?: 0) > 0 }
+    val visibleDrones = viewModel.fleetItems.filter { drone ->
+        when (filter) {
+            HangarFilter.ALL -> true
+            HangarFilter.OWNED -> (state.fleetCounts[drone.id] ?: 0) > 0
+            HangarFilter.ACTIVE -> (state.activeFleetCounts[drone.id] ?: 0) > 0
+        }
+    }
     SpacePanel(
         stringResource(R.string.drone_hangar_title),
         stringResource(R.string.drone_hangar_subtitle),
@@ -210,28 +236,78 @@ fun DroneHangarPanel(viewModel: GameViewModel, state: GameState, onClose: () -> 
         backgroundRes = R.drawable.bg_hangar_minimal_v1
     ) {
         item {
-            val active = state.activeFleetCounts.values.sum()
-            val owned = state.fleetCounts.values.sum()
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = AppColors.Surface.copy(alpha = .90f)),
                 border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.24f))
             ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource(R.string.hangar_overview), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column {
+                            Text(stringResource(R.string.hangar_overview), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.hangar_fleet_ready), color = AppColors.TextMuted, fontSize = 10.sp)
+                        }
+                        Surface(shape = RoundedCornerShape(10.dp), color = AppColors.Primary.copy(alpha = .13f)) {
+                            Text("$discovered / ${viewModel.fleetItems.size}", Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = AppColors.Primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     HangarCapacityLine(stringResource(R.string.drones_in_flight), active, viewModel.activeDroneCapacity(state), AppColors.Primary)
-                    Text(stringResource(R.string.drones_in_storage_count, owned), color = AppColors.Secondary, fontSize = 11.sp)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HangarMetric(stringResource(R.string.hangar_owned), owned.toString(), AppColors.Secondary, Modifier.weight(1f))
+                        HangarMetric(stringResource(R.string.hangar_discovered), discovered.toString(), AppColors.Warning, Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        HangarFilter.entries.forEach { option ->
+                            HangarFilterChip(option, filter == option, { filter = option }, Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
-        items(viewModel.fleetItems.chunked(2), key = { row -> row.first().id }) { row ->
+        if (visibleDrones.isEmpty()) {
+            item {
+                Text(stringResource(R.string.hangar_empty_filter), Modifier.fillMaxWidth().padding(24.dp), color = AppColors.TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
+        items(visibleDrones.chunked(2), key = { row -> row.first().id }) { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { drone ->
                     CompactHangarDroneCard(drone, viewModel, state, Modifier.weight(1f))
                 }
                 repeat(2 - row.size) { Spacer(Modifier.weight(1f)) }
             }
+        }
+    }
+}
+
+private enum class HangarFilter { ALL, OWNED, ACTIVE }
+
+@Composable
+private fun HangarFilterChip(filter: HangarFilter, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val label = when (filter) {
+        HangarFilter.ALL -> R.string.hangar_filter_all
+        HangarFilter.OWNED -> R.string.hangar_filter_owned
+        HangarFilter.ACTIVE -> R.string.hangar_filter_active
+    }
+    Surface(
+        modifier = modifier.height(48.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(10.dp),
+        color = if (selected) AppColors.Primary.copy(alpha = .18f) else Color.White.copy(alpha = .04f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) AppColors.Primary.copy(alpha = .55f) else AppColors.Outline)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(stringResource(label), color = if (selected) AppColors.Primary else AppColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun HangarMetric(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Surface(modifier, shape = RoundedCornerShape(10.dp), color = Color.White.copy(alpha = .04f)) {
+        Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, color = AppColors.TextMuted, fontSize = 10.sp)
+            Text(value, color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -245,8 +321,10 @@ internal fun CompactHangarDroneCard(
 ) {
     val count = state.fleetCounts[drone.id] ?: 0
     val active = state.activeFleetCounts[drone.id] ?: 0
+    val damaged = state.damagedFleetCounts[drone.id] ?: 0
+    val repairCost = if (damaged > 0) EconomyBalance.droneRepairCost(state.totalDebris, drone.rarity) else 0.0
     val discovered = drone.id in state.discoveredDroneIds || count > 0
-    val canDeploy = active > 0 || (count > 0 && state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state))
+    val canDeploy = active > 0 || (count > 0 && state.totalDebris >= repairCost && state.activeFleetCounts.values.sum() < viewModel.activeDroneCapacity(state))
     val hoverFrames = if (drone.rarity == Rarity.LEGENDARY) 16 else 8
     val hoverMotion = rememberInfiniteTransition(label = "hangar_hover_${drone.id}")
     val hoverPhase by hoverMotion.animateFloat(
@@ -265,6 +343,18 @@ internal fun CompactHangarDroneCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, if (active > 0) AppColors.Primary.copy(alpha = .38f) else AppColors.Outline.copy(alpha = .7f))
     ) {
         Column(Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = RoundedCornerShape(8.dp), color = drone.rarity.color.copy(alpha = .14f)) {
+                    Text(if (discovered) rarityLabel(drone.rarity) else "—", Modifier.padding(horizontal = 7.dp, vertical = 3.dp), color = if (discovered) drone.rarity.color else AppColors.TextMuted, fontSize = 8.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
+                if (active > 0) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(6.dp).background(AppColors.Primary, CircleShape))
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.hangar_active_badge), color = AppColors.Primary, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
             Box(
                 modifier = Modifier
                     .size(74.dp),
@@ -286,13 +376,35 @@ internal fun CompactHangarDroneCard(
             }
             Spacer(Modifier.height(4.dp))
             Text(if (discovered) drone.name else stringResource(R.string.locked), color = if (discovered) Color.White else AppColors.TextMuted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("$active / $count", color = if (active > 0) AppColors.Primary else AppColors.TextMuted, fontSize = 11.sp)
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.hangar_drone_count, count), color = if (count > 0) AppColors.Secondary else AppColors.TextMuted, fontSize = 10.sp)
+            if (damaged > 0 && active == 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    GeneratedSheetIcon(
+                        drawable = R.drawable.ui_meteor_repair_sheet_v1,
+                        index = 1,
+                        size = 24.dp,
+                        columns = 2,
+                        rows = 3
+                    )
+                    Text(
+                        stringResource(R.string.drone_repair_cost, formatNum(repairCost)),
+                        color = AppColors.Warning,
+                        fontSize = 9.sp
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 7.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 CosmicHangarAction(
-                    text = stringResource(if (active > 0) R.string.send_to_storage else R.string.send_to_flight),
+                    text = if (active > 0) stringResource(R.string.send_to_storage)
+                        else if (damaged > 0) stringResource(R.string.repair_and_launch)
+                        else stringResource(R.string.send_to_flight),
                     iconRes = if (active > 0) R.drawable.ic_action_recall else R.drawable.ic_action_launch,
                     enabled = canDeploy,
                     primary = true,
+                    modifier = Modifier.weight(1f),
                     onClick = { if (active > 0) viewModel.recallDrone(drone.id) else viewModel.deployDrone(drone.id) }
                 )
                 CosmicHangarAction(
@@ -300,6 +412,7 @@ internal fun CompactHangarDroneCard(
                     iconRes = R.drawable.ic_action_sell,
                     enabled = count > 0,
                     primary = false,
+                    modifier = Modifier.width(38.dp),
                     onClick = { viewModel.sellFleet(drone.id) }
                 )
             }
@@ -313,13 +426,13 @@ private fun CosmicHangarAction(
     iconRes: Int,
     enabled: Boolean,
     primary: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val accent = if (primary) AppColors.Primary else AppColors.Danger
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(if (primary) 40.dp else 34.dp)
+        modifier = modifier
+            .height(48.dp)
             .alpha(if (enabled) 1f else .34f)
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
@@ -340,15 +453,10 @@ private fun CosmicHangarAction(
                 tint = Color.Unspecified,
                 modifier = Modifier.size(if (primary) 18.dp else 16.dp)
             )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = text,
-                color = accent,
-                fontSize = if (primary) 10.sp else 9.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (primary) {
+                Spacer(Modifier.width(5.dp))
+                Text(text = text, color = accent, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
@@ -457,7 +565,7 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                     Button(
                         onClick = { viewModel.claimAchievement(achievement.id) },
                         enabled = unlocked && !claimed,
-                        modifier = Modifier.fillMaxWidth().height(34.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.Warning.copy(alpha = .18f), contentColor = AppColors.Warning),
@@ -550,12 +658,19 @@ fun PrestigeShopPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                         }
                         val canBuy = !owned && state.prestigePoints >= technology.cost
                         Surface(
-                            modifier = Modifier.height(34.dp).widthIn(min = 82.dp)
+                            modifier = Modifier.height(48.dp).widthIn(min = 104.dp)
                                 .alpha(if (owned || canBuy) 1f else .38f)
                                 .clickable(enabled = canBuy) { viewModel.buyTechnology(technology) },
                             shape = RoundedCornerShape(11.dp),
-                            color = Color.Transparent,
-                            border = null
+                            color = if (owned) {
+                                AppColors.SurfaceRaised.copy(alpha = .72f)
+                            } else {
+                                accent.copy(alpha = if (canBuy) .18f else .08f)
+                            },
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (owned) AppColors.Outline else accent.copy(alpha = if (canBuy) .58f else .24f)
+                            )
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (!owned) Image(painterResource(R.drawable.ui_action_frame_v2), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, alpha = if (canBuy) .72f else .30f)

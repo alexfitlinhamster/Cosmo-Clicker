@@ -1,6 +1,17 @@
 package com.example.myapplication
 
 object QuestEngine {
+    /** Clears run-specific quest state. Timed quests are recreated on the next refresh. */
+    fun reset(state: GameState): GameState = state.copy(
+        activeQuests = emptyList(),
+        completedQuestIds = emptySet(),
+        questBonuses = emptyMap(),
+        dailyQuestDay = -1L,
+        weeklyQuestWeek = -1L,
+        dailyQuestsCompletedAt = -1L,
+        weeklyQuestsCompletedAt = -1L
+    )
+
     fun advance(
         quests: List<Quest>,
         type: QuestType,

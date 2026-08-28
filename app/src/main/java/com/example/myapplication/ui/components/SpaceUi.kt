@@ -55,7 +55,7 @@ fun SpaceSheetHeader(title: String, subtitle: String? = null, onClose: () -> Uni
         Image(
             painter = painterResource(R.drawable.ui_close_control_v2),
             contentDescription = stringResource(R.string.close),
-            modifier = Modifier.size(42.dp).clickable(onClick = onClose),
+            modifier = Modifier.size(48.dp).clickable(onClick = onClose),
             contentScale = ContentScale.Fit
         )
     }
@@ -72,7 +72,7 @@ fun SpaceTab(
     iconSheetIndex: Int? = null
 ) {
     Surface(
-        modifier = modifier.height(42.dp).clickable(onClick = onClick),
+        modifier = modifier.height(48.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         color = if (selected) Color.Transparent else Color.White.copy(alpha = .035f),
         border = null,
@@ -114,29 +114,56 @@ fun SpaceDialog(
     title: String,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
-    actions: @Composable RowScope.() -> Unit
+    actions: @Composable RowScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    backgroundRes: Int? = null
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
+            modifier = modifier.widthIn(max = 640.dp).fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
             color = AppColors.CardBackground,
             border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.35f)),
             shadowElevation = 18.dp
         ) {
-            Column(
-                modifier = Modifier
-                    .background(Brush.verticalGradient(listOf(Color(0xFF142641), Color(0xFF080F1E))))
-                    .padding(20.dp)
-            ) {
-                SpaceSheetHeader(title = title, onClose = onDismiss)
-                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.08f))
-                content()
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
-                    content = actions
-                )
+            Box {
+                if (backgroundRes != null) {
+                    Image(
+                        painter = painterResource(backgroundRes),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(Color(0xFF030916).copy(alpha = .34f))
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .then(
+                            if (backgroundRes == null) {
+                                Modifier.background(Brush.verticalGradient(listOf(Color(0xFF142641), Color(0xFF080F1E))))
+                            } else {
+                                Modifier.background(
+                                    Brush.verticalGradient(
+                                        listOf(Color(0xFF12213A).copy(alpha = .30f), Color(0xFF030817).copy(alpha = .64f))
+                                    )
+                                )
+                            }
+                        )
+                        .padding(20.dp)
+                ) {
+                    SpaceSheetHeader(title = title, onClose = onDismiss)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.10f))
+                    content()
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
+                        content = actions
+                    )
+                }
             }
         }
     }

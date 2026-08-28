@@ -1,14 +1,13 @@
 package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -18,12 +17,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.R
 
 enum class CosmicButtonStyle { Primary, Secondary, Reward, Danger }
 
@@ -37,27 +35,39 @@ fun Button(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     style: CosmicButtonStyle = CosmicButtonStyle.Primary,
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit
 ) {
-    val frame = if (!enabled) R.drawable.ui_button_locked_v4 else when (style) {
-        CosmicButtonStyle.Primary -> R.drawable.ui_button_primary_v4
-        CosmicButtonStyle.Secondary -> R.drawable.ui_button_secondary_v4
-        CosmicButtonStyle.Reward -> R.drawable.ui_button_reward_v4
-        CosmicButtonStyle.Danger -> R.drawable.ui_button_danger_v4
+    // Draw the resting state with Compose primitives. The former full-size PNG frame
+    // could be skipped by the renderer until the first pointer invalidation, leaving
+    // an invisible but clickable button on some devices.
+    val accent = when (style) {
+        CosmicButtonStyle.Primary -> Color(0xFF55E6BC)
+        CosmicButtonStyle.Secondary -> Color(0xFFA9C8C2)
+        CosmicButtonStyle.Reward -> Color(0xFFFFCA62)
+        CosmicButtonStyle.Danger -> Color(0xFFFF6B74)
     }
+    val effectiveAccent = if (enabled) accent else Color(0xFF778394)
     Box(
         modifier = modifier
-            .defaultMinSize(minWidth = 96.dp, minHeight = 42.dp)
+            .defaultMinSize(
+                minWidth = if (compact) 72.dp else 96.dp,
+                minHeight = 48.dp
+            )
             .alpha(if (enabled) 1f else .72f)
+            .clip(shape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        effectiveAccent.copy(alpha = if (enabled) .30f else .16f),
+                        Color(0xFF101B2C),
+                        effectiveAccent.copy(alpha = if (enabled) .13f else .08f)
+                    )
+                )
+            )
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(frame),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
         CompositionLocalProvider(LocalContentColor provides Color.White) {
             Row(
                 modifier = Modifier.padding(contentPadding),

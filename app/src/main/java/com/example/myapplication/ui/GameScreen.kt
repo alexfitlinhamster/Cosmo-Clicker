@@ -76,7 +76,8 @@ fun GameScreen(
     val soundManager = remember(context) { SoundManager(context) }
     LaunchedEffect(soundManager) { soundManager.resumeBackgroundMusic() }
     val floatingTextId = remember { AtomicLong(0L) }
-    var floatingTexts by remember { mutableStateOf(listOf<FloatingTextData>()) }
+    val floatingTexts = remember { mutableStateListOf<FloatingTextData?>().apply { repeat(MAX_FLOATING_TEXTS) { add(null) } } }
+    var nextFloatingTextSlot by remember { mutableIntStateOf(0) }
     var lastFloatingTextMillis by remember { mutableLongStateOf(0L) }
     var isShopOpen by remember { mutableStateOf(false) }
     var isHangarOpen by remember { mutableStateOf(false) }
@@ -201,11 +202,12 @@ fun GameScreen(
         if (now - lastFloatingTextMillis < FLOATING_TEXT_THROTTLE_MS) return
         lastFloatingTextMillis = now
         val id = floatingTextId.incrementAndGet()
-        floatingTexts = floatingTexts
-            .takeLast(MAX_FLOATING_TEXTS - 1) + FloatingTextData(id, text, x, y)
+        val slot = nextFloatingTextSlot
+        nextFloatingTextSlot = (nextFloatingTextSlot + 1) % MAX_FLOATING_TEXTS
+        floatingTexts[slot] = FloatingTextData(id, text, x, y)
         scope.launch {
             delay(GameConstants.FloatingTextDuration)
-            floatingTexts = floatingTexts.filter { it.id != id }
+            if (floatingTexts[slot]?.id == id) floatingTexts[slot] = null
         }
     }
 
@@ -313,15 +315,17 @@ fun GameScreen(
                         planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
                         modifier = Modifier.align(Alignment.Center)
                     ) { x, y ->
-                        soundManager.playClick()
-                        val value = viewModel.onPlanetClick()
-                        val planetWidthFraction = GameConstants.PlanetSize.value / maxWidth.value
-                        val planetHeightFraction = GameConstants.PlanetSize.value / maxHeight.value
-                        addFloatingText(
-                            "+${formatNum(value)}",
-                            (0.5f + (x - 0.5f) * planetWidthFraction).coerceIn(0f, 1f),
-                            (0.5f + (y - 0.5f) * planetHeightFraction).coerceIn(0f, 1f)
-                        )
+                        val value = viewModel.onPlanetClick(x, y)
+                        if (value > 0.0) {
+                            soundManager.playClick()
+                            val planetWidthFraction = GameConstants.PlanetSize.value / maxWidth.value
+                            val planetHeightFraction = GameConstants.PlanetSize.value / maxHeight.value
+                            addFloatingText(
+                                "+${formatNum(value)}",
+                                (0.5f + (x - 0.5f) * planetWidthFraction).coerceIn(0f, 1f),
+                                (0.5f + (y - 0.5f) * planetHeightFraction).coerceIn(0f, 1f)
+                            )
+                        }
                     }
 
                 state.drones.forEachIndexed { index, drone ->
@@ -394,16 +398,15 @@ fun GameScreen(
                         )
                         GameEventType.CYBER_VIRUS -> CyberVirusField(
                             event = event,
-                            target = state.stormSequence.firstOrNull() ?: 0,
                             remaining = state.eventTapsLeft,
                             gameAreaWidth = maxWidth,
                             gameAreaHeight = maxHeight,
-                            onNodeClick = viewModel::onCyberNodeClick
+                            onResolved = viewModel::resolveCyberVirus
                         )
                     }
                 }
 
-                floatingTexts.forEach { data ->
+                floatingTexts.filterNotNull().forEach { data ->
                     key(data.id) {
                         FloatingText(data, maxWidth, maxHeight)
                     }
@@ -524,6 +527,9 @@ fun GameScreen(
             onOpenAll = { viewModel.openAllPendingCases() },
             onClearReward = { viewModel.clearReward() },
             onClearBundleSummary = { viewModel.clearCaseBundleSummary() },
+            onOpeningPulse = { frame ->
+                soundManager.playCaseOpeningPulse(frame, state.openingCaseType ?: com.example.myapplication.CaseType.COMMON)
+            },
             reduceMotion = false
         )
 
@@ -531,6 +537,10 @@ fun GameScreen(
             SettingsScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = onLanguageSelected,
+                onAchievements = {
+                    showSettings = false
+                    isAchievementsOpen = true
+                },
                 onResetGame = {
                     viewModel.resetGame()
                     showSettings = false
@@ -544,33 +554,65 @@ fun GameScreen(
             SpaceDialog(
                 title = stringResource(R.string.offline_reward_title),
                 onDismiss = viewModel::clearOfflineReward,
+                modifier = Modifier.widthIn(max = 360.dp),
+                backgroundRes = R.drawable.bg_offline_reward_space_v1,
                 content = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Image(
-                            painter = painterResource(R.drawable.drone_collection_art),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxWidth().height(130.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(Modifier.height(12.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(132.dp)
+                                .background(AppColors.Primary.copy(alpha = .10f), CircleShape)
+                                .border(2.dp, AppColors.Primary.copy(alpha = .62f), CircleShape)
+                                .padding(5.dp)
+                                .clip(CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.offline_drone_reward_v1),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             "+${formatNum(state.lastOfflineReward)}",
                             color = AppColors.Primary,
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black
                         )
-                        Text(stringResource(R.string.debris), color = AppColors.Secondary, fontSize = 13.sp)
-                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            stringResource(R.string.debris),
+                            color = AppColors.Secondary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         Text(
                             stringResource(R.string.offline_time_away, formatOfflineDuration(state.lastOfflineSeconds)),
                             color = Color.LightGray,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 },
                 actions = {
-                    Button(onClick = viewModel::clearOfflineReward, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.collect_reward))
+                    Button(
+                        onClick = viewModel::clearOfflineReward,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.collect_reward),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
                     }
                 }
             )

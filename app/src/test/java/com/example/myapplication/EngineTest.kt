@@ -95,6 +95,19 @@ class EngineTest {
     }
 
     @Test
+    fun pirateShipJamsAllPassiveIncome() {
+        val state = GameState(
+            totalDebris = 1_000.0,
+            activeEvent = GameEvent(GameEventType.PIRATE_RAID, Long.MAX_VALUE),
+            eventTapsLeft = 5
+        )
+
+        val result = EconomyEngine.processTick(state, 100L, passiveIncome = 500.0)
+
+        assertEquals(1_000.0, result.totalDebris, 0.0)
+    }
+
+    @Test
     fun expiredEventIsFullyClearedWithoutApplyingItsEconomyEffect() {
         val state = GameState(
             totalDebris = 1_000.0,
@@ -447,14 +460,14 @@ class EngineTest {
     }
 
     @Test
-    fun pirateRaidStealsBoundedPercentageEachEconomyTick() {
+    fun pirateRaidFreezesIncomeWithoutDrainingSavedDebris() {
         val state = GameState(
             totalDebris = 10_000.0,
             activeEvent = GameEvent(GameEventType.PIRATE_RAID, 2_000L),
             eventTapsLeft = 6
         )
         val result = EconomyEngine.processTick(state, 1_000L)
-        assertEquals(9_980.0, result.totalDebris, 0.0)
+        assertEquals(10_000.0, result.totalDebris, 0.0)
         assertEquals(1.0, EventEngine.pirateRaidTheft(0.0), 0.0)
         assertEquals(5_000_000.0, EventEngine.pirateRaidTheft(Double.MAX_VALUE), 0.0)
     }

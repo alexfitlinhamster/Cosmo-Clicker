@@ -9,11 +9,11 @@ import org.junit.Test
 class GameRulesTest {
 
     @Test
-    fun caseCostGrowsByEightPercentAfterEveryPurchase() {
+    fun commonCaseCostGrowsByFifteenPercentAfterEveryPurchase() {
         assertEquals(25_000.0, GameRules.calculateCaseCost(0), 0.0001)
-        assertEquals(27_000.0, GameRules.calculateCaseCost(1), 0.0001)
-        assertEquals(49_975.1157, GameRules.calculateCaseCost(9), 0.001)
-        assertEquals(53_973.1250, GameRules.calculateCaseCost(10), 0.001)
+        assertEquals(28_750.0, GameRules.calculateCaseCost(1), 0.0001)
+        assertEquals(87_946.9072, GameRules.calculateCaseCost(9), 0.001)
+        assertEquals(101_138.9433, GameRules.calculateCaseCost(10), 0.001)
         assertEquals(25_000.0, GameRules.calculateCaseCost(-1), 0.0001)
     }
 
@@ -24,6 +24,16 @@ class GameRulesTest {
         assertEquals(500_000.0, GameRules.calculateCaseCost(0, CaseType.LEGENDARY), 0.0001)
         assertTrue(CaseType.COMMON.premiumChance < CaseType.RARE.premiumChance)
         assertTrue(CaseType.RARE.premiumChance < CaseType.LEGENDARY.premiumChance)
+        assertEquals(1.15, CaseType.COMMON.growthMultiplier, 0.0)
+        assertEquals(1.25, CaseType.RARE.growthMultiplier, 0.0)
+        assertEquals(1.40, CaseType.LEGENDARY.growthMultiplier, 0.0)
+    }
+
+    @Test
+    fun eachCaseTierUsesItsOwnGrowthCurve() {
+        assertEquals(28_750.0, GameRules.calculateCaseCost(1, CaseType.COMMON), 0.001)
+        assertEquals(156_250.0, GameRules.calculateCaseCost(1, CaseType.RARE), 0.001)
+        assertEquals(700_000.0, GameRules.calculateCaseCost(1, CaseType.LEGENDARY), 0.001)
     }
 
     @Test

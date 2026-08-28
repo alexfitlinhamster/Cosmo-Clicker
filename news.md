@@ -130,8 +130,8 @@
   indicators, and direct tap-to-attack interaction on the boss model.
 - Added a custom Command Center navigation icon and localized labels below the
   Quests, Shop, Hangar, and Command Center buttons.
-- Added looping background music plus dedicated planet-unlock and achievement
-  reward sounds, with automatic pause and resume when the app changes state.
+  - Added looping background music plus dedicated planet-unlock and achievement
+    reward sounds, with automatic pause and resume when the app changes state.
 - Added English, Russian, and Spanish text for navigation, challenges, boss traits,
   combat instructions, and battle results.
 - Added Common, Rare, and Legendary cases with increasing prices and improved

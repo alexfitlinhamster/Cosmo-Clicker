@@ -12,7 +12,7 @@ object CaseController {
 
     fun startOpening(state: GameState, type: CaseType, count: Int): GameState? {
         val safeCount = count.coerceAtLeast(1)
-        val price = bundleCost(state.casesPurchased, type, safeCount)
+        val price = bundleCost(state.casePurchasesByType[type] ?: 0, type, safeCount)
         if (state.isOpeningCase || state.lastDroppedDroneId != null || state.totalDebris < price) return null
         return state.copy(
             totalDebris = state.totalDebris - price,

@@ -37,7 +37,8 @@ object EventEngine {
         GameEventType.SOLAR_FLARE to 20,
         GameEventType.CYBER_VIRUS to 12,
         GameEventType.PIRATE_RAID to 12,
-        GameEventType.TRADING_SHIP to 10
+        // Roughly 4% of field events: visible often enough to feel real, still genuinely rare.
+        GameEventType.TRADING_SHIP to 3
     )
 
     private val negativeTypes = setOf(

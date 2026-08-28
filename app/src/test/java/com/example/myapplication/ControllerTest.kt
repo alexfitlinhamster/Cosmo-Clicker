@@ -16,7 +16,7 @@ class ControllerTest {
         )
         val recalled = FleetController.recall(state, item.id)!!
         assertEquals(0, recalled.activeFleetCounts[item.id])
-        val deployed = FleetController.deploy(recalled, item.id)!!
+        val deployed = FleetController.deploy(recalled, item)!!
         assertEquals(1, deployed.activeFleetCounts[item.id])
         val sold = FleetController.sell(deployed, item)!!
         assertEquals(1, sold.fleetCounts[item.id])
@@ -39,5 +39,11 @@ class ControllerTest {
         val purchased = EconomyController.buyClickUpgrade(state, item)!!
         assertEquals(1, purchased.clickLevels[item.id])
         assertEquals(50.0, purchased.totalDebris, 0.0)
+    }
+
+    @Test
+    fun builtInAutoclickerUsesPremiumPriceCurve() {
+        assertEquals(100_000.0, EconomyController.utilityUpgradeCost("autoclick", 0), 0.0)
+        assertEquals(275_000.0, EconomyController.utilityUpgradeCost("autoclick", 1), 0.0)
     }
 }

@@ -211,7 +211,10 @@ private fun DroneCollectionHeader(state: GameState, viewModel: GameViewModel) {
                 Button(
                     onClick = { viewModel.claimCollectionReward(nextMilestone) },
                     enabled = discovered >= nextMilestone,
-                    style = CosmicButtonStyle.Reward
+                    modifier = Modifier.widthIn(min = 108.dp, max = 144.dp).height(48.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    style = CosmicButtonStyle.Reward,
+                    compact = true
                 ) { Text(stringResource(R.string.collection_claim), fontSize = 10.sp) }
             }
         }
@@ -431,8 +434,9 @@ fun MysteryCaseRow(viewModel: GameViewModel, state: GameState) {
 
 @Composable
 private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseType, totalDrones: Int) {
-    val caseCost = viewModel.calculateCaseCost(state.casesPurchased, type)
-    val maxAffordable = viewModel.maxAffordableCases(state.totalDebris, state.casesPurchased, type)
+    val typePurchases = state.casePurchasesByType[type] ?: 0
+    val caseCost = viewModel.calculateCaseCost(typePurchases, type)
+    val maxAffordable = viewModel.maxAffordableCases(state.totalDebris, typePurchases, type)
     var showBundleDialog by remember { mutableStateOf(false) }
     var selectedCaseCount by remember { mutableIntStateOf(1) }
     val accent = when (type) {
@@ -464,8 +468,8 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                 contentAlignment = Alignment.Center
             ) {
                 GeneratedSheetIcon(
-                    drawable = R.drawable.shop_cases_minimal_sheet_v1,
-                    index = when (type) { CaseType.COMMON -> 0; CaseType.RARE -> 3; CaseType.LEGENDARY -> 6 },
+                    drawable = R.drawable.shop_case_ui_sheet_v1,
+                    index = when (type) { CaseType.COMMON -> 0; CaseType.RARE -> 1; CaseType.LEGENDARY -> 2 },
                     size = 44.dp,
                     modifier = Modifier.clip(RoundedCornerShape(7.dp))
                 )
@@ -479,7 +483,10 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
         }
         val caseEnabled = state.totalDebris >= caseCost
         Box(
-            modifier = Modifier.fillMaxWidth().height(46.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Brush.horizontalGradient(listOf(accent.copy(.30f), Color(0xFF111D30))))
+                .border(1.dp, accent.copy(.72f), RoundedCornerShape(12.dp))
                 .alpha(if (caseEnabled) 1f else .38f)
                 .clickable(enabled = caseEnabled) {
                 if (maxAffordable >= 2) {
@@ -490,7 +497,6 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
             },
             contentAlignment = Alignment.Center
         ) {
-            Image(painterResource(R.drawable.ui_shop_case_button_v3), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 GeneratedSheetIcon(R.drawable.shop_ui_minimal_sheet_v1, 4, 17.dp, columns = 4, rows = 4)
                 Spacer(Modifier.width(5.dp))
@@ -513,7 +519,7 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                 ) {
                     Text("×$selectedCaseCount", color = accent, fontSize = 30.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
                     Text(
-                        formatNum(viewModel.calculateCaseBundleCost(state.casesPurchased, type, selectedCaseCount)),
+                        formatNum(viewModel.calculateCaseBundleCost(typePurchases, type, selectedCaseCount)),
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -523,7 +529,7 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                         value = selectedCaseCount.toFloat(),
                         onValueChange = { selectedCaseCount = it.toInt().coerceIn(1, maxAffordable) },
                         valueRange = 1f..maxAffordable.toFloat(),
-                        modifier = Modifier.fillMaxWidth(0.82f).height(34.dp),
+                        modifier = Modifier.fillMaxWidth(0.82f).height(48.dp),
                         colors = SliderDefaults.colors(
                             thumbColor = accent,
                             activeTrackColor = accent,
@@ -539,13 +545,16 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
             actions = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Box(
-                        modifier = Modifier.fillMaxWidth(0.72f).height(46.dp).clickable {
+                        modifier = Modifier.fillMaxWidth(0.78f).height(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Brush.horizontalGradient(listOf(accent.copy(.34f), Color(0xFF111D30))))
+                            .border(1.dp, accent.copy(.76f), RoundedCornerShape(12.dp))
+                            .clickable {
                             showBundleDialog = false
                             viewModel.startOpeningCases(type, selectedCaseCount)
                         },
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(painterResource(R.drawable.ui_shop_case_button_v3), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
                         Text(stringResource(R.string.buy_cases_count, selectedCaseCount), color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                     }
                 }
@@ -691,7 +700,7 @@ fun ShopRow(
                 Text(meta, color = Color.LightGray, fontSize = 11.sp, lineHeight = 14.sp)
             }
         }
-        if (fleetActionLabel != null || canSell || canBuy) Row(
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
         ) {
@@ -701,7 +710,7 @@ fun ShopRow(
                     enabled = fleetActionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary.copy(alpha = 0.18f), contentColor = AppColors.Primary),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.heightIn(min = 40.dp).weight(1f),
+                    modifier = Modifier.heightIn(min = 48.dp).weight(1f),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(fleetActionLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -712,21 +721,33 @@ fun ShopRow(
                     onClick = onSell,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger.copy(alpha = 0.2f), contentColor = AppColors.Danger),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.heightIn(min = 40.dp).widthIn(min = 72.dp),
+                    modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 88.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     style = CosmicButtonStyle.Danger
                 ) {
                     Text(stringResource(R.string.sell), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            if (canBuy) {
-                Box(
-                    modifier = Modifier.width(116.dp).height(42.dp).clickable(onClick = onBuy),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(painterResource(R.drawable.ui_shop_upgrade_button_v3), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-                    Text(formatNum(cost.toDouble()), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                }
+            Box(
+                modifier = Modifier.width(124.dp).height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(AppColors.Primary.copy(alpha = .28f), Color(0xFF101B2C), AppColors.Primary.copy(alpha = .12f))
+                        )
+                    )
+                    .border(1.dp, AppColors.Primary.copy(alpha = .68f), RoundedCornerShape(12.dp))
+                    .alpha(if (canBuy) 1f else .42f)
+                    .clickable(enabled = canBuy, onClick = onBuy),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painterResource(if (canBuy) R.drawable.ui_button_primary_v5 else R.drawable.ui_button_locked_v5),
+                    null,
+                    Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds
+                )
+                Text(formatNum(cost.toDouble()), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
         }
     }
@@ -856,12 +877,30 @@ fun PlanetRow(
             Spacer(modifier = Modifier.weight(1f))
         val planetEnabled = (canBuy || owned) && !isLocked
         Box(
-            modifier = Modifier.width(116.dp).height(42.dp)
+            modifier = Modifier.width(124.dp).height(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(accent.copy(alpha = .28f), Color(0xFF101B2C), accent.copy(alpha = .12f))
+                    )
+                )
+                .border(1.dp, accent.copy(alpha = .68f), RoundedCornerShape(12.dp))
                 .alpha(if (planetEnabled) 1f else .35f)
                 .clickable(enabled = planetEnabled, onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Image(painterResource(R.drawable.ui_shop_planet_button_v3), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+            Image(
+                painterResource(
+                    when {
+                        !planetEnabled -> R.drawable.ui_button_locked_v5
+                        canBuy && !owned -> R.drawable.ui_button_reward_v5
+                        else -> R.drawable.ui_button_primary_v5
+                    }
+                ),
+                null,
+                Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
             val btnText = when {
                 isLocked -> stringResource(R.string.locked)
                 active -> stringResource(R.string.active)

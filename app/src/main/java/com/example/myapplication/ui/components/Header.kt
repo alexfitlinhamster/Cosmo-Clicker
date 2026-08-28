@@ -4,13 +4,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -66,7 +66,6 @@ fun Header(
             .padding(top = 44.dp, start = 12.dp, end = 12.dp, bottom = 10.dp)
             .fillMaxWidth()
             .background(AppColors.CardBackground.copy(alpha = .92f), RoundedCornerShape(18.dp))
-            .border(1.dp, AppColors.Outline.copy(alpha = .55f), RoundedCornerShape(18.dp))
             .padding(8.dp)
     ) {
         Row(
@@ -76,7 +75,7 @@ fun Header(
         ) {
             HeaderAction(
                 icon = R.drawable.ic_achievement_medal,
-                description = R.string.open_statistics,
+                description = R.string.open_achievements,
                 onClick = onAchievementsClick
             )
             Spacer(Modifier.width(6.dp))
@@ -250,16 +249,16 @@ fun Header(
 
 @Composable
 private fun HeaderAction(icon: Int, description: Int, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.size(40.dp).clickable(onClick = onClick),
-        shape = CircleShape,
-        color = AppColors.SurfaceRaised,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .24f))
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .background(AppColors.SurfaceRaised, CircleShape)
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(description),
-            modifier = Modifier.padding(9.dp),
+            modifier = Modifier.size(30.dp),
             tint = Color.Unspecified
         )
     }

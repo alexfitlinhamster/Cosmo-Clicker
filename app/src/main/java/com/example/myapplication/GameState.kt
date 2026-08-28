@@ -41,10 +41,10 @@ enum class QuestType {
 enum class QuestCadence { DAILY, WEEKLY }
 enum class QuestDifficulty { EASY, MEDIUM, HARD }
 
-enum class CaseType(val priceMultiplier: Double, val premiumChance: Int) {
-    COMMON(1.0, 1),
-    RARE(5.0, 5),
-    LEGENDARY(20.0, 20)
+enum class CaseType(val priceMultiplier: Double, val growthMultiplier: Double, val premiumChance: Int) {
+    COMMON(1.0, 1.15, 1),
+    RARE(5.0, 1.25, 5),
+    LEGENDARY(20.0, 1.40, 20)
 }
 
 enum class WeeklyRule { CLICKS_ONLY, FRAGILE_DRONES, VOLATILE_MARKET }
@@ -81,6 +81,7 @@ data class GameState(
     val clickLevels: Map<String, Int> = emptyMap(),
     val fleetCounts: Map<String, Int> = emptyMap(),
     val activeFleetCounts: Map<String, Int> = emptyMap(),
+    val damagedFleetCounts: Map<String, Int> = emptyMap(),
     val discoveredDroneIds: Set<String> = emptySet(),
     val droneParts: Map<String, Int> = emptyMap(),
     val claimedCollectionMilestones: Set<String> = emptySet(),
@@ -99,6 +100,7 @@ data class GameState(
     val caseBundleRewards: Map<String, Int> = emptyMap(),
     val showCaseBundleSummary: Boolean = false,
     val casesPurchased: Int = 0,
+    val casePurchasesByType: Map<CaseType, Int> = emptyMap(),
     val lastDroppedDroneId: String? = null,
     val infectedDroneId: Long? = null,
     val activeQuests: List<Quest> = emptyList(),

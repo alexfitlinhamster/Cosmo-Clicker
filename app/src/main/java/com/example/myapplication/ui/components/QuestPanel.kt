@@ -269,8 +269,10 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                 onClick = { onClaim(quest.id) },
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary, contentColor = Color.Black),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp),
-                style = CosmicButtonStyle.Reward
+                modifier = Modifier.align(Alignment.End).widthIn(min = 120.dp, max = 168.dp).height(48.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                style = CosmicButtonStyle.Reward,
+                compact = true
             ) {
                 Text(stringResource(R.string.claim), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
