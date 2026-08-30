@@ -61,7 +61,7 @@ fun DebrisTarget(target: ScavengeTarget, gameAreaWidth: Dp, gameAreaHeight: Dp, 
     ) {
         if (target.isMeteor) {
             Image(
-                painter = painterResource(R.drawable.event_meteor_minimal_v2),
+                painter = painterResource(R.drawable.event_meteor_minimal_v3),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier

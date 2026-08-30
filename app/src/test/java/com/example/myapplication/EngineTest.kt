@@ -219,10 +219,10 @@ class EngineTest {
     @Test
     fun rareEventChanceGrowsAcrossGalaxyAndExcludesTradingShip() {
         assertEquals(3, EventEngine.eliteChancePercent("p1"))
-        assertEquals(9, EventEngine.eliteChancePercent("p39"))
-        assertTrue(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p39", FixedRandom(8)))
-        assertFalse(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p39", FixedRandom(9)))
-        assertFalse(EventEngine.rollElite(GameEventType.TRADING_SHIP, "p39", FixedRandom(0)))
+        assertEquals(7, EventEngine.eliteChancePercent("p25"))
+        assertTrue(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p25", FixedRandom(6)))
+        assertFalse(EventEngine.rollElite(GameEventType.PIRATE_RAID, "p25", FixedRandom(7)))
+        assertFalse(EventEngine.rollElite(GameEventType.TRADING_SHIP, "p25", FixedRandom(0)))
     }
 
     @Test
@@ -493,6 +493,7 @@ class EngineTest {
         assertEquals(null, result.activeEvent)
         assertEquals(EventLogOutcome.COMPLETED, result.eventLog.last().outcome)
         assertEquals(3_300.0, result.eventLog.last().reward, 0.0001)
+        assertTrue(GameEventType.PIRATE_RAID in result.encounteredEventTypes)
         assertEquals(31_100L, result.activeEffects[SkillType.VOID_ENERGY.id])
     }
 

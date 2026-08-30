@@ -3,6 +3,7 @@ package com.example.myapplication.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,13 +22,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import com.example.myapplication.ui.components.Button
 import com.example.myapplication.ui.components.CosmicButtonStyle
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myapplication.BuildConfig
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.ui.components.SpaceDialog
 
 private data class LanguageOption(val tag: String?, val label: Int)
@@ -56,6 +55,10 @@ private data class LanguageOption(val tag: String?, val label: Int)
 fun SettingsScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
+    soundEnabled: Boolean,
+    onSoundEnabledChanged: (Boolean) -> Unit,
+    reducedMotion: Boolean,
+    onReducedMotionChanged: (Boolean) -> Unit,
     onAchievements: () -> Unit,
     onResetGame: () -> Unit,
     onBack: () -> Unit
@@ -114,9 +117,9 @@ fun SettingsScreen(
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(SpaceDesign.SheetRadius),
                 color = AppColors.CardBackground.copy(alpha = .96f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Primary.copy(alpha = .28f))
+                border = null
             ) {
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(
@@ -145,7 +148,26 @@ fun SettingsScreen(
             SettingsImageButton(
                 label = stringResource(R.string.language),
                 value = stringResource(languageLabel),
+                icon = R.drawable.icon_settings_language_v2,
                 onClick = { showLanguageDialog = true }
+            )
+
+            Spacer(Modifier.height(10.dp))
+            SettingsToggleRow(
+                title = stringResource(R.string.sound),
+                description = stringResource(R.string.sound_description),
+                icon = R.drawable.icon_settings_sound_v2,
+                checked = soundEnabled,
+                onCheckedChange = onSoundEnabledChanged
+            )
+
+            Spacer(Modifier.height(10.dp))
+            SettingsToggleRow(
+                title = stringResource(R.string.reduced_motion),
+                description = stringResource(R.string.reduced_motion_description),
+                icon = R.drawable.icon_settings_reduced_motion_v2,
+                checked = reducedMotion,
+                onCheckedChange = onReducedMotionChanged
             )
 
             Spacer(Modifier.height(10.dp))
@@ -153,6 +175,7 @@ fun SettingsScreen(
                 onClick = onAchievements,
                 modifier = Modifier.fillMaxWidth().height(68.dp),
                 style = CosmicButtonStyle.Primary,
+                generatedArtwork = true,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -176,7 +199,7 @@ fun SettingsScreen(
             SettingsSectionTitle(stringResource(R.string.settings_about_section), "02", AppColors.Secondary)
             Spacer(Modifier.height(8.dp))
 
-            SettingsCard(accent = AppColors.Secondary) {
+            SettingsCard {
                 SettingsRow(
                     stringResource(R.string.version),
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
@@ -212,11 +235,12 @@ fun SettingsScreen(
                 onClick = { showResetDialog = true },
                 modifier = Modifier.fillMaxWidth().height(68.dp),
                 style = CosmicButtonStyle.Danger,
+                generatedArtwork = true,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(R.drawable.ic_reset_progress),
+                        painter = painterResource(R.drawable.icon_settings_reset_v2),
                         contentDescription = null,
                         modifier = Modifier.size(32.dp)
                     )
@@ -250,7 +274,7 @@ fun SettingsScreen(
                         border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) AppColors.Primary else Color.White.copy(alpha = 0.08f))
                     ) {
                         Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = selected, onClick = null)
+                            CosmicSelectionIndicator(selected)
                             Text(stringResource(option.label), color = Color.White, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                         }
                     }
@@ -261,33 +285,35 @@ fun SettingsScreen(
     }
 
     if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text(stringResource(R.string.reset_game_confirm_title)) },
-            text = { Text(stringResource(R.string.reset_game_confirm_message)) },
-            confirmButton = {
+        SpaceDialog(
+            title = stringResource(R.string.reset_game_confirm_title),
+            onDismiss = { showResetDialog = false },
+            modifier = Modifier.widthIn(max = 420.dp),
+            content = {
+                Text(stringResource(R.string.reset_game_confirm_message), color = AppColors.TextMuted, lineHeight = 18.sp)
+            },
+            actions = {
+                Button(
+                    modifier = Modifier.weight(1f).height(SpaceDesign.MinTouchSize),
+                    onClick = { showResetDialog = false },
+                    style = CosmicButtonStyle.Secondary,
+                    compact = true,
+                    generatedArtwork = true
+                ) {
+                    Text(stringResource(R.string.cancel), fontSize = 11.sp, maxLines = 1)
+                }
                 Button(
                     onClick = {
                         showResetDialog = false
                         onResetGame()
                     },
-                    modifier = Modifier.widthIn(min = 124.dp).height(48.dp),
+                    modifier = Modifier.weight(1f).height(SpaceDesign.MinTouchSize),
                     style = CosmicButtonStyle.Danger,
                     compact = true,
+                    generatedArtwork = true,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 0.dp)
                 ) {
                     Text(stringResource(R.string.reset_game_confirm), fontSize = 11.sp, maxLines = 1)
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showResetDialog = false },
-                    modifier = Modifier.widthIn(min = 104.dp).height(48.dp),
-                    style = CosmicButtonStyle.Secondary,
-                    compact = true,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 0.dp)
-                ) {
-                    Text(stringResource(R.string.cancel), fontSize = 11.sp, maxLines = 1)
                 }
             }
         )
@@ -296,25 +322,108 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsImageButton(label: String, value: String, onClick: () -> Unit) {
+private fun SettingsToggleRow(
+    title: String,
+    description: String,
+    icon: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) },
+        shape = RoundedCornerShape(SpaceDesign.CardRadius),
+        color = AppColors.Surface.copy(alpha = .92f),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (checked) AppColors.Primary.copy(alpha = .42f) else AppColors.Outline
+        )
+    ) {
+        Row(Modifier.padding(horizontal = 15.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(42.dp)
+            )
+            Spacer(Modifier.width(11.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(description, color = AppColors.TextMuted, fontSize = 10.sp, lineHeight = 13.sp)
+            }
+            CosmicSwitch(checked)
+        }
+    }
+}
+
+@Composable
+private fun CosmicSwitch(checked: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(width = 52.dp, height = 30.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(if (checked) AppColors.Primary.copy(alpha = .34f) else Color(0xFF172438))
+            .border(
+                1.dp,
+                if (checked) AppColors.Primary.copy(alpha = .72f) else AppColors.Outline,
+                RoundedCornerShape(15.dp)
+            )
+            .padding(3.dp),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+    ) {
+        Box(
+            Modifier
+                .size(22.dp)
+                .background(
+                    if (checked) AppColors.Primary else AppColors.TextMuted,
+                    androidx.compose.foundation.shape.CircleShape
+                )
+        )
+    }
+}
+
+@Composable
+private fun CosmicSelectionIndicator(selected: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .border(
+                1.dp,
+                if (selected) AppColors.Primary else AppColors.Outline,
+                androidx.compose.foundation.shape.CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (selected) {
+            Box(
+                Modifier
+                    .size(12.dp)
+                    .background(AppColors.Primary, androidx.compose.foundation.shape.CircleShape)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsImageButton(label: String, value: String, icon: Int, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(74.dp)
             .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(AppColors.Primary.copy(alpha = .16f), AppColors.Surface.copy(alpha = .96f))
+                )
+            )
+            .border(1.dp, AppColors.Primary.copy(alpha = .34f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(R.drawable.ui_language_select_button_v1),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 76.dp, end = 28.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 28.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Image(painterResource(icon), null, Modifier.size(46.dp))
+            Spacer(Modifier.width(14.dp))
             Text(label, modifier = Modifier.weight(1f), color = Color.White, fontWeight = FontWeight.Bold)
             Text(value, color = AppColors.Primary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.width(8.dp))
@@ -326,14 +435,13 @@ private fun SettingsImageButton(label: String, value: String, onClick: () -> Uni
 @Composable
 private fun SettingsCard(
     modifier: Modifier = Modifier,
-    accent: Color = AppColors.Primary,
     content: @Composable () -> Unit
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(SpaceDesign.CardRadius),
         color = AppColors.Surface.copy(alpha = .92f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = .32f)),
+        border = null,
         shadowElevation = 0.dp
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {

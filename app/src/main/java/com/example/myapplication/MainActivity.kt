@@ -38,6 +38,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             var selectedLanguage by remember { mutableStateOf(getSelectedLanguage()) }
+            var soundEnabled by remember { mutableStateOf(getBooleanSetting(SOUND_KEY, true)) }
+            var reducedMotion by remember { mutableStateOf(getBooleanSetting(REDUCED_MOTION_KEY, false)) }
             val localizedConfiguration = remember(selectedLanguage) {
                 Configuration(resources.configuration).apply {
                     setLocale(selectedLanguage?.let(Locale::forLanguageTag) ?: Locale.getDefault())
@@ -56,6 +58,16 @@ class MainActivity : ComponentActivity() {
                         onLanguageSelected = { language ->
                             saveSelectedLanguage(language)
                             selectedLanguage = language
+                        },
+                        soundEnabled = soundEnabled,
+                        onSoundEnabledChanged = { enabled ->
+                            saveBooleanSetting(SOUND_KEY, enabled)
+                            soundEnabled = enabled
+                        },
+                        reducedMotion = reducedMotion,
+                        onReducedMotionChanged = { enabled ->
+                            saveBooleanSetting(REDUCED_MOTION_KEY, enabled)
+                            reducedMotion = enabled
                         }
                     )
                 }
@@ -73,8 +85,17 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    private fun getBooleanSetting(key: String, defaultValue: Boolean): Boolean =
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).getBoolean(key, defaultValue)
+
+    private fun saveBooleanSetting(key: String, value: Boolean) {
+        getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE).edit { putBoolean(key, value) }
+    }
+
     private companion object {
         const val PREFERENCES_NAME = "settings"
         const val LANGUAGE_KEY = "language"
+        const val SOUND_KEY = "sound_enabled"
+        const val REDUCED_MOTION_KEY = "reduced_motion"
     }
 }

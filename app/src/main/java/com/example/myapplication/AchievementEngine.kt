@@ -2,6 +2,7 @@ package com.example.myapplication
 
 data class LifetimeStats(
     val clicks: Long = 0L,
+    val bestCombo: Int = 0,
     val debrisCollected: Long = 0L,
     val casesOpened: Int = 0,
     val eventsCompleted: Int = 0,

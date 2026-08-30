@@ -74,12 +74,11 @@ fun SpaceTab(
     Surface(
         modifier = modifier.height(48.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        color = if (selected) Color.Transparent else Color.White.copy(alpha = .035f),
-        border = null,
+        color = if (selected) accent.copy(alpha = .14f) else Color.White.copy(alpha = .035f),
+        border = if (selected) BorderStroke(1.dp, accent.copy(alpha = .46f)) else null,
         shadowElevation = 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
-        if (selected) Image(painterResource(R.drawable.ui_action_frame_v2), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, alpha = .48f)
         Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             if (iconSheetIndex != null) {
                 GeneratedSheetIcon(R.drawable.shop_ui_minimal_sheet_v1, iconSheetIndex, 19.dp, columns = 4, rows = 4)
@@ -123,7 +122,7 @@ fun SpaceDialog(
             modifier = modifier.widthIn(max = 640.dp).fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
             color = AppColors.CardBackground,
-            border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.35f)),
+            border = null,
             shadowElevation = 18.dp
         ) {
             Box {

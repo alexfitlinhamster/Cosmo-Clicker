@@ -2,8 +2,6 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,6 +31,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.myapplication.*
 import com.example.myapplication.R as GameR
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.utils.formatNum
 
 @Composable
@@ -45,9 +44,8 @@ fun GalaxyRouteDialog(viewModel: GameViewModel, state: GameState, onDismiss: () 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(.9f),
-            shape = RoundedCornerShape(28.dp),
-            color = Color.Transparent,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF5AD9FF).copy(.28f))
+            shape = RoundedCornerShape(SpaceDesign.SheetRadius),
+            color = Color.Transparent
         ) {
             Column(
                 Modifier
@@ -72,7 +70,6 @@ fun GalaxyRouteDialog(viewModel: GameViewModel, state: GameState, onDismiss: () 
                         val current = id == state.currentPlanetId
                         val requiredFleet = EconomyBalance.requiredActiveDronesForPlanet(index)
                         val requiredDrone = EconomyBalance.requiredDroneIdForPlanet(index)
-                        val requiredPrestige = EconomyBalance.requiredPrestigeForPlanet(index)
                         val fleetReady = EconomyBalance.planetFleetObjectiveMet(state, index)
                         val canBuy = isNext && state.totalDebris >= planet.price && fleetReady
 
@@ -85,16 +82,6 @@ fun GalaxyRouteDialog(viewModel: GameViewModel, state: GameState, onDismiss: () 
                                 alignRight = index % 2 == 0
                             )
                         }
-                        if (requiredPrestige > EconomyBalance.requiredPrestigeForPlanet(index - 1)) {
-                            RouteCheckpoint(
-                                iconRes = GameR.drawable.ic_prestige_hologram_v2,
-                                text = stringResource(GameR.string.next_goal_prestige, state.lifetimeStats.prestiges, requiredPrestige),
-                                completed = state.lifetimeStats.prestiges >= requiredPrestige,
-                                visible = isNext || owned,
-                                alignRight = index % 2 == 0
-                            )
-                        }
-
                         PlanetRouteNode(
                             planet = planet,
                             id = id,
@@ -109,8 +96,6 @@ fun GalaxyRouteDialog(viewModel: GameViewModel, state: GameState, onDismiss: () 
                             requirement = when {
                                 requiredDrone != null && requiredDrone !in state.discoveredDroneIds ->
                                     stringResource(GameR.string.next_goal_drone)
-                                state.lifetimeStats.prestiges < requiredPrestige ->
-                                    stringResource(GameR.string.next_goal_prestige, state.lifetimeStats.prestiges, requiredPrestige)
                                 requiredFleet > 0 && !fleetReady ->
                                     stringResource(GameR.string.next_goal_fleet, state.activeFleetCounts.values.sum(), requiredFleet)
                                 else -> null
@@ -157,7 +142,6 @@ private fun PlanetRouteNode(
                     .size(68.dp)
                     .shadow(if (current) 18.dp else 4.dp, CircleShape, spotColor = accent)
                     .background(Color(0xFF091122), CircleShape)
-                    .border(if (current) 3.dp else 1.dp, accent, CircleShape)
                     .padding(5.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -187,8 +171,6 @@ private fun PlanetRouteNode(
                 .padding(bottom = 12.dp)
                 .clip(RoundedCornerShape(18.dp))
                 .background(if (current) Color(0xFF123047) else Color.White.copy(.045f))
-                .border(1.dp, accent.copy(if (current || isNext) .65f else .18f), RoundedCornerShape(18.dp))
-                .clickable(enabled = owned || canBuy, onClick = onClick)
                 .padding(horizontal = 13.dp, vertical = 11.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -201,15 +183,26 @@ private fun PlanetRouteNode(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                RouteStatePill(
-                    text = when {
+                val actionText = when {
                         current -> stringResource(GameR.string.current_world)
                         owned -> stringResource(GameR.string.select)
                         isNext -> formatNum(price)
                         else -> "•••"
-                    },
-                    color = accent
-                )
+                    }
+                if (owned || isNext) {
+                    Button(
+                        onClick = onClick,
+                        enabled = !current && (owned || canBuy),
+                        modifier = Modifier.widthIn(min = 76.dp, max = 112.dp).height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        compact = true,
+                        generatedArtwork = true
+                    ) {
+                        Text(actionText, fontSize = 10.sp, fontWeight = FontWeight.Black, maxLines = 1)
+                    }
+                } else {
+                    RouteStatePill(actionText, accent)
+                }
             }
             if (revealed) {
                 Text(localizedPlanetBonus(id), color = AppColors.Secondary, fontSize = 11.sp, maxLines = 2, lineHeight = 13.sp)
@@ -228,7 +221,7 @@ private fun RouteCheckpoint(iconRes: Int, text: String, completed: Boolean, visi
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).scale(scaleX = if (alignRight) -1f else 1f, scaleY = 1f)) {
         Column(Modifier.width(76.dp).fillMaxHeight().scale(scaleX = if (alignRight) -1f else 1f, scaleY = 1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
-                Modifier.size(42.dp).background(Color(0xFF10182A), CircleShape).border(1.dp, accent.copy(.7f), CircleShape).padding(5.dp),
+                Modifier.size(42.dp).background(Color(0xFF10182A), CircleShape).padding(5.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Image(painterResource(iconRes), null, Modifier.fillMaxSize().alpha(if (visible) 1f else .1f), contentScale = ContentScale.Fit)
@@ -254,7 +247,7 @@ private fun RouteCheckpoint(iconRes: Int, text: String, completed: Boolean, visi
 private fun RouteStatePill(text: String, color: Color) {
     Text(
         text,
-        modifier = Modifier.background(color.copy(.14f), RoundedCornerShape(50)).border(1.dp, color.copy(.45f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp),
+        modifier = Modifier.background(color.copy(.14f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp),
         color = color,
         fontSize = 10.sp,
         fontWeight = FontWeight.Black
@@ -263,7 +256,7 @@ private fun RouteStatePill(text: String, color: Color) {
 
 @Composable
 private fun StatusDot(modifier: Modifier, color: Color, label: String) {
-    Box(modifier.size(20.dp).background(color, CircleShape).border(2.dp, Color(0xFF071426), CircleShape), contentAlignment = Alignment.Center) {
+    Box(modifier.size(20.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
         Text(label, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
     }
 }

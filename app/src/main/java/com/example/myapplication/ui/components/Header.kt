@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,6 +32,7 @@ import com.example.myapplication.R
 import com.example.myapplication.GameState
 import com.example.myapplication.EconomyBalance
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 
@@ -65,7 +67,7 @@ fun Header(
         modifier = Modifier
             .padding(top = 44.dp, start = 12.dp, end = 12.dp, bottom = 10.dp)
             .fillMaxWidth()
-            .background(AppColors.CardBackground.copy(alpha = .92f), RoundedCornerShape(18.dp))
+            .background(Brush.verticalGradient(listOf(Color(0xA80A1322), Color.Transparent)))
             .padding(8.dp)
     ) {
         Row(
@@ -83,7 +85,7 @@ fun Header(
                 modifier = Modifier
                     .weight(1f)
                     .height(40.dp)
-                    .background(AppColors.Surface, RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = .22f), RoundedCornerShape(SpaceDesign.ControlRadius))
                     .padding(horizontal = 9.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -170,15 +172,12 @@ fun Header(
 
         if (nextPlanetIndex != null && nextPlanetPrice != null) {
             val requiredDrone = EconomyBalance.requiredDroneIdForPlanet(nextPlanetIndex)
-            val requiredPrestige = EconomyBalance.requiredPrestigeForPlanet(nextPlanetIndex)
             val requiredFleet = EconomyBalance.requiredActiveDronesForPlanet(nextPlanetIndex)
             val activeFleet = state.activeFleetCounts.values.sum()
             val needsDrone = requiredDrone != null && requiredDrone !in state.discoveredDroneIds
-            val needsPrestige = !needsDrone && state.lifetimeStats.prestiges < requiredPrestige
-            val needsFleet = !needsDrone && !needsPrestige && activeFleet < requiredFleet
+            val needsFleet = !needsDrone && activeFleet < requiredFleet
             val progress = when {
                 needsDrone -> 0f
-                needsPrestige -> (state.lifetimeStats.prestiges.toFloat() / requiredPrestige.coerceAtLeast(1)).coerceIn(0f, 1f)
                 needsFleet -> (activeFleet.toFloat() / requiredFleet.coerceAtLeast(1)).coerceIn(0f, 1f)
                 else -> EconomyBalance.planetUnlockProgress(state.totalDebris, nextPlanetPrice)
             }
@@ -186,7 +185,7 @@ fun Header(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 6.dp)
-                    .background(AppColors.Surface, RoundedCornerShape(12.dp))
+                    .background(AppColors.Surface, RoundedCornerShape(SpaceDesign.ControlRadius))
                     .clickable(onClick = onRouteClick)
                     .padding(horizontal = 9.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -212,7 +211,6 @@ fun Header(
                 Text(
                     when {
                         needsDrone -> stringResource(R.string.goal_action_open_case)
-                        needsPrestige -> stringResource(R.string.goal_action_prestige)
                         needsFleet -> stringResource(R.string.goal_action_deploy, requiredFleet, activeFleet)
                         else -> stringResource(R.string.goal_action_save, formatNum((nextPlanetPrice - state.totalDebris).coerceAtLeast(0.0)))
                     },
@@ -253,7 +251,7 @@ private fun HeaderAction(icon: Int, description: Int, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .size(48.dp)
-            .background(AppColors.SurfaceRaised, CircleShape)
+            .background(Color.Black.copy(alpha = .18f), CircleShape)
     ) {
         Icon(
             painter = painterResource(icon),

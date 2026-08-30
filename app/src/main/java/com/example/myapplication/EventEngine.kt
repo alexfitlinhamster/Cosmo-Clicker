@@ -812,7 +812,12 @@ object EventEngine {
         timestamp: Long,
         reward: Double = 0.0
     ): GameState = state.copy(
-        eventLog = (state.eventLog + EventLogEntry(timestamp, type, outcome, reward)).takeLast(30)
+        eventLog = (state.eventLog + EventLogEntry(timestamp, type, outcome, reward)).takeLast(30),
+        encounteredEventTypes = if (outcome == EventLogOutcome.STARTED) {
+            state.encounteredEventTypes
+        } else {
+            state.encounteredEventTypes + type
+        }
     )
 
 }

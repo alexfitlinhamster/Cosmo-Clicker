@@ -2,7 +2,6 @@ package com.example.myapplication.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,17 +25,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.GameState
+import com.example.myapplication.DailyRewardEngine
 import com.example.myapplication.Quest
 import com.example.myapplication.QuestCadence
 import com.example.myapplication.QuestDifficulty
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.utils.formatNum
 
 @Composable
 fun QuestPanel(
     state: GameState,
     onClaim: (String) -> Unit,
+    onClaimDailyReward: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -45,17 +47,16 @@ fun QuestPanel(
             .widthIn(max = 720.dp)
             .fillMaxWidth()
             .fillMaxHeight(0.72f),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+        shape = RoundedCornerShape(topStart = SpaceDesign.SheetRadius, topEnd = SpaceDesign.SheetRadius),
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground)
     ) {
         Column(
             modifier = Modifier
                 .background(Brush.verticalGradient(listOf(Color(0xFF0B1A2C), Color(0xFF07101E))))
-                .padding(18.dp)
+                .padding(SpaceDesign.SheetPadding)
         ) {
             SpaceSheetHeader(
-                title = stringResource(R.string.quests),
+                title = stringResource(R.string.goals),
                 subtitle = stringResource(R.string.missions_subtitle),
                 onClose = onClose
             )
@@ -70,6 +71,26 @@ fun QuestPanel(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item(key = "daily_reward") {
+                        val reward = DailyRewardEngine.preview(state)
+                        val available = DailyRewardEngine.canClaim(state)
+                        Column(
+                            Modifier.fillMaxWidth()
+                                .background(Brush.horizontalGradient(listOf(AppColors.Warning.copy(.18f), AppColors.Primary.copy(.10f))), RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(stringResource(R.string.daily_reward_title), color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.daily_reward_day, reward.day, formatNum(reward.debris)), color = AppColors.TextMuted, fontSize = 11.sp)
+                            Button(
+                                onClick = onClaimDailyReward,
+                                enabled = available,
+                                modifier = Modifier.fillMaxWidth().height(48.dp)
+                            ) {
+                                Text(stringResource(if (available) R.string.daily_reward_claim else R.string.daily_reward_claimed))
+                            }
+                        }
+                    }
                     val daily = state.activeQuests.filter { it.cadence == QuestCadence.DAILY }
                     val weekly = state.activeQuests.filter { it.cadence == QuestCadence.WEEKLY }
                     item(key = "daily_header") {
@@ -120,7 +141,6 @@ private fun QuestResetTimer(time: String) {
     Row(
         modifier = Modifier
             .background(Color(0xFF09182B).copy(alpha = 0.92f), RoundedCornerShape(12.dp))
-            .border(1.dp, AppColors.Primary.copy(alpha = 0.38f), RoundedCornerShape(12.dp))
             .padding(horizontal = 9.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -204,7 +224,6 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                 ),
                 RoundedCornerShape(16.dp)
             )
-            .border(1.dp, if (quest.isCompleted) AppColors.Primary.copy(alpha = 0.58f) else Color.White.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -272,7 +291,8 @@ fun QuestItemRow(quest: Quest, onClaim: (String) -> Unit) {
                 modifier = Modifier.align(Alignment.End).widthIn(min = 120.dp, max = 168.dp).height(48.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                 style = CosmicButtonStyle.Reward,
-                compact = true
+                compact = true,
+                generatedArtwork = true
             ) {
                 Text(stringResource(R.string.claim), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }

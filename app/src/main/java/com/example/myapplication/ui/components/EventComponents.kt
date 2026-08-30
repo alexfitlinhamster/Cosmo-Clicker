@@ -186,15 +186,15 @@ private fun eventAccent(type: GameEventType): Color = when (type) {
 }
 
 private fun eventIconResource(type: GameEventType): Int = when (type) {
-    GameEventType.METEOR_SHOWER -> R.drawable.event_meteor_minimal_v2
-    GameEventType.DISTRESS_SIGNAL -> R.drawable.event_distress_minimal_v2
-    GameEventType.ABANDONED_STATION -> R.drawable.event_station_minimal_v2
-    GameEventType.SOLAR_FLARE -> R.drawable.event_solar_minimal_v2
-    GameEventType.TRADING_SHIP -> R.drawable.event_trade_minimal_v2
-    GameEventType.PIRATE_RAID -> R.drawable.event_pirate_minimal_v2
-    GameEventType.BLACK_HOLE -> R.drawable.event_black_hole_minimal_v2
-    GameEventType.CYBER_VIRUS -> R.drawable.event_cyber_minimal_v2
-    GameEventType.STORM -> R.drawable.event_storm_minimal_v2
+    GameEventType.METEOR_SHOWER -> R.drawable.event_meteor_minimal_v3
+    GameEventType.DISTRESS_SIGNAL -> R.drawable.event_distress_minimal_v3
+    GameEventType.ABANDONED_STATION -> R.drawable.event_station_minimal_v3
+    GameEventType.SOLAR_FLARE -> R.drawable.event_solar_minimal_v3
+    GameEventType.TRADING_SHIP -> R.drawable.event_trade_minimal_v3
+    GameEventType.PIRATE_RAID -> R.drawable.event_pirate_minimal_v3
+    GameEventType.BLACK_HOLE -> R.drawable.event_black_hole_minimal_v3
+    GameEventType.CYBER_VIRUS -> R.drawable.event_cyber_minimal_v3
+    GameEventType.STORM -> R.drawable.event_storm_minimal_v3
 }
 
 @Composable
@@ -206,9 +206,9 @@ fun EventChallengeComponent(
 ) {
     val size = 76.dp
     val icon = if (event.type == GameEventType.STORM) {
-        R.drawable.event_storm_minimal_v2
+        R.drawable.event_storm_minimal_v3
     } else {
-        R.drawable.event_solar_minimal_v2
+        R.drawable.event_solar_minimal_v3
     }
     Box(
         modifier = Modifier
@@ -259,7 +259,7 @@ fun MeteorInterceptChallenge(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painterResource(R.drawable.event_meteor_minimal_v2),
+                    painterResource(R.drawable.event_meteor_minimal_v3),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().padding(if (active) 5.dp else 9.dp),
                     alpha = if (active) 1f else .34f
@@ -491,7 +491,7 @@ fun DistressSignalScanner(
             Box(Modifier.size(190.dp).border(1.dp, accent.copy(alpha = 0.18f), CircleShape))
             Box(Modifier.size(132.dp).border(1.dp, accent.copy(alpha = 0.24f), CircleShape))
             Image(
-                painterResource(R.drawable.event_distress_minimal_v2),
+                painterResource(R.drawable.event_distress_minimal_v3),
                 contentDescription = null,
                 modifier = Modifier.size(94.dp).graphicsLayer {
                     scaleX = pulse
@@ -590,7 +590,7 @@ fun AbandonedStationAccess(
             textAlign = TextAlign.Center
         )
         Image(
-            painterResource(R.drawable.event_station_minimal_v2),
+            painterResource(R.drawable.event_station_minimal_v3),
             contentDescription = null,
             modifier = Modifier.fillMaxWidth().height(104.dp),
             contentScale = ContentScale.Fit
@@ -689,7 +689,7 @@ fun BlackHoleComponent(
         Box(Modifier.size(218.dp).border(1.dp, Color(0xFF9C72E8).copy(alpha = 0.25f), CircleShape))
         Box(Modifier.size(170.dp).border(1.dp, Color(0xFF66D9FF).copy(alpha = 0.18f), CircleShape))
         Image(
-            painter = painterResource(id = R.drawable.event_black_hole_minimal_v2),
+            painter = painterResource(id = R.drawable.event_black_hole_minimal_v3),
             contentDescription = stringResource(R.string.event_black_hole),
             modifier = Modifier.size(blackHoleSize).graphicsLayer {
                 rotationZ = rotation
@@ -770,7 +770,7 @@ fun BlackHoleEventDialog(event: GameEvent, tapsLeft: Int, onDismiss: () -> Unit)
         onDismiss = onDismiss,
         content = {
             Image(
-                painter = painterResource(R.drawable.event_black_hole_minimal_v2),
+                painter = painterResource(R.drawable.event_black_hole_minimal_v3),
                 contentDescription = null,
                 modifier = Modifier.fillMaxWidth().height(150.dp)
             )
@@ -984,7 +984,7 @@ fun TradingShipComponent(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
-                painter = painterResource(R.drawable.event_trade_minimal_v2),
+                painter = painterResource(R.drawable.event_trade_minimal_v3),
                 contentDescription = stringResource(R.string.event_trading_ship),
                 modifier = Modifier.size(88.dp)
             )
@@ -1036,7 +1036,7 @@ fun TradingShipMarket(
             )
             Spacer(Modifier.height(8.dp))
             Image(
-                painter = painterResource(R.drawable.event_trade_minimal_v2),
+                painter = painterResource(R.drawable.event_trade_minimal_v3),
                 contentDescription = null,
                 modifier = Modifier.size(104.dp)
             )
@@ -1187,7 +1187,6 @@ fun EventInfoDialog(event: GameEvent, onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White.copy(alpha = .035f), RoundedCornerShape(14.dp))
-                    .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(14.dp))
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -1237,7 +1236,7 @@ fun CyberVirusDialog(event: GameEvent, onResolved: (Boolean) -> Unit, onDismiss:
         content = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(
-                    painter = painterResource(R.drawable.event_cyber_minimal_v2),
+                    painter = painterResource(R.drawable.event_cyber_minimal_v3),
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth().height(128.dp).clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop

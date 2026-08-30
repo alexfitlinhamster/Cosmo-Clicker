@@ -50,7 +50,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         ItemConfig("amplifier", "Quantum Amplifier", 18_000.0, 220.0, R.drawable.upgrade_quantum_amplifier_v2),
         ItemConfig("matrix", "Neural Matrix", 70_000.0, 650.0, R.drawable.upgrade_neural_matrix_v2),
         ItemConfig("compressor", "Void Compressor", 260_000.0, 1_900.0, R.drawable.upgrade_void_compressor_v2),
-        ItemConfig("singularity", "Singularity Tap", 950_000.0, 5_500.0, R.drawable.upgrade_singularity_tap_v2)
+        ItemConfig("singularity", "Singularity Tap", 950_000.0, 5_500.0, R.drawable.upgrade_singularity_tap_v2),
+        ItemConfig("antimatter_lens", "Antimatter Lens", 3_500_000.0, 16_000.0, R.drawable.upgrade_antimatter_lens_v1),
+        ItemConfig("pulsar_battery", "Pulsar Battery", 12_500_000.0, 46_000.0, R.drawable.upgrade_pulsar_battery_v1),
+        ItemConfig("graviton_press", "Graviton Press", 45_000_000.0, 132_000.0, R.drawable.upgrade_graviton_press_v1),
+        ItemConfig("nanite_swarm", "Nanite Swarm", 165_000_000.0, 380_000.0, R.drawable.upgrade_nanite_swarm_v1),
+        ItemConfig("dark_matter_forge", "Dark Matter Forge", 600_000_000.0, 1_100_000.0, R.drawable.upgrade_dark_matter_forge_v1),
+        ItemConfig("temporal_relay", "Temporal Relay", 2_200_000_000.0, 3_200_000.0, R.drawable.upgrade_temporal_relay_v1),
+        ItemConfig("stellar_resonator", "Stellar Resonator", 8_000_000_000.0, 9_200_000.0, R.drawable.upgrade_stellar_resonator_v1),
+        ItemConfig("entropy_engine", "Entropy Engine", 29_000_000_000.0, 26_500_000.0, R.drawable.upgrade_entropy_engine_v1),
+        ItemConfig("reality_anchor", "Reality Anchor", 105_000_000_000.0, 76_000_000.0, R.drawable.upgrade_reality_anchor_v1),
+        ItemConfig("omega_core", "Omega Core", 380_000_000_000.0, 220_000_000.0, R.drawable.upgrade_omega_core_v1)
     )
 
     val fleetItems = (1..29).map { i ->
@@ -156,10 +166,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             .orEmpty().filterTo(mutableSetOf()) { it in fleetById }
         val droneParts = fleetItems.associate { it.id to prefs.getInt("droneParts_${it.id}", 0).coerceAtLeast(0) }
 
-        val ownedPlanets = prefs.getStringSet("ownedPlanets", setOf("p1"))
-            ?.filterTo(mutableSetOf()) { it in planets }
-            .orEmpty()
-            .plus("p1")
+        val ownedPlanets = ProgressionSaveNormalizer.ownedPlanets(
+            prefs.getStringSet("ownedPlanets", setOf("p1")).orEmpty()
+        )
 
         // Load Quests
         val activeQuests = mutableListOf<Quest>()
@@ -204,8 +213,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        val storedPlanetId = prefs.getString("currentPlanetId", "p1") ?: "p1"
-        val currentPlanetId = storedPlanetId.takeIf { it in ownedPlanets && it in planets } ?: "p1"
+        val currentPlanetId = ProgressionSaveNormalizer.currentPlanet(
+            prefs.getString("currentPlanetId", "p1"),
+            ownedPlanets
+        )
+        val loadedEventLog = EventLogCodec.decode(prefs.getString("eventLog", null))
 
         val loadedState = GameState(
             totalDebris = loadPreciseDouble("totalDebris", 50.0).finiteOr(50.0).coerceAtLeast(0.0),
@@ -248,8 +260,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             weeklyQuestWeek = prefs.getLong("weeklyQuestWeek", -1L),
             dailyQuestsCompletedAt = prefs.getLong("dailyQuestsCompletedAt", -1L),
             weeklyQuestsCompletedAt = prefs.getLong("weeklyQuestsCompletedAt", -1L),
+            lastDailyRewardDay = prefs.getLong("lastDailyRewardDay", -1L),
+            dailyRewardStreak = prefs.getInt("dailyRewardStreak", 0).coerceIn(0, 7),
             lifetimeStats = LifetimeStats(
                 clicks = prefs.getLong("lifetimeClicks", 0L).coerceAtLeast(0L),
+                bestCombo = prefs.getInt("lifetimeBestCombo", 0).coerceIn(0, MAX_COMBO),
                 debrisCollected = prefs.getLong("lifetimeDebrisCollected", 0L).coerceAtLeast(0L),
                 casesOpened = prefs.getInt("lifetimeCasesOpened", 0).coerceAtLeast(0),
                 eventsCompleted = prefs.getInt("lifetimeEventsCompleted", 0).coerceAtLeast(0),
@@ -257,7 +272,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             ),
             unlockedAchievementIds = prefs.getStringSet("unlockedAchievementIds", emptySet()) ?: emptySet(),
             claimedAchievementIds = prefs.getStringSet("claimedAchievementIds", emptySet()) ?: emptySet(),
-            eventLog = EventLogCodec.decode(prefs.getString("eventLog", null)),
+            eventLog = loadedEventLog,
+            encounteredEventTypes = EventDiscoveryNormalizer.restore(
+                prefs.getStringSet("encounteredEventTypes", emptySet()).orEmpty(),
+                loadedEventLog
+            ),
             weeklyGalaxy = WeeklyGalaxy(
                 weekKey = prefs.getLong("galaxyWeekKey", -1L),
                 rule = prefs.getString("galaxyRule", WeeklyRule.CLICKS_ONLY.name)
@@ -321,7 +340,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putLong("weeklyQuestWeek", state.weeklyQuestWeek)
             putLong("dailyQuestsCompletedAt", state.dailyQuestsCompletedAt)
             putLong("weeklyQuestsCompletedAt", state.weeklyQuestsCompletedAt)
+            putLong("lastDailyRewardDay", state.lastDailyRewardDay)
+            putInt("dailyRewardStreak", state.dailyRewardStreak)
             putLong("lifetimeClicks", state.lifetimeStats.clicks)
+            putInt("lifetimeBestCombo", state.lifetimeStats.bestCombo)
             putLong("lifetimeDebrisCollected", state.lifetimeStats.debrisCollected)
             putInt("lifetimeCasesOpened", state.lifetimeStats.casesOpened)
             putInt("lifetimeEventsCompleted", state.lifetimeStats.eventsCompleted)
@@ -329,6 +351,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             putStringSet("unlockedAchievementIds", state.unlockedAchievementIds)
             putStringSet("claimedAchievementIds", state.claimedAchievementIds)
             putString("eventLog", EventLogCodec.encode(state.eventLog))
+            putStringSet("encounteredEventTypes", state.encounteredEventTypes.map { it.name }.toSet())
             putLong("galaxyWeekKey", state.weeklyGalaxy.weekKey)
             putString("galaxyRule", state.weeklyGalaxy.rule.name)
             putBoolean("galaxyActive", state.weeklyGalaxy.active)
@@ -1097,7 +1120,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     debrisEarned = currentState.sessionStats.debrisEarned + clickPower
                 ),
                 lifetimeStats = currentState.lifetimeStats.copy(
-                    clicks = currentState.lifetimeStats.clicks + 1
+                    clicks = currentState.lifetimeStats.clicks + 1,
+                    bestCombo = maxOf(currentState.lifetimeStats.bestCombo, _combo.value)
                 )
             )
             if (next.weeklyGalaxy.active && next.weeklyGalaxy.rule == WeeklyRule.CLICKS_ONLY) {
@@ -1465,6 +1489,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 weeklyQuestsCompletedAt = weeklyCompletedAt
             )
         }
+    }
+
+    fun claimDailyReward() {
+        updateStoreState("daily_reward") { state -> DailyRewardEngine.claim(state) }
     }
 
     private fun startQuestRefreshLoop() {

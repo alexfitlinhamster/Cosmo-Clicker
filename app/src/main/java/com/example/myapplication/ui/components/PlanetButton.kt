@@ -25,7 +25,13 @@ import com.example.myapplication.ui.GameConstants
 import kotlinx.coroutines.delay
 
 @Composable
-fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifier, onClick: (Float, Float) -> Unit) {
+fun PlanetButton(
+    planetId: String,
+    planetConfig: PlanetConfig,
+    modifier: Modifier,
+    reducedMotion: Boolean = false,
+    onClick: (Float, Float) -> Unit
+) {
     var scaleVal by remember { mutableFloatStateOf(1f) }
     val animatedScale by animateFloatAsState(
         targetValue = scaleVal,
@@ -35,8 +41,8 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
     val isLocked = planetConfig.price < 0
     val containerSize = GameConstants.PlanetSize
 
-    val infiniteTransition = rememberInfiniteTransition(label = "planet_rotation")
-    val rotation by infiniteTransition.animateFloat(
+    val infiniteTransition = if (!reducedMotion) rememberInfiniteTransition(label = "planet_rotation") else null
+    val rotation = infiniteTransition?.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -44,7 +50,7 @@ fun PlanetButton(planetId: String, planetConfig: PlanetConfig, modifier: Modifie
             repeatMode = RepeatMode.Restart
         ),
         label = "rotation"
-    )
+    )?.value ?: 0f
 
     Box(
         modifier = modifier

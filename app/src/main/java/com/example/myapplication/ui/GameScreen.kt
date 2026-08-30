@@ -65,6 +65,10 @@ import java.util.concurrent.atomic.AtomicLong
 fun GameScreen(
     selectedLanguage: String?,
     onLanguageSelected: (String?) -> Unit,
+    soundEnabled: Boolean = true,
+    onSoundEnabledChanged: (Boolean) -> Unit = {},
+    reducedMotion: Boolean = false,
+    onReducedMotionChanged: (Boolean) -> Unit = {},
     viewModel: GameViewModel = viewModel()
 ) {
     val state by viewModel.gameState.collectAsState()
@@ -74,7 +78,9 @@ fun GameScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val soundManager = remember(context) { SoundManager(context) }
-    LaunchedEffect(soundManager) { soundManager.resumeBackgroundMusic() }
+    LaunchedEffect(soundManager, soundEnabled) {
+        if (soundEnabled) soundManager.resumeBackgroundMusic() else soundManager.pauseBackgroundMusic()
+    }
     val floatingTextId = remember { AtomicLong(0L) }
     val floatingTexts = remember { mutableStateListOf<FloatingTextData?>().apply { repeat(MAX_FLOATING_TEXTS) { add(null) } } }
     var nextFloatingTextSlot by remember { mutableIntStateOf(0) }
@@ -82,6 +88,7 @@ fun GameScreen(
     var isShopOpen by remember { mutableStateOf(false) }
     var isHangarOpen by remember { mutableStateOf(false) }
     var isAchievementsOpen by remember { mutableStateOf(false) }
+    var isStatisticsOpen by remember { mutableStateOf(false) }
     var isQuestOpen by remember { mutableStateOf(false) }
     var isPrestigeShopOpen by remember { mutableStateOf(false) }
     var isGalaxyRouteOpen by rememberSaveable { mutableStateOf(false) }
@@ -100,6 +107,7 @@ fun GameScreen(
             isShopOpen ||
             isHangarOpen ||
             isAchievementsOpen ||
+            isStatisticsOpen ||
             isPrestigeShopOpen ||
             isGalaxyRouteOpen ||
             isQuestOpen
@@ -110,6 +118,7 @@ fun GameScreen(
             isShopOpen -> isShopOpen = false
             isHangarOpen -> isHangarOpen = false
             isAchievementsOpen -> isAchievementsOpen = false
+            isStatisticsOpen -> isStatisticsOpen = false
             isPrestigeShopOpen -> isPrestigeShopOpen = false
             isGalaxyRouteOpen -> isGalaxyRouteOpen = false
             isQuestOpen -> isQuestOpen = false
@@ -121,12 +130,14 @@ fun GameScreen(
     }
 
     LaunchedEffect(state.activeEvent?.startedAt) {
-        if (state.activeEvent != null) soundManager.playEventStart()
+        if (soundEnabled && state.activeEvent != null) soundManager.playEventStart()
     }
 
     LaunchedEffect(state.eventChainResult) {
         state.eventChainResult?.let {
-            if (it.success) soundManager.playEventSuccess() else soundManager.playEventFailure()
+            if (soundEnabled) {
+                if (it.success) soundManager.playEventSuccess() else soundManager.playEventFailure()
+            }
             delay(1_200L)
             viewModel.clearEventChainResult()
         }
@@ -135,7 +146,7 @@ fun GameScreen(
     var previousOwnedPlanets by remember { mutableStateOf(state.ownedPlanets) }
     LaunchedEffect(state.ownedPlanets) {
         if (state.ownedPlanets.size > previousOwnedPlanets.size) {
-            soundManager.playPlanetUnlock()
+            if (soundEnabled) soundManager.playPlanetUnlock()
             unlockedPlanetId = (state.ownedPlanets - previousOwnedPlanets)
                 .maxByOrNull(EconomyBalance::planetIndex)
         }
@@ -152,7 +163,7 @@ fun GameScreen(
     var previousClaimedAchievements by remember { mutableStateOf(state.claimedAchievementIds) }
     LaunchedEffect(state.claimedAchievementIds) {
         if (state.claimedAchievementIds.size > previousClaimedAchievements.size) {
-            soundManager.playAchievementClaimed()
+            if (soundEnabled) soundManager.playAchievementClaimed()
         }
         previousClaimedAchievements = state.claimedAchievementIds
     }
@@ -162,7 +173,7 @@ fun GameScreen(
             when (event) {
                 Lifecycle.Event.ON_START -> {
                     viewModel.resumeSimulation()
-                    soundManager.resumeBackgroundMusic()
+                    if (soundEnabled) soundManager.resumeBackgroundMusic()
                 }
                 Lifecycle.Event.ON_STOP -> {
                     viewModel.pauseSimulation()
@@ -174,7 +185,7 @@ fun GameScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             viewModel.resumeSimulation()
-            soundManager.resumeBackgroundMusic()
+            if (soundEnabled) soundManager.resumeBackgroundMusic()
         }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -189,7 +200,7 @@ fun GameScreen(
     val nextPlanetImageRes = nextPlanetIndex?.let { viewModel.planets["p$it"]?.imageRes }
 
     // Логика выбора фона в зависимости от активного ивента
-    val backgroundRes = R.drawable.background_cosmic_game
+    val backgroundRes = R.drawable.background_cosmic_game_v2
     val eventTint = when (state.activeEvent?.type) {
         GameEventType.STORM, GameEventType.BLACK_HOLE -> Color(0xFF5A3D8F)
         GameEventType.SOLAR_FLARE -> Color(0xFF9A512F)
@@ -211,8 +222,8 @@ fun GameScreen(
         }
     }
 
-    val spaceMotion = rememberInfiniteTransition(label = "space_background")
-    val starTwinklePhase by spaceMotion.animateFloat(
+    val spaceMotion = if (!reducedMotion) rememberInfiniteTransition(label = "space_background") else null
+    val starTwinklePhase = spaceMotion?.animateFloat(
         initialValue = 0f,
         targetValue = (Math.PI * 2.0).toFloat(),
         animationSpec = infiniteRepeatable(
@@ -220,8 +231,8 @@ fun GameScreen(
             repeatMode = RepeatMode.Restart
         ),
         label = "star_twinkle_phase"
-    )
-    val cosmicParticlePhase by spaceMotion.animateFloat(
+    )?.value ?: 0f
+    val cosmicParticlePhase = spaceMotion?.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -229,10 +240,10 @@ fun GameScreen(
             repeatMode = RepeatMode.Restart
         ),
         label = "cosmic_particle_phase"
-    )
+    )?.value ?: 0f
     // A single clock drives every rotor. Previously each drone owned an infinite
     // transition, multiplying animation work as the active fleet grew.
-    val sharedRotorPhase by spaceMotion.animateFloat(
+    val sharedRotorPhase = spaceMotion?.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -240,7 +251,7 @@ fun GameScreen(
             repeatMode = RepeatMode.Restart
         ),
         label = "shared_drone_rotor_phase"
-    )
+    )?.value ?: 0f
 
     Box(modifier = Modifier.fillMaxSize()) {
         // ДИНАМИЧЕСКИЙ ФОН
@@ -251,7 +262,7 @@ fun GameScreen(
             contentScale = ContentScale.FillBounds
         )
 
-        CosmicParticleTrails(cosmicParticlePhase)
+        if (!reducedMotion) CosmicParticleTrails(cosmicParticlePhase)
 
         // Затемнение для читаемости элементов
         Box(
@@ -263,7 +274,7 @@ fun GameScreen(
 
         // Звезды
         repeat(GameConstants.StarCount) { index ->
-            Star(index = index, twinklePhase = starTwinklePhase)
+            Star(index = index, twinklePhase = starTwinklePhase, reduceMotion = reducedMotion)
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -313,11 +324,12 @@ fun GameScreen(
                 PlanetButton(
                         planetId = state.currentPlanetId,
                         planetConfig = viewModel.planets[state.currentPlanetId] ?: viewModel.planets.values.first(),
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        reducedMotion = reducedMotion
                     ) { x, y ->
                         val value = viewModel.onPlanetClick(x, y)
                         if (value > 0.0) {
-                            soundManager.playClick()
+                            if (soundEnabled) soundManager.playClick()
                             val planetWidthFraction = GameConstants.PlanetSize.value / maxWidth.value
                             val planetHeightFraction = GameConstants.PlanetSize.value / maxHeight.value
                             addFloatingText(
@@ -436,6 +448,13 @@ fun GameScreen(
                 onClose = { isAchievementsOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
+        } else if (isStatisticsOpen) {
+            StatisticsPanel(
+                viewModel = viewModel,
+                state = state,
+                onClose = { isStatisticsOpen = false },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         } else if (isPrestigeShopOpen) {
             PrestigeShopPanel(
                 viewModel = viewModel,
@@ -447,6 +466,7 @@ fun GameScreen(
             QuestPanel(
                 state = state,
                 onClaim = { viewModel.claimQuestReward(it) },
+                onClaimDailyReward = viewModel::claimDailyReward,
                 onClose = { isQuestOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
@@ -455,16 +475,15 @@ fun GameScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(AppColors.CardBackground.copy(alpha = .94f), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
-                    .border(1.dp, AppColors.Outline.copy(alpha = .45f), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
+                    .background(Color(0xB80A1322))
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 GameNavigationButton(
                     icon = R.drawable.ic_nav_quests_minimal,
-                    label = R.string.quests,
-                    description = R.string.quests,
+                    label = R.string.goals,
+                    description = R.string.goals,
                     onClick = { isQuestOpen = true },
                     modifier = Modifier.weight(1f)
                 )
@@ -482,19 +501,34 @@ fun GameScreen(
                     onClick = { isHangarOpen = true },
                     modifier = Modifier.weight(1f)
                 )
+                GameNavigationButton(
+                    icon = R.drawable.ic_nav_stats_minimal,
+                    label = R.string.statistics,
+                    description = R.string.open_statistics,
+                    onClick = { isStatisticsOpen = true },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
         if (autoClickBlockSeconds > 0) {
-            Surface(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 112.dp, start = 20.dp, end = 20.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = AppColors.Danger.copy(alpha = 0.94f),
-                shadowElevation = 8.dp
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 112.dp, start = 20.dp, end = 20.dp)
+                    .fillMaxWidth()
+                    .heightIn(min = 68.dp),
+                contentAlignment = Alignment.Center
             ) {
+                Image(
+                    painter = painterResource(R.drawable.ui_autoclick_warning_v1),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds
+                )
                 Text(
                     stringResource(R.string.autoclicker_detected, autoClickBlockSeconds),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp),
+                    modifier = Modifier.padding(horizontal = 44.dp, vertical = 14.dp),
                     color = Color.White,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -528,15 +562,19 @@ fun GameScreen(
             onClearReward = { viewModel.clearReward() },
             onClearBundleSummary = { viewModel.clearCaseBundleSummary() },
             onOpeningPulse = { frame ->
-                soundManager.playCaseOpeningPulse(frame, state.openingCaseType ?: com.example.myapplication.CaseType.COMMON)
+                if (soundEnabled) soundManager.playCaseOpeningPulse(frame, state.openingCaseType ?: com.example.myapplication.CaseType.COMMON)
             },
-            reduceMotion = false
+            reduceMotion = reducedMotion
         )
 
         if (showSettings) {
             SettingsScreen(
                 selectedLanguage = selectedLanguage,
                 onLanguageSelected = onLanguageSelected,
+                soundEnabled = soundEnabled,
+                onSoundEnabledChanged = onSoundEnabledChanged,
+                reducedMotion = reducedMotion,
+                onReducedMotionChanged = onReducedMotionChanged,
                 onAchievements = {
                     showSettings = false
                     isAchievementsOpen = true
@@ -623,8 +661,8 @@ fun GameScreen(
         }
 
         if (showStartScreen) {
-            val promptTransition = rememberInfiniteTransition(label = "start_prompt")
-            val animatedPromptOffset by promptTransition.animateFloat(
+            val promptTransition = if (!reducedMotion) rememberInfiniteTransition(label = "start_prompt") else null
+            val animatedPromptOffset = promptTransition?.animateFloat(
                 initialValue = 0f,
                 targetValue = -10f,
                 animationSpec = infiniteRepeatable(
@@ -632,8 +670,8 @@ fun GameScreen(
                     repeatMode = RepeatMode.Reverse
                 ),
                 label = "start_prompt_offset"
-            )
-            val animatedPromptAlpha by promptTransition.animateFloat(
+            )?.value ?: 0f
+            val animatedPromptAlpha = promptTransition?.animateFloat(
                 initialValue = 0.4f,
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
@@ -641,7 +679,7 @@ fun GameScreen(
                     repeatMode = RepeatMode.Reverse
                 ),
                 label = "start_prompt_alpha"
-            )
+            )?.value ?: 1f
             val promptOffset = animatedPromptOffset
             val promptAlpha = animatedPromptAlpha
 
@@ -657,7 +695,7 @@ fun GameScreen(
                         indication = null
                     ) {
                         scope.launch {
-                            soundManager.playClick()
+                            if (soundEnabled) soundManager.playClick()
                             // Анимация ухода вверх и исчезновения
                             launch {
                                 startScreenOffset.animateTo(
@@ -677,7 +715,7 @@ fun GameScreen(
                     }
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.play_fon_game),
+                    painter = painterResource(id = R.drawable.play_fon_game_v2),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
@@ -688,7 +726,7 @@ fun GameScreen(
                 CosmicParticleTrails(cosmicParticlePhase)
 
                 repeat(18) { index ->
-                    Star(index = index + 100, twinklePhase = starTwinklePhase)
+                    Star(index = index + 100, twinklePhase = starTwinklePhase, reduceMotion = reducedMotion)
                 }
 
                 Column(
@@ -700,10 +738,20 @@ fun GameScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(104.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Image(
+                        painter = painterResource(R.drawable.icon_game),
+                        contentDescription = null,
+                        modifier = Modifier.size(86.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        color = Color.White,
+                        fontSize = 23.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.4.sp
+                    )
+                    Box(modifier = Modifier.fillMaxWidth().height(86.dp), contentAlignment = Alignment.Center) {
                         Image(
                             painter = painterResource(R.drawable.ui_start_button_v2),
                             contentDescription = null,
@@ -761,22 +809,12 @@ private fun GameNavigationButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = AppColors.SurfaceRaised,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                AppColors.Primary.copy(alpha = .24f)
-            )
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = stringResource(description),
-                modifier = Modifier.padding(9.dp),
-                tint = Color.Unspecified
-            )
-        }
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = stringResource(description),
+            modifier = Modifier.size(38.dp),
+            tint = Color.Unspecified
+        )
         Spacer(Modifier.height(3.dp))
         Text(
             text = stringResource(label),

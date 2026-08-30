@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,6 +38,7 @@ import com.example.myapplication.R
 import com.example.myapplication.Technology
 import com.example.myapplication.ui.GameConstants
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.utils.formatNum
 import kotlinx.coroutines.delay
 import java.text.DateFormat
@@ -58,11 +58,10 @@ private fun LegacyOperationsPanel(
         modifier = modifier
             .fillMaxWidth()
             .fillMaxHeight(0.80f),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+        shape = RoundedCornerShape(topStart = SpaceDesign.SheetRadius, topEnd = SpaceDesign.SheetRadius),
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground)
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(SpaceDesign.SheetPadding)) {
                 Image(
                     painter = painterResource(R.drawable.shop_command_header),
                     contentDescription = null,
@@ -133,8 +132,8 @@ private fun LegacyOperationsPanel(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     enabled = !state.isHotelDebtActive,
                                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger.copy(alpha = 0.1f), contentColor = AppColors.Danger),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Danger),
-                                    style = CosmicButtonStyle.Danger
+                                    style = CosmicButtonStyle.Danger,
+                                    generatedArtwork = true
                                 ) {
                                     Text(stringResource(if (state.isHotelDebtActive) R.string.debt_active else R.string.take_hotel_debt))
                                 }
@@ -214,7 +213,8 @@ private fun DroneCollectionHeader(state: GameState, viewModel: GameViewModel) {
                     modifier = Modifier.widthIn(min = 108.dp, max = 144.dp).height(48.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                     style = CosmicButtonStyle.Reward,
-                    compact = true
+                    compact = true,
+                    generatedArtwork = true
                 ) { Text(stringResource(R.string.collection_claim), fontSize = 10.sp) }
             }
         }
@@ -229,8 +229,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
-                Modifier.size(30.dp).background(AppColors.Warning.copy(alpha = .14f), CircleShape)
-                    .border(1.dp, AppColors.Warning.copy(alpha = .4f), CircleShape),
+                Modifier.size(30.dp).background(AppColors.Warning.copy(alpha = .14f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -258,8 +257,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
-            color = AppColors.Primary.copy(alpha = 0.08f),
-            border = BorderStroke(1.dp, AppColors.Primary.copy(alpha = 0.22f))
+            color = AppColors.Primary.copy(alpha = 0.08f)
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(stringResource(R.string.prestige_explained_title), color = AppColors.Primary, fontWeight = FontWeight.Bold)
@@ -271,7 +269,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 )
             }
         }
-        Button(onClick = { showPrestigeConfirmation = true }, enabled = canPrestige) {
+        Button(onClick = { showPrestigeConfirmation = true }, enabled = canPrestige, generatedArtwork = true) {
             Text(stringResource(if (canPrestige) R.string.prestige else R.string.prestige_requirement))
         }
         Technology.entries.forEach { technology ->
@@ -283,7 +281,8 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
             Button(
                 onClick = { viewModel.buyTechnology(technology) },
                 enabled = technology !in state.technologies && state.prestigePoints >= technology.cost,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                generatedArtwork = true
             ) {
                 Text("${stringResource(label)} · ${stringResource(R.string.technology_cost, technology.cost)}")
             }
@@ -316,7 +315,6 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .background(if (unlocked) AppColors.Warning.copy(alpha = 0.09f) else Color.White.copy(alpha = 0.035f), RoundedCornerShape(14.dp))
-                    .border(1.dp, if (unlocked) AppColors.Warning.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -328,7 +326,8 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                     onClick = { viewModel.claimAchievement(achievement.id) },
                     enabled = unlocked && !claimed,
                     contentPadding = PaddingValues(horizontal = 10.dp),
-                    style = CosmicButtonStyle.Reward
+                    style = CosmicButtonStyle.Reward,
+                    generatedArtwork = true
                 ) {
                     Text(
                         stringResource(
@@ -351,7 +350,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
-            Button(onClick = viewModel::clearEventLog, enabled = state.eventLog.isNotEmpty(), style = CosmicButtonStyle.Secondary) {
+            Button(onClick = viewModel::clearEventLog, enabled = state.eventLog.isNotEmpty(), style = CosmicButtonStyle.Secondary, generatedArtwork = true) {
                 Text(stringResource(R.string.event_log_clear))
             }
         }
@@ -405,13 +404,13 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
                 )
             },
             actions = {
-                Button(onClick = { showPrestigeConfirmation = false }, style = CosmicButtonStyle.Secondary) {
+                Button(onClick = { showPrestigeConfirmation = false }, style = CosmicButtonStyle.Secondary, generatedArtwork = true) {
                     Text(stringResource(R.string.cancel))
                 }
                 Button(onClick = {
                     showPrestigeConfirmation = false
                     viewModel.prestige()
-                }) { Text(stringResource(R.string.prestige_confirm)) }
+                }, generatedArtwork = true) { Text(stringResource(R.string.prestige_confirm)) }
             }
         )
     }
@@ -419,7 +418,7 @@ private fun MetaProgressPanel(viewModel: GameViewModel, state: GameState) {
 
 @Composable
 fun ShopLauncherButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.size(56.dp).clickable(onClick = onClick), shape = RoundedCornerShape(16.dp), color = Color(0xFF0B1728), border = BorderStroke(1.dp, AppColors.Primary.copy(.42f))) {
+    Surface(modifier = modifier.size(56.dp).clickable(onClick = onClick), shape = RoundedCornerShape(16.dp), color = Color(0xFF0B1728)) {
         MinimalShopIcon(1, AppColors.Primary, Modifier.padding(10.dp))
     }
 }
@@ -486,7 +485,6 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
             modifier = Modifier.fillMaxWidth().height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Brush.horizontalGradient(listOf(accent.copy(.30f), Color(0xFF111D30))))
-                .border(1.dp, accent.copy(.72f), RoundedCornerShape(12.dp))
                 .alpha(if (caseEnabled) 1f else .38f)
                 .clickable(enabled = caseEnabled) {
                 if (maxAffordable >= 2) {
@@ -548,7 +546,6 @@ private fun CaseTypeRow(viewModel: GameViewModel, state: GameState, type: CaseTy
                         modifier = Modifier.fillMaxWidth(0.78f).height(48.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(Brush.horizontalGradient(listOf(accent.copy(.34f), Color(0xFF111D30))))
-                            .border(1.dp, accent.copy(.76f), RoundedCornerShape(12.dp))
                             .clickable {
                             showBundleDialog = false
                             viewModel.startOpeningCases(type, selectedCaseCount)
@@ -589,7 +586,6 @@ private fun DroneCollectionSets(state: GameState) {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 color = if (complete) AppColors.Primary.copy(alpha = .11f) else Color.White.copy(alpha = .035f),
-                border = BorderStroke(1.dp, if (complete) AppColors.Primary.copy(alpha = .42f) else Color.White.copy(alpha = .08f))
             ) {
                 Column(Modifier.padding(11.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -619,7 +615,6 @@ private fun LateGalaxyPreview(viewModel: GameViewModel) {
         Modifier.fillMaxWidth()
             .padding(bottom = 10.dp)
             .background(AppColors.Primary.copy(alpha = .055f), RoundedCornerShape(16.dp))
-            .border(1.dp, AppColors.Primary.copy(alpha = .18f), RoundedCornerShape(16.dp))
             .padding(12.dp)
     ) {
         Text(stringResource(R.string.late_galaxy_preview), color = AppColors.Primary, fontWeight = FontWeight.Bold)
@@ -659,13 +654,12 @@ fun ShopRow(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .background(Color(0xFF0B172C), RoundedCornerShape(14.dp))
-            .border(1.dp, if (fleetActionLabel != null) AppColors.Primary.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(46.dp).background(AppColors.Primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp)).border(1.dp, AppColors.Primary.copy(alpha = 0.14f), RoundedCornerShape(12.dp)),
+                modifier = Modifier.size(46.dp).background(AppColors.Primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (spriteIndex >= 0) {
@@ -711,7 +705,8 @@ fun ShopRow(
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary.copy(alpha = 0.18f), contentColor = AppColors.Primary),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.heightIn(min = 48.dp).weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    generatedArtwork = true
                 ) {
                     Text(fleetActionLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
@@ -723,7 +718,8 @@ fun ShopRow(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 88.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp),
-                    style = CosmicButtonStyle.Danger
+                    style = CosmicButtonStyle.Danger,
+                    generatedArtwork = true
                 ) {
                     Text(stringResource(R.string.sell), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
@@ -736,17 +732,11 @@ fun ShopRow(
                             listOf(AppColors.Primary.copy(alpha = .28f), Color(0xFF101B2C), AppColors.Primary.copy(alpha = .12f))
                         )
                     )
-                    .border(1.dp, AppColors.Primary.copy(alpha = .68f), RoundedCornerShape(12.dp))
+                    .border(1.dp, AppColors.Primary.copy(alpha = if (canBuy) .52f else .22f), RoundedCornerShape(12.dp))
                     .alpha(if (canBuy) 1f else .42f)
                     .clickable(enabled = canBuy, onClick = onBuy),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painterResource(if (canBuy) R.drawable.ui_button_primary_v5 else R.drawable.ui_button_locked_v5),
-                    null,
-                    Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
-                )
                 Text(formatNum(cost.toDouble()), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
         }
@@ -790,7 +780,6 @@ fun PlanetRow(
             .padding(vertical = 5.dp),
         shape = RoundedCornerShape(17.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.Surface.copy(alpha = .9f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = if (active) .52f else .25f))
     ) {
         Column(
             modifier = Modifier
@@ -804,7 +793,6 @@ fun PlanetRow(
                 modifier = Modifier.size(iconSize),
                 shape = RoundedCornerShape(18.dp),
                 color = Color(0xFF071525),
-                border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = .30f))
             ) {
             Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp))) {
                 if (spriteIndex >= 0) {
@@ -884,23 +872,15 @@ fun PlanetRow(
                         listOf(accent.copy(alpha = .28f), Color(0xFF101B2C), accent.copy(alpha = .12f))
                     )
                 )
-                .border(1.dp, accent.copy(alpha = .68f), RoundedCornerShape(12.dp))
+                .border(
+                    1.dp,
+                    accent.copy(alpha = if (planetEnabled && !owned) .54f else .24f),
+                    RoundedCornerShape(12.dp)
+                )
                 .alpha(if (planetEnabled) 1f else .35f)
                 .clickable(enabled = planetEnabled, onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painterResource(
-                    when {
-                        !planetEnabled -> R.drawable.ui_button_locked_v5
-                        canBuy && !owned -> R.drawable.ui_button_reward_v5
-                        else -> R.drawable.ui_button_primary_v5
-                    }
-                ),
-                null,
-                Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
             val btnText = when {
                 isLocked -> stringResource(R.string.locked)
                 active -> stringResource(R.string.active)
@@ -974,6 +954,16 @@ internal fun localizedUpgradeName(id: String): String = stringResource(
         "matrix" -> R.string.upgrade_neural_matrix
         "compressor" -> R.string.upgrade_void_compressor
         "singularity" -> R.string.upgrade_singularity_tap
+        "antimatter_lens" -> R.string.upgrade_antimatter_lens
+        "pulsar_battery" -> R.string.upgrade_pulsar_battery
+        "graviton_press" -> R.string.upgrade_graviton_press
+        "nanite_swarm" -> R.string.upgrade_nanite_swarm
+        "dark_matter_forge" -> R.string.upgrade_dark_matter_forge
+        "temporal_relay" -> R.string.upgrade_temporal_relay
+        "stellar_resonator" -> R.string.upgrade_stellar_resonator
+        "entropy_engine" -> R.string.upgrade_entropy_engine
+        "reality_anchor" -> R.string.upgrade_reality_anchor
+        "omega_core" -> R.string.upgrade_omega_core
         else -> R.string.unknown_item
     }
 )

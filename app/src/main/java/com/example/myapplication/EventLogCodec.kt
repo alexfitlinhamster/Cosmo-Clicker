@@ -16,3 +16,15 @@ object EventLogCodec {
         EventLogEntry(timestamp, type, outcome, reward)
     }.takeLast(30)
 }
+
+internal object EventDiscoveryNormalizer {
+    fun restore(savedNames: Set<String>, eventLog: List<EventLogEntry>): Set<GameEventType> {
+        val saved = savedNames.mapNotNullTo(mutableSetOf()) { name ->
+            GameEventType.entries.firstOrNull { it.name == name }
+        }
+        if (saved.isNotEmpty()) return saved
+        return eventLog.asSequence()
+            .filter { it.outcome != EventLogOutcome.STARTED }
+            .mapTo(mutableSetOf()) { it.eventType }
+    }
+}

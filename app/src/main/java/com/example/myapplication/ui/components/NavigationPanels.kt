@@ -36,10 +36,14 @@ import com.example.myapplication.DroneTraitEngine
 import com.example.myapplication.EconomyBalance
 import com.example.myapplication.GameState
 import com.example.myapplication.GameViewModel
+import com.example.myapplication.GalacticCollectionEngine
+import com.example.myapplication.GalacticCollectionProgress
+import com.example.myapplication.OverallProgressEngine
 import com.example.myapplication.R
 import com.example.myapplication.Technology
 import com.example.myapplication.Rarity
 import com.example.myapplication.ui.theme.AppColors
+import com.example.myapplication.ui.theme.SpaceDesign
 import com.example.myapplication.utils.formatNum
 
 @Composable
@@ -49,14 +53,14 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
     val accent = tabColors[selectedTab]
     Card(
         modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.80f),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = SpaceDesign.SheetRadius, topEnd = SpaceDesign.SheetRadius),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF07111F)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.32f))
+        border = null
     ) {
         Column(
             Modifier
                 .background(Brush.verticalGradient(listOf(accent.copy(alpha = .12f), Color(0xFF07111F), Color(0xFF090D1A))))
-                .padding(18.dp)
+                .padding(SpaceDesign.SheetPadding)
         ) {
             SpaceSheetHeader(stringResource(R.string.case_shop_title), stringResource(R.string.case_shop_subtitle), onClose)
             Spacer(Modifier.height(12.dp))
@@ -80,8 +84,10 @@ fun ShopBar(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, mod
                             cost = cost,
                             enabled = level < EconomyBalance.MAX_CLICK_UPGRADE_LEVEL && state.totalDebris >= cost,
                             iconRes = upgrade.iconRes,
-                            iconIndex = viewModel.clickItems.indexOf(upgrade),
-                            sheetDrawable = R.drawable.shop_upgrades_minimal_sheet_v1,
+                            iconIndex = viewModel.clickItems.indexOf(upgrade).let { if (it < 9) it else it - 9 },
+                            sheetDrawable = if (viewModel.clickItems.indexOf(upgrade) < 9) R.drawable.shop_upgrades_minimal_sheet_v1 else R.drawable.shop_upgrades_expansion_sheet_v1,
+                            sheetColumns = if (viewModel.clickItems.indexOf(upgrade) < 9) 3 else 5,
+                            sheetRows = if (viewModel.clickItems.indexOf(upgrade) < 9) 3 else 2,
                             accent = tabColors[0],
                             onBuy = { viewModel.buyClickUpgrade(upgrade.id) }
                         )
@@ -200,12 +206,6 @@ private fun ClickUpgradeRow(
                 .clickable(enabled = enabled, onClick = onBuy),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painterResource(if (enabled) R.drawable.ui_button_primary_v5 else R.drawable.ui_button_locked_v5),
-                null,
-                Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 GeneratedSheetIcon(R.drawable.shop_ui_minimal_sheet_v1, 4, 16.dp, columns = 4, rows = 4)
                 Spacer(Modifier.width(4.dp))
@@ -482,22 +482,26 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
     val totalAchievements = AchievementEngine.definitions.size
     val claimedCount = state.claimedAchievementIds.size
     val completion = claimedCount.toFloat() / totalAchievements.coerceAtLeast(1)
+    val upgradeIds = viewModel.clickItems.map { it.id }
+    val progressCategories = OverallProgressEngine.categories(state, upgradeIds)
+    val overallProgress = OverallProgressEngine.percent(state, upgradeIds)
+    val collection = GalacticCollectionEngine.progress(state, viewModel.fleetItems.size)
     Card(
         modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.76f),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = RoundedCornerShape(topStart = SpaceDesign.SheetRadius, topEnd = SpaceDesign.SheetRadius),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
-        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Outline.copy(alpha = .65f))
+        border = null
     ) {
         Box(Modifier.fillMaxSize()) {
             Image(painterResource(R.drawable.bg_achievements_archive_v1), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = .58f)
             Box(Modifier.fillMaxSize().background(Color(0xA608101C)))
-        Column(Modifier.fillMaxSize().padding(18.dp)) {
+        Column(Modifier.fillMaxSize().padding(SpaceDesign.SheetPadding)) {
             SpaceSheetHeader(stringResource(R.string.achievements), stringResource(R.string.achievements_subtitle), onClose)
             Spacer(Modifier.height(12.dp))
-            Row(
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            item(key = "progress_summary") { Row(
                 Modifier.fillMaxWidth()
                     .background(Brush.horizontalGradient(listOf(AppColors.Warning.copy(alpha = .18f), AppColors.Primary.copy(alpha = .08f))), RoundedCornerShape(16.dp))
-                    .border(1.dp, AppColors.Warning.copy(alpha = .25f), RoundedCornerShape(16.dp))
                     .padding(13.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -508,6 +512,7 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                         Text(stringResource(R.string.achievements), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text("$claimedCount / $totalAchievements", color = AppColors.Warning, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
+                    Text(stringResource(R.string.overall_progress, overallProgress), color = AppColors.Secondary, fontSize = 10.sp)
                     LinearProgressIndicator(
                         progress = { completion },
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
@@ -515,9 +520,13 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                         trackColor = Color.White.copy(alpha = .10f)
                     )
                 }
+            } }
+            item(key = "progress_breakdown") {
+                ProgressBreakdown(progressCategories)
             }
-            Spacer(Modifier.height(12.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            item(key = "galactic_collection") {
+                GalacticCollectionCard(collection)
+            }
                 items(AchievementEngine.definitions, key = { it.id }) { achievement ->
             val unlocked = achievement.id in state.unlockedAchievementIds
             val claimed = achievement.id in state.claimedAchievementIds
@@ -532,7 +541,13 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                         when { claimed -> Color.White.copy(alpha = .035f); unlocked -> AppColors.Warning.copy(alpha = .10f); else -> AppColors.Surface.copy(alpha = .82f) },
                         RoundedCornerShape(15.dp)
                     )
-                    .border(1.dp, if (unlocked && !claimed) AppColors.Warning.copy(alpha = .42f) else AppColors.Outline.copy(alpha = .34f), RoundedCornerShape(15.dp))
+                    .then(
+                        if (unlocked && !claimed) Modifier.border(
+                            1.dp,
+                            AppColors.Warning.copy(alpha = .42f),
+                            RoundedCornerShape(15.dp)
+                        ) else Modifier
+                    )
                     .padding(horizontal = 11.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -587,6 +602,104 @@ fun AchievementsPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
 }
 }
 
+@Composable
+private fun ProgressBreakdown(categories: List<OverallProgressEngine.Category>) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(AppColors.Surface.copy(alpha = SpaceDesign.StrongSurfaceAlpha), RoundedCornerShape(SpaceDesign.CardRadius))
+            .padding(SpaceDesign.CardPadding),
+        verticalArrangement = Arrangement.spacedBy(9.dp)
+    ) {
+        Text(
+            stringResource(R.string.progress_breakdown),
+            color = Color.White,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
+        categories.forEach { category ->
+            val title = when (category.id) {
+                "planets" -> R.string.progress_planets
+                "upgrades" -> R.string.progress_upgrades
+                "achievements" -> R.string.progress_achievements
+                "technologies" -> R.string.progress_technologies
+                else -> R.string.progress_station
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(title), Modifier.width(92.dp), color = AppColors.TextMuted, fontSize = 10.sp)
+                LinearProgressIndicator(
+                    progress = { category.fraction },
+                    modifier = Modifier.weight(1f).height(5.dp).clip(CircleShape),
+                    color = if (category.percent >= 100) AppColors.Warning else AppColors.Primary,
+                    trackColor = Color.White.copy(alpha = SpaceDesign.TrackAlpha)
+                )
+                Text(
+                    stringResource(R.string.progress_count, category.completed, category.total),
+                    Modifier.width(58.dp),
+                    color = Color.White,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GalacticCollectionCard(collection: GalacticCollectionProgress) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color(0xFF6F5AEF).copy(alpha = .22f), AppColors.Primary.copy(alpha = .10f))
+                ),
+                RoundedCornerShape(SpaceDesign.CardRadius)
+            )
+            .padding(SpaceDesign.CardPadding),
+        verticalArrangement = Arrangement.spacedBy(9.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(R.drawable.ic_goal_route_minimal), null, Modifier.size(30.dp), tint = Color.Unspecified)
+            Spacer(Modifier.width(9.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.galactic_collection), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.galactic_collection_subtitle), color = AppColors.TextMuted, fontSize = 9.sp, lineHeight = 11.sp)
+            }
+        }
+        LinearProgressIndicator(
+            progress = { collection.fraction },
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+            color = Color(0xFF9F8BFF),
+            trackColor = Color.White.copy(alpha = SpaceDesign.TrackAlpha)
+        )
+        Text(
+            stringResource(R.string.collection_entries, collection.discoveredEntries, collection.totalEntries),
+            color = AppColors.Secondary,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CollectionMetric(R.string.progress_planets, collection.planets, collection.totalPlanets, Modifier.weight(1f))
+            CollectionMetric(R.string.collection_events, collection.eventTypes, collection.totalEventTypes, Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CollectionMetric(R.string.progress_achievements, collection.achievements, collection.totalAchievements, Modifier.weight(1f))
+            CollectionMetric(R.string.collection_drones, collection.droneDiscoveries, collection.totalDrones, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun CollectionMetric(label: Int, value: Int, total: Int, modifier: Modifier = Modifier) {
+    Row(
+        modifier.background(Color.White.copy(alpha = SpaceDesign.MutedSurfaceAlpha), RoundedCornerShape(10.dp)).padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(stringResource(label), Modifier.weight(1f), color = AppColors.TextMuted, fontSize = 9.sp, maxLines = 2)
+        Text("$value/$total", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
+}
 @Composable
 fun PrestigeShopPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
     SpacePanel(
@@ -667,13 +780,12 @@ fun PrestigeShopPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
                             } else {
                                 accent.copy(alpha = if (canBuy) .18f else .08f)
                             },
-                            border = androidx.compose.foundation.BorderStroke(
+                            border = if (owned) null else androidx.compose.foundation.BorderStroke(
                                 1.dp,
-                                if (owned) AppColors.Outline else accent.copy(alpha = if (canBuy) .58f else .24f)
+                                accent.copy(alpha = if (canBuy) .58f else .24f)
                             )
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                if (!owned) Image(painterResource(R.drawable.ui_action_frame_v2), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, alpha = if (canBuy) .72f else .30f)
                                 Text(stringResource(if (owned) R.string.prestige_owned else R.string.prestige_buy), color = if (owned) AppColors.TextMuted else accent, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
@@ -685,11 +797,61 @@ fun PrestigeShopPanel(viewModel: GameViewModel, state: GameState, onClose: () ->
 }
 
 @Composable
+fun StatisticsPanel(viewModel: GameViewModel, state: GameState, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    val upgradeIds = viewModel.clickItems.map { it.id }
+    val categories = OverallProgressEngine.categories(state, upgradeIds)
+    val overallProgress = OverallProgressEngine.percent(state, upgradeIds)
+    SpacePanel(
+        title = stringResource(R.string.statistics_and_achievements),
+        subtitle = stringResource(R.string.statistics_subtitle),
+        onClose = onClose,
+        modifier = modifier,
+        backgroundRes = R.drawable.bg_statistics_observatory_v1
+    ) {
+        item(key = "completion") {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(AppColors.Primary.copy(alpha = .18f), Color(0xFF6F5AEF).copy(alpha = .18f))
+                        ),
+                        RoundedCornerShape(SpaceDesign.CardRadius)
+                    )
+                    .padding(SpaceDesign.CardPadding),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.progress_breakdown), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("$overallProgress%", color = AppColors.Primary, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                }
+                LinearProgressIndicator(
+                    progress = { overallProgress / 100f },
+                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                    color = AppColors.Primary,
+                    trackColor = Color.White.copy(alpha = SpaceDesign.TrackAlpha)
+                )
+            }
+        }
+        item(key = "categories") { ProgressBreakdown(categories) }
+        item(key = "planets") { StatisticRow(stringResource(R.string.stat_planets), "${state.ownedPlanets.size}/${EconomyBalance.MAX_PLANET_INDEX}") }
+        item(key = "clicks") { StatisticRow(stringResource(R.string.stat_clicks), state.lifetimeStats.clicks.toString()) }
+        item(key = "combo") { StatisticRow(stringResource(R.string.stat_best_combo), state.lifetimeStats.bestCombo.toString()) }
+        item(key = "debris") { StatisticRow(stringResource(R.string.stat_debris_collected), formatNum(state.lifetimeStats.debrisCollected.toDouble())) }
+        item(key = "drones") { StatisticRow(stringResource(R.string.stat_drones_discovered), "${state.discoveredDroneIds.size}/${viewModel.fleetItems.size}") }
+        item(key = "cases") { StatisticRow(stringResource(R.string.stat_cases_opened), state.lifetimeStats.casesOpened.toString()) }
+        item(key = "events") { StatisticRow(stringResource(R.string.stat_events_completed), state.lifetimeStats.eventsCompleted.toString()) }
+        item(key = "quests") { StatisticRow(stringResource(R.string.stat_quests), state.completedQuestIds.size.toString()) }
+        item(key = "prestige") { StatisticRow(stringResource(R.string.stat_prestiges), state.lifetimeStats.prestiges.toString()) }
+        item(key = "achievements") { StatisticRow(stringResource(R.string.stat_achievements), "${state.claimedAchievementIds.size}/${AchievementEngine.definitions.size}") }
+    }
+}
+
+@Composable
 private fun StatisticRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth()
-            .background(AppColors.Surface.copy(alpha = .82f), RoundedCornerShape(13.dp))
-            .border(1.dp, AppColors.Outline.copy(alpha = .42f), RoundedCornerShape(13.dp))
+            .background(AppColors.Surface.copy(alpha = SpaceDesign.StrongSurfaceAlpha), RoundedCornerShape(SpaceDesign.ControlRadius))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -713,9 +875,9 @@ private fun SpacePanel(
 ) {
     Card(
         modifier = modifier.widthIn(max = 720.dp).fillMaxWidth().fillMaxHeight(0.80f),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = SpaceDesign.SheetRadius, topEnd = SpaceDesign.SheetRadius),
         colors = CardDefaults.cardColors(containerColor = AppColors.CardBackground),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+        border = null
     ) {
         Box(Modifier.fillMaxSize()) {
             if (backgroundRes != null) {
@@ -728,7 +890,7 @@ private fun SpacePanel(
                 )
                 Box(Modifier.fillMaxSize().background(Color(0xB807101D)))
             }
-            Column(Modifier.fillMaxSize().padding(18.dp)) {
+            Column(Modifier.fillMaxSize().padding(SpaceDesign.SheetPadding)) {
                 SpaceSheetHeader(title, subtitle, onClose)
                 Spacer(Modifier.height(14.dp))
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp), content = content)

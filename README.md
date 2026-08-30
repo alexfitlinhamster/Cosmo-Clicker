@@ -16,9 +16,9 @@ Drona Salvage is a single-player incremental Android game about collecting space
   grants debris; failure costs resources and temporarily disables the infected drone.
 - Open Common, Rare, and Legendary cases with different prices and rarity odds.
   Every case has a stable eight-frame opening animation and tier-specific artwork.
-- Purchase upgrades and manage debt while growing the space operation.
+- Purchase 19 click upgrades, including ten late-game technologies, and manage debt while growing the space operation.
 - Keep progress between sessions with local Android storage.
-- Complete rotating daily and weekly quests, claim achievements, build permanent
+- Claim a seven-day login reward cycle, complete rotating daily and weekly quests, claim achievements, build permanent
   prestige upgrades, and earn offline fleet progress between sessions.
 - Play in English, Russian, or Spanish, with reduced-motion and sound controls.
 

@@ -1,5 +1,42 @@
 # News
 
+## Unreleased
+
+- Preserved and audited the complete 39-planet route, including its late-game
+  specializations, fleet requirements, drone-discovery goals, and prestige gate.
+- Added ten late-game click upgrades with a dedicated experimental icon sheet.
+- Added a persistent seven-day daily-reward streak with scaled debris and a day-seven
+  prestige-point reward.
+- Added an overall completion percentage calculated from planets, click upgrades,
+  achievements, permanent technologies, and station modules.
+- Expanded completion into visible journey categories and added a Galactic Collection
+  archive for planets, completed encounter types, achievements, and drone discoveries.
+- Persisted encountered event types independently from the rolling event log, with a
+  migration fallback for existing saves.
+- Added a dedicated statistics screen with completion categories, best combo, journey
+  totals, and direct access from the main navigation.
+- Restored persistent sound/vibration and reduced-motion settings and connected them
+  to music, feedback, stars, and case-opening animations.
+- Unified button press/disabled artwork and shared sheet/card spacing across the main
+  shop, goals, hangar, achievements, statistics, prestige, and settings surfaces.
+- Replaced stretched fixed-ratio button frames with adaptive minimal controls and
+  removed redundant outlines from sheets, settings cards, tabs, and inactive items.
+- Rebuilt all nine event icons and the settings icon set as one restrained,
+  frame-free minimal sci-fi family with consistent scale, lighting, and silhouettes.
+- Added dedicated statistics and settings artwork, unique icons for all ten late-game
+  click upgrades, and custom cosmic selection/switch controls.
+- Made reduced-motion stop the main background clock, particle trails, planet rotation,
+  and start-screen pulse instead of merely reducing their visible intensity.
+- Removed thirteen unreferenced legacy PNG sheets and button versions to reduce the
+  packaged resource footprint without changing current artwork.
+- Added route normalization so malformed legacy planet identifiers cannot corrupt
+  current-planet selection while valid progress across all 39 worlds is preserved.
+- Losslessly recompressed every eligible PNG after pixel comparison and corrected the
+  round launcher icon to use the adaptive icon resource.
+- Added long-running economy simulations for early, middle, and late progression,
+  case curves, upgrade curves, and offline-income safety.
+- Preserved the existing drone system without gameplay or balance changes.
+
 ## 1.18.0 — Deep Space Encounters Update - 2026-08-24
 
 - Reworked the remaining field encounters into clearer multi-stage interactions:
@@ -123,7 +160,7 @@
   fleet-damage reduction, dragon regeneration, minion waves, and temporary drone
   shutdowns during boss battles.
 - Moved challenge battles from the Command Center dialog into the main game field,
-  where bosses replace the planet and fight alongside the visible player drone fleet.
+  where bosses replace thew planet and fight alongside the visible player drone fleet.
 - Replaced rectangular boss illustrations with four transparent full-body boss
   renders and added entrance, hovering, breathing, tilt, and hit-reaction animations.
 - Added clear victory and timeout results, floating damage values, boss ability

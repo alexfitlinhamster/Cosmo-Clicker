@@ -69,6 +69,15 @@ class MainActivityUiTest {
     }
 
     @Test
+    fun statisticsExposeCompletionAndJourneyMetrics() {
+        dismissStartScreenIfPresent()
+        composeRule.onNodeWithContentDescription("Open statistics").performClick()
+        composeRule.onNodeWithText("Progress statistics").assertIsDisplayed()
+        composeRule.onNodeWithText("Journey progress").assertIsDisplayed()
+        composeRule.onNodeWithText("Best combo").assertIsDisplayed()
+    }
+
+    @Test
     fun generatedButtonFramesStayOptimizedAndTransparent() {
         val resources = composeRule.activity.resources
         val frames = listOf(
